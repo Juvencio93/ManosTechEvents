@@ -197,13 +197,22 @@ async function apiRegistrarVisitante(token, dados) {
         console.log("DADOS ENVIADOS AO SUPABASE:");
 console.log(dados);
 
-const { error } = await supabaseClient
+console.log("DADOS ENVIADOS AO SUPABASE:");
+console.log(JSON.stringify(dados, null, 2));
+
+const { data, error } = await supabaseClient
     .from('visitantes')
-    .insert([dados]);
-        if (error) {
-            console.error('Erro ao registrar visitante:', error);
-            throw error;
-        }
+    .insert([dados])
+    .select();
+
+console.log("RESPOSTA DO SUPABASE:");
+console.log(data);
+console.log(error);
+
+if (error) {
+    console.error(error);
+    throw error;
+}
     } catch (e) {
         console.warn('Registrando visitante localmente (fallback)');
         const eventoLocal = EV.find(ev => ev.token === token);
