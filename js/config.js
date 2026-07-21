@@ -92,5 +92,11 @@ function carregarDados() {
 }
 
 function salvarDados() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ config: CFG, eventos: EV, funcionarios: FN }));
+    localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+            config: CFG,
+            funcionarios: FN
+        })
+    );
 }
