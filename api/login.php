@@ -4,6 +4,7 @@ if (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off') {
     exit;
 }
 session_start();
+session_regenerate_id(true); // evita session fixation
 header('Content-Type: application/json');
 require_once 'config.php';
 
