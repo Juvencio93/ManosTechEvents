@@ -37,7 +37,10 @@ async function apiLogin(email, senha) {
     // Tenta Supabase primeiro
     if (supabaseClient) {
         try {
-            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, senha });
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password: senha
+});
             if (error) {
                 console.error('Erro de autenticação Supabase:', error.message);
                 throw new Error(error.message);
