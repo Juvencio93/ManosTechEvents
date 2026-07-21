@@ -162,26 +162,34 @@ async function apiExcluirEvento(id) {
 
 // ---------- Visitantes ----------
 async function apiRegistrarVisitante(token, dados) {
-    if (supabaseClient) {
-        try {
-            const { data: evento } = await supabaseClient
-                .from('eventos')
-                .select('id')
-                .eq('token', token)
-                .single();
-            if (evento) {
-                dados.evento_id = evento.id;
-                const dadosSnake = toSnakeCase(dados);
-                const { error } = await supabaseClient.from('visitantes').insert([dadosSnake]);
-                if (!error) return;
-            }
-        } catch (e) {}
-    }
-    const eventoLocal = EV.find(ev => ev.token === token);
-    if (eventoLocal) {
-        eventoLocal.visitantes.unshift(dados);
-        eventoLocal.totalVisitantes = eventoLocal.visitantes.length;
-        salvarDados();
+    try {
+        const { data: evento, error: eventoError } = await supabaseClient
+            .from('eventos')
+            .select('id')
+            .eq('token', token)
+            .single();
+
+        if (eventoError) throw new Error('Evento não encontrado');
+
+        // Garante que evento_id seja um número inteiro
+        dados.evento_id = parseInt(evento.id, 10);
+
+        const { error } = await supabaseClient
+            .from('visitantes')
+            .insert([dados]);
+
+        if (error) {
+            console.error('Erro ao registrar visitante:', error);
+            throw error;
+        }
+    } catch (e) {
+        console.warn('Registrando visitante localmente (fallback)');
+        const eventoLocal = EV.find(ev => ev.token === token);
+        if (eventoLocal) {
+            eventoLocal.visitantes.unshift(dados);
+            eventoLocal.totalVisitantes = eventoLocal.visitantes.length;
+            salvarDados();
+        }
     }
 }
 
