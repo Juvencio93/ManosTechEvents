@@ -1,4 +1,4 @@
-// Autenticação e controle de acesso (com fallback localStorage)
+// Autenticação (Supabase puro)
 
 async function fazerLogin() {
     const email = document.getElementById('loginEmail').value.trim();
@@ -20,7 +20,6 @@ function entrarSistema() {
     atualizarInterfaceUsuario();
     aplicarPermissoes();
     showPage('inicio');
-    // Não chama salvarDados() nem carregarDados()
 }
 
 async function sairDoSistema() {
@@ -32,8 +31,8 @@ async function sairDoSistema() {
     closeMenu();
     usuarioLogado = null;
     eventoSelecionadoId = null;
-    // Não chama salvarDados()
 }
+
 function confirmarSaidaSistema() {
     confirmarAcao('Deseja realmente sair do sistema?', sairDoSistema);
 }
@@ -55,7 +54,6 @@ function voltarLoginAdmin() {
 function fazerLoginCliente() {
     const usuario = document.getElementById('clienteUsuario').value.trim();
     const senha = document.getElementById('clienteSenha').value.trim();
-    // Cliente: busca local (a API ainda não tem endpoint de cliente)
     const evento = EV.find(ev => ev.clienteUsuario === usuario && ev.clienteSenha === senha);
     if (evento) {
         document.getElementById('loginClienteScreen').style.display = 'none';
@@ -74,7 +72,6 @@ function confirmarSaidaCliente() {
     });
 }
 
-// Atualiza apenas elementos fixos (sidebar, logo)
 function atualizarInterfaceUsuario() {
     const sidebarEmpresa = document.getElementById('sidebarEmpresaNome');
     if (sidebarEmpresa) sidebarEmpresa.textContent = CFG.empresaNome;
