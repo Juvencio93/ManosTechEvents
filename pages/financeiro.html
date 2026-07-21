@@ -1,0 +1,23 @@
+<div class="top-bar"><h2>💰 Financeiro</h2></div>
+<div class="card" id="resumoFinanceiroGeral">
+    <h3>📊 Resumo Geral de Todos os Eventos</h3>
+    <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="stat-card"><div class="stat-icon">💵</div><div class="stat-value" id="resumoTotalCobrado">R$ 0</div><div class="stat-label">Total Cobrado</div></div>
+        <div class="stat-card"><div class="stat-icon">📉</div><div class="stat-value" id="resumoTotalCusto">R$ 0</div><div class="stat-label">Custo Operacional Total</div></div>
+        <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-value" id="resumoLucroTotal">R$ 0</div><div class="stat-label">Lucro Líquido Total</div></div>
+    </div>
+</div>
+<div class="evento-selector" style="margin-bottom:20px;"><span>🎯 Evento:</span><select id="eventoSelectFinanceiro" onchange="selecionarEventoFinanceiro()"><option value="">-- Escolha --</option></select></div>
+<div id="financeiroContent" style="display:none;">
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon">💵</div><div class="stat-value" id="finValorCobrado">R$ 0</div><div class="stat-label">Valor Total</div></div>
+        <div class="stat-card"><div class="stat-icon">📉</div><div class="stat-value" id="finCustoOperacional">R$ 0</div><div class="stat-label">Custo Operacional</div></div>
+        <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-value" id="finLucro">R$ 0</div><div class="stat-label">Lucro</div></div>
+        <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value" style="color:var(--yellow);" id="finMargem">0%</div><div class="stat-label">Margem de Lucro</div></div>
+    </div>
+    <div class="grid-2">
+        <div class="card"><h3>💳 Status do Pagamento</h3><div id="finStatusPagamento" style="margin-bottom:14px;"></div><table><tr><td style="color:var(--text2);">Valor Total:</td><td style="color:var(--azul);font-weight:600;" id="finValorTotal">R$ 0</td></tr><tr><td style="color:var(--text2);">Valor Pago (entrada):</td><td style="color:var(--green);font-weight:600;" id="finValorPago">R$ 0</td></tr><tr><td style="color:var(--text2);">Saldo Devedor:</td><td style="color:var(--yellow);font-weight:600;" id="finValorPendente">R$ 0</td></tr><tr><td style="color:var(--text2);">Vencimento:</td><td id="finVencimento">-</td></tr><tr><td style="color:var(--text2);">Forma Pagto:</td><td id="finFormaPagamento">-</td></tr></table></div>
+        <div class="card"><h3>📅 Parcelas (sobre o saldo devedor)</h3><table><thead><tr><th>Nº</th><th>Valor da Parcela</th><th>Venc.</th><th>Status</th></tr></thead><tbody id="finParcelasTable"></tbody></table></div>
+    </div>
+</div>
+<div id="financeiroEmpty" style="text-align:center;padding:70px;color:var(--text2);display:block;"><div style="font-size:56px;">💰</div><h3>Selecione um evento</h3></div>
