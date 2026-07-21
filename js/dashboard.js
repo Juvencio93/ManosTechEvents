@@ -1,10 +1,8 @@
-// Dashboard
-function selecionarEvento() {
+// Dashboard (carrega visitantes do Supabase)
+
+async function selecionarEvento() {
     const select = document.getElementById('eventoSelect');
-    if (!select) {
-        // Se o select não existe (página dashboard não carregada), apenas guarda o ID
-        return;
-    }
+    if (!select) return;
     const id = parseInt(select.value);
     if (!id) {
         eventoSelecionadoId = null;
@@ -26,8 +24,17 @@ function selecionarEvento() {
         statusMini.style.display = 'inline-block';
     }
 
-    document.getElementById('totalVisitantes').textContent = evento.totalVisitantes || 0;
-    document.getElementById('liveConnected').textContent = (evento.totalVisitantes > 0) ? Math.floor(Math.random() * 50) + 30 : 0;
+    let visitantes = [];
+    try {
+        visitantes = await apiListarVisitantes(id);
+    } catch (e) {
+        console.warn('Usando array local para visitantes');
+        visitantes = evento.visitantes || [];
+    }
+
+    const total = visitantes.length;
+    document.getElementById('totalVisitantes').textContent = total;
+    document.getElementById('liveConnected').textContent = total > 0 ? Math.floor(Math.random() * 50) + 30 : 0;
     document.getElementById('tempoMedio').textContent = (evento.tempoMedio || 0) + 'min';
     document.getElementById('pctMobile').textContent = (evento.pctMobile || 0) + '%';
 
@@ -39,19 +46,13 @@ function selecionarEvento() {
 
     const horas = {};
     for (let h = 8; h <= 20; h++) horas[h] = 0;
-    if (evento.visitantes) {
-        evento.visitantes.forEach(v => {
-            const h = v.hora || 8;
-            if (horas[h] !== undefined) horas[h]++;
-        });
-    }
+    visitantes.forEach(v => { const h = v.hora || 8; if (horas[h] !== undefined) horas[h]++; });
     const max = Math.max(...Object.values(horas), 1);
     const heatmap = document.getElementById('heatmapContainer');
     if (heatmap) heatmap.innerHTML = Object.entries(horas).map(([h, c]) =>
         `<div class="heatmap-bar" style="height:${Math.max((c/max)*140,4)}px;" title="${h}h: ${c}"></div>`
     ).join('');
 
-    const visitantes = evento.visitantes || [];
     const vList = document.getElementById('visitantesList');
     if (vList) vList.innerHTML = visitantes.slice(0, 10).map(v =>
         `<div style="display:flex;align-items:center;gap:12px;padding:8px;border-bottom:1px solid rgba(255,255,255,0.04);">
@@ -60,7 +61,7 @@ function selecionarEvento() {
         </div>`
     ).join('');
     const vCount = document.getElementById('visitantesCount');
-    if (vCount) vCount.textContent = evento.totalVisitantes + ' visitantes';
+    if (vCount) vCount.textContent = total + ' visitantes';
 
     const tableFull = document.getElementById('visitantesTableFull');
     if (tableFull) tableFull.innerHTML = visitantes.map(v =>
@@ -89,6 +90,8 @@ function copiarLinkDashboard() {
     const link = document.getElementById('dashboardPortalLink').textContent;
     navigator.clipboard.writeText(link).then(() => toast('📋 Link copiado!'));
 }
+
+// Necessário para o modal QR
 function copiarQR() {
     const link = document.getElementById('qrModalLink');
     if (link) {
