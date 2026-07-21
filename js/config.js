@@ -91,5 +91,9 @@ function carregarDados() {
 }
 
 function salvarDados() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ config: CFG, eventos: EV, funcionarios: FN }));
+    const dados = { config: CFG, eventos: EV, funcionarios: FN };
+    // Remove logos em base64 para economizar espaço
+    dados.eventos = dados.eventos.map(e => ({ ...e, logoUrl: '', patrocinadoresLogos: [] }));
+    dados.config.logoUrl = '';
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dados));
 }
