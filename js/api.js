@@ -52,11 +52,17 @@ async function apiLogin(email, senha) {
                 throw new Error(error.message);
             }
             sessao = data.user;
-            const { data: perfil } = await supabaseClient
-                .from('perfis')
-                .select('*')
-                .eq('id', data.user.id)
-                .single();
+           const {
+    data: perfil,
+    error: perfilError
+} = await supabaseClient
+    .from('perfis')
+    .select('*')
+    .eq('id', data.user.id)
+    .single();
+
+console.log("Perfil:", perfil);
+console.log("Erro Perfil:", perfilError);
             if (perfil) {
                 return {
                     nome: perfil.nome,
