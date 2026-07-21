@@ -1,12 +1,18 @@
 // Financeiro
 function atualizarResumoFinanceiroGeral() {
+    const elTotalCobrado = document.getElementById('resumoTotalCobrado');
+    if (!elTotalCobrado) return; // elemento só existe na página financeiro
+    const elTotalCusto = document.getElementById('resumoTotalCusto');
+    const elLucroTotal = document.getElementById('resumoLucroTotal');
+
     const totalCobrado = EV.reduce((acc, e) => acc + (e.valorCobrado || 0), 0);
     const totalCusto = EV.reduce((acc, e) => acc + (e.custoOperacional || 0), 0);
     const lucro = totalCobrado - totalCusto;
-    document.getElementById('resumoTotalCobrado').textContent = formatarMoeda(totalCobrado);
-    document.getElementById('resumoTotalCusto').textContent = formatarMoeda(totalCusto);
-    document.getElementById('resumoLucroTotal').textContent = formatarMoeda(lucro);
-    document.getElementById('resumoLucroTotal').style.color = lucro >= 0 ? 'var(--green)' : 'var(--red)';
+
+    elTotalCobrado.textContent = formatarMoeda(totalCobrado);
+    elTotalCusto.textContent = formatarMoeda(totalCusto);
+    elLucroTotal.textContent = formatarMoeda(lucro);
+    elLucroTotal.style.color = lucro >= 0 ? 'var(--green)' : 'var(--red)';
 }
 
 function selecionarEventoFinanceiro() {
@@ -14,14 +20,14 @@ function selecionarEventoFinanceiro() {
     const content = document.getElementById('financeiroContent');
     const empty = document.getElementById('financeiroEmpty');
     if (!id) {
-        content.style.display = 'none';
-        empty.style.display = 'block';
+        if (content) content.style.display = 'none';
+        if (empty) empty.style.display = 'block';
         return;
     }
     const evento = EV.find(e => e.id === id);
     if (!evento) return;
-    content.style.display = 'block';
-    empty.style.display = 'none';
+    if (content) content.style.display = 'block';
+    if (empty) empty.style.display = 'none';
 
     const p = usuarioLogado?.permissoes || {};
     const semPermissao = !p.f;
@@ -33,30 +39,53 @@ function selecionarEventoFinanceiro() {
     const margem = valorCobrado > 0 ? (lucro / valorCobrado) * 100 : 0;
 
     if (semPermissao) {
-        ['finValorCobrado','finCustoOperacional','finLucro','finMargem','finValorTotal','finValorPago','finValorPendente'].forEach(id => document.getElementById(id).textContent = 'R$ ••••');
-        document.getElementById('finStatusPagamento').innerHTML = '<span class="badge badge-secondary">🔒 Sem permissão</span>';
-        document.getElementById('finParcelasTable').innerHTML = '<tr><td colspan="4">🔒</td></tr>';
+        ['finValorCobrado','finCustoOperacional','finLucro','finMargem','finValorTotal','finValorPago','finValorPendente'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = 'R$ ••••';
+        });
+        const statusEl = document.getElementById('finStatusPagamento');
+        if (statusEl) statusEl.innerHTML = '<span class="badge badge-secondary">🔒 Sem permissão</span>';
+        const tabela = document.getElementById('finParcelasTable');
+        if (tabela) tabela.innerHTML = '<tr><td colspan="4">🔒</td></tr>';
         return;
     }
 
-    document.getElementById('finValorCobrado').textContent = formatarMoeda(valorCobrado);
-    document.getElementById('finCustoOperacional').textContent = formatarMoeda(custo);
-    document.getElementById('finCustoOperacional').style.color = 'var(--red)';
-    document.getElementById('finLucro').textContent = formatarMoeda(lucro);
-    document.getElementById('finLucro').style.color = lucro >= 0 ? 'var(--green)' : 'var(--red)';
-    document.getElementById('finMargem').textContent = margem.toFixed(1).replace('.', ',') + '%';
+    const elValorCobrado = document.getElementById('finValorCobrado');
+    if (elValorCobrado) elValorCobrado.textContent = formatarMoeda(valorCobrado);
+    const elCusto = document.getElementById('finCustoOperacional');
+    if (elCusto) {
+        elCusto.textContent = formatarMoeda(custo);
+        elCusto.style.color = 'var(--red)';
+    }
+    const elLucro = document.getElementById('finLucro');
+    if (elLucro) {
+        elLucro.textContent = formatarMoeda(lucro);
+        elLucro.style.color = lucro >= 0 ? 'var(--green)' : 'var(--red)';
+    }
+    const elMargem = document.getElementById('finMargem');
+    if (elMargem) elMargem.textContent = margem.toFixed(1).replace('.', ',') + '%';
 
     const sp = statusPagamento(evento);
-    document.getElementById('finStatusPagamento').innerHTML = `<span class="badge ${sp.classe}" style="font-size:14px;padding:8px 16px;">${sp.texto}</span>`;
+    const statusEl = document.getElementById('finStatusPagamento');
+    if (statusEl) statusEl.innerHTML = `<span class="badge ${sp.classe}" style="font-size:14px;padding:8px 16px;">${sp.texto}</span>`;
 
-    document.getElementById('finValorTotal').textContent = formatarMoeda(valorCobrado);
-    document.getElementById('finValorPago').textContent = formatarMoeda(pago);
-    document.getElementById('finValorPago').style.color = 'var(--green)';
+    const elTotal = document.getElementById('finValorTotal');
+    if (elTotal) elTotal.textContent = formatarMoeda(valorCobrado);
+    const elPago = document.getElementById('finValorPago');
+    if (elPago) {
+        elPago.textContent = formatarMoeda(pago);
+        elPago.style.color = 'var(--green)';
+    }
     const saldoDevedor = Math.max(0, valorCobrado - pago);
-    document.getElementById('finValorPendente').textContent = formatarMoeda(saldoDevedor);
-    document.getElementById('finValorPendente').style.color = 'var(--yellow)';
-    document.getElementById('finVencimento').textContent = evento.vencimento ? formatarData(evento.vencimento) : 'Não definido';
-    document.getElementById('finFormaPagamento').textContent = {
+    const elPendente = document.getElementById('finValorPendente');
+    if (elPendente) {
+        elPendente.textContent = formatarMoeda(saldoDevedor);
+        elPendente.style.color = 'var(--yellow)';
+    }
+    const elVencimento = document.getElementById('finVencimento');
+    if (elVencimento) elVencimento.textContent = evento.vencimento ? formatarData(evento.vencimento) : 'Não definido';
+    const elForma = document.getElementById('finFormaPagamento');
+    if (elForma) elForma.textContent = {
         pix: 'PIX', boleto: 'Boleto', cartao: 'Cartão', transferencia: 'Transferência'
     }[evento.formaPagamento] || 'Não definido';
 
@@ -70,5 +99,6 @@ function selecionarEventoFinanceiro() {
             htmlParcelas += `<tr><td>${i}ª</td><td>${formatarMoeda(valorParcela)}</td><td>${evento.vencimento ? formatarData(evento.vencimento) : '-'}</td><td><span class="badge badge-warning">Pendente</span></td></tr>`;
         }
     }
-    document.getElementById('finParcelasTable').innerHTML = htmlParcelas;
+    const tabelaParcelas = document.getElementById('finParcelasTable');
+    if (tabelaParcelas) tabelaParcelas.innerHTML = htmlParcelas;
 }
