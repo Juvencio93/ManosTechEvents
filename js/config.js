@@ -76,21 +76,25 @@ let callbackConfirmacao = null;
 
 function carregarDados() {
     const dados = localStorage.getItem(STORAGE_KEY);
+
     if (dados) {
         try {
             const parsed = JSON.parse(dados);
+
             if (parsed.config) CFG = parsed.config;
-            if (parsed.eventos) EV = parsed.eventos;
             if (parsed.funcionarios) FN = parsed.funcionarios;
+
+            // Não carrega eventos do localStorage
+            EV = [];
+
             return;
         } catch (e) {}
     }
-    CFG = DADOS_INICIAIS.config;
-    EV = DADOS_INICIAIS.eventos;
-    FN = DADOS_INICIAIS.funcionarios;
-    salvarDados();
-}
 
+    CFG = DADOS_INICIAIS.config;
+    FN = DADOS_INICIAIS.funcionarios;
+    EV = [];
+}
 function salvarDados() {
     localStorage.setItem(
         STORAGE_KEY,
