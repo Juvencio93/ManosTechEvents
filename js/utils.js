@@ -31,7 +31,7 @@ function statusPagamento(evento) {
 
 function gerarLinkPortal(evento) {
     if (!evento || !evento.token) return '#';
-    // Em produção, o domínio será portal.manostech.com.br
+    // Use o domínio real do portal quando estiver em produção
     return `https://portal.manostech.com.br/portal.html?token=${evento.token}`;
 }
 
