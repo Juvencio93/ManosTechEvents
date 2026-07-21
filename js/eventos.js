@@ -1,4 +1,4 @@
-// CRUD de Eventos (adaptado para API)
+// CRUD de Eventos (versão robusta – patrocinadores protegidos)
 
 function preencherSelectsEventos() {
     const opcoes = EV.map(e => `<option value="${e.id}">${e.nome} - ${e.cliente} (${calcularStatusEvento(e)})</option>`).join('');
@@ -42,9 +42,13 @@ function editarEvento(id) {
     logoTemporario = evento.logoUrl;
     document.getElementById('logoPreview').innerHTML = evento.logoUrl ? `<img src="${evento.logoUrl}">` : '<span>📷 Upload</span>';
 
-    // CORRIGIDO: Garante que patrocinadoresLogos seja array de strings
+    // Sanitiza patrocinadoresLogos
     const logos = evento.patrocinadoresLogos || [];
-    patrocinadoresTemp = Array.isArray(logos) ? logos.map(item => typeof item === 'string' ? item : (item.url || '')) : [];
+    patrocinadoresTemp = Array.isArray(logos)
+        ? logos
+            .map(item => (typeof item === 'string' && item.length > 10) ? item : null)
+            .filter(url => url !== null)
+        : [];
 
     renderizarPatrocinadores();
     esconderDicas();
@@ -102,11 +106,11 @@ function removerPatrocinador(index) {
     renderizarPatrocinadores();
 }
 
-// CORRIGIDO: filtro de URLs válidas e tratamento de erro na imagem
 function renderizarPatrocinadores() {
     const container = document.getElementById('patrocinadoresContainer');
     if (!container) return;
-    const urls = patrocinadoresTemp.filter(url => typeof url === 'string' && url.length > 10);
+    // Filtra apenas strings válidas
+    const urls = patrocinadoresTemp.filter(url => typeof url === 'string' && url.startsWith('data:') || (url.startsWith('http') && url.length > 10));
     container.innerHTML = urls.map((url, i) =>
         `<div class="patrocinador-thumb"><img src="${url}" onerror="this.style.display='none'"><button class="remove-btn" onclick="removerPatrocinador(${i})">✕</button></div>`
     ).join('') + '<div class="patrocinador-add" onclick="document.getElementById(\'patrocinadorUpload\').click()">+</div>';
@@ -139,6 +143,9 @@ async function salvarEvento() {
         return;
     }
 
+    // Sanitiza patrocinadoresLogos antes de salvar
+    const logosLimpos = patrocinadoresTemp.filter(url => typeof url === 'string' && url.length > 10);
+
     const dados = {
         nome: document.getElementById('eventoNome').value.trim(),
         cliente: document.getElementById('eventoCliente').value.trim(),
@@ -148,7 +155,7 @@ async function salvarEvento() {
         clienteUsuario: document.getElementById('eventoClienteUsuario').value.trim(),
         clienteSenha: document.getElementById('eventoClienteSenha').value.trim(),
         patrocinadores: document.getElementById('eventoPatrocinadores').value.trim(),
-        patrocinadoresLogos: [...patrocinadoresTemp],
+        patrocinadoresLogos: logosLimpos,    // só strings válidas
         observacoes: document.getElementById('eventoObservacoes').value.trim(),
         valorCobrado: parseFloat(document.getElementById('eventoValorCobrado').value) || 0,
         custoOperacional: parseFloat(document.getElementById('eventoCustoOperacional').value) || 0,
@@ -176,10 +183,10 @@ async function salvarEvento() {
         }
 
         fecharModal('eventoModal');
-        EV = await apiListarEventos(); // Recarrega da API (ou localStorage)
+        EV = await apiListarEventos();
         preencherSelectsEventos();
         renderizarEventos();
-        salvarDados(); // fallback local
+        salvarDados();
         if (eventoSelecionadoId) {
             const select = document.getElementById('eventoSelect');
             if (select) {
@@ -244,7 +251,7 @@ function renderizarEventos() {
         acoes += `<button class="btn btn-xs btn-primary" onclick="abrirPortalCat(${e.id})">🌐</button>`;
         if (p.x) acoes += `<button class="btn btn-xs btn-danger" onclick="excluirEvento(${e.id})">🗑️</button>`;
         return `<tr>
-            <td><div style="width:34px;height:34px;border-radius:6px;overflow:hidden;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;">${e.logoUrl ? `<img src="${e.logoUrl}" style="width:100%;height:100%;object-fit:contain;">` : '🎪'}</div></td>
+            <td><div style="width:34px;height:34px;border-radius:6px;overflow:hidden;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;">${e.logoUrl ? `<img src="${e.logoUrl}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'">` : '🎪'}</div></td>
             <td><strong>${escapeHtml(e.nome)}</strong></td>
             <td>${escapeHtml(e.cliente)}</td>
             <td>${formatarData(e.dataInicio)} a ${formatarData(e.dataFim)}</td>
