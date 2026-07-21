@@ -19,8 +19,8 @@ function entrarSistema() {
     document.getElementById('menuToggle').style.display = 'flex';
     atualizarInterfaceUsuario();
     aplicarPermissoes();
-    showPage('inicio'); // carrega a página inicial dinamicamente
-    salvarDados();
+    showPage('inicio');
+    // Não chama salvarDados() nem carregarDados()
 }
 
 async function sairDoSistema() {
