@@ -90,6 +90,8 @@ function copiarLinkDashboard() {
     navigator.clipboard.writeText(link).then(() => toast('📋 Link copiado!'));
 }
 function copiarQR() {
-    const link = document.getElementById('qrModalLink').textContent;
-    navigator.clipboard.writeText(link).then(() => toast('📋 Link copiado!'));
+    const link = document.getElementById('qrModalLink');
+    if (link) {
+        navigator.clipboard.writeText(link.textContent).then(() => toast('📋 Link copiado!'));
+    }
 }
