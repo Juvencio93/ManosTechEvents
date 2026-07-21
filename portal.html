@@ -409,24 +409,24 @@
 
         // ---------- Restante do código ----------
         const REDIRECT_URL = 'https://www.google.com';
-        const params = new URLSearchParams(window.location.search);
-        const eventoId = parseInt(params.get('id'));
+   const params = new URLSearchParams(window.location.search);
+const eventoToken = params.get('token');   // Agora usa token
 
-        function carregarEvento() {
-            if (!eventoId) {
-                document.getElementById('nomeEvento').textContent = 'Evento não especificado';
-                return null;
-            }
-            try {
-                const dados = localStorage.getItem('sge_v9');
-                if (dados) {
-                    const parsed = JSON.parse(dados);
-                    const eventos = parsed.eventos || [];
-                    return eventos.find(ev => ev.id === eventoId);
-                }
-            } catch (e) {}
-            return null;
+function carregarEvento() {
+    if (!eventoToken) {
+        document.getElementById('nomeEvento').textContent = 'Evento não especificado';
+        return null;
+    }
+    try {
+        const dados = localStorage.getItem('sge_v9');
+        if (dados) {
+            const parsed = JSON.parse(dados);
+            const eventos = parsed.eventos || [];
+            return eventos.find(ev => ev.token === eventoToken);
         }
+    } catch (e) {}
+    return null;
+}
 
         const evento = carregarEvento();
 
