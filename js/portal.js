@@ -87,12 +87,7 @@ const dados = {
     await apiRegistrarVisitante(evento.token, dados);
     
     // Atualiza a lista local de visitantes (caso o fallback tenha sido usado)
-    const idx = EV.findIndex(ev => ev.id === evento.id);
-    if (idx !== -1) {
-        EV[idx].visitantes.unshift(dados);
-        EV[idx].totalVisitantes = EV[idx].visitantes.length;
-    }
-    
+   
     salvarDados();
     if (eventoSelecionadoId === evento.id) selecionarEvento();
     if (eventoClienteAtual?.id === evento.id) abrirAreaClienteEvento(evento);
