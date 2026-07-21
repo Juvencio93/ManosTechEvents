@@ -86,7 +86,7 @@ function salvarFuncionario() {
     }
     fecharModal('funcionarioModal');
     renderizarFuncionarios();
-    salvarDados();
+   
     toast('✅ Funcionário salvo!');
     funcionarioEmEdicao = null;
 }
@@ -96,7 +96,7 @@ function excluirFuncionario(index) {
     confirmarAcao('Deseja realmente excluir este funcionário?', () => {
         FN.splice(index, 1);
         renderizarFuncionarios();
-        salvarDados();
+       
         toast('🗑️ Funcionário excluído!');
     });
 }
