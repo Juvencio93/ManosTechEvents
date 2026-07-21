@@ -1,34 +1,26 @@
-// Autenticação e controle de acesso
-function fazerLogin() {
+// Autenticação e controle de acesso (adaptado para API)
+async function fazerLogin() {
     const email = document.getElementById('loginEmail').value.trim();
     const senha = document.getElementById('loginPassword').value.trim();
-    if (email === CFG.adminEmail && senha === CFG.adminSenha) {
-        usuarioLogado = {
-            nome: CFG.adminNome,
-            nivel: 'Administrador',
-            permissoes: { v: true, d: true, vi: true, e: true, x: true, f: true, g: true, c: true, r: true }
-        };
+    try {
+        const user = await apiLogin(email, senha);
+        usuarioLogado = user;
+        // Carrega eventos da API (ou localStorage)
+        EV = await apiListarEventos();
         entrarSistema();
-        return;
+    } catch (e) {
+        alert(e.message);
     }
-    const func = FN.find(f => f.email === email && (f.senha || '123456') === senha);
-    if (func) {
-        usuarioLogado = func;
-        entrarSistema();
-        return;
-    }
-    alert('❌ Credenciais inválidas!');
 }
 
 function entrarSistema() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
     document.getElementById('menuToggle').style.display = 'flex';
-    // Apenas atualiza elementos globais (sidebar, logo)
     atualizarInterfaceUsuario();
     aplicarPermissoes();
-    salvarDados();
-    // O carregamento da página inicial e preenchimento de selects será feito por showPage('inicio')
+    showPage('inicio'); // carrega página inicial dinamicamente
+    salvarDados(); // ainda persiste localmente para fallback
 }
 
 function sairDoSistema() {
@@ -38,6 +30,7 @@ function sairDoSistema() {
     closeMenu();
     usuarioLogado = null;
     eventoSelecionadoId = null;
+    sessao = null;
 }
 
 function confirmarSaidaSistema() {
@@ -61,6 +54,7 @@ function voltarLoginAdmin() {
 function fazerLoginCliente() {
     const usuario = document.getElementById('clienteUsuario').value.trim();
     const senha = document.getElementById('clienteSenha').value.trim();
+    // Cliente: busca local (a API ainda não tem endpoint de cliente)
     const evento = EV.find(ev => ev.clienteUsuario === usuario && ev.clienteSenha === senha);
     if (evento) {
         document.getElementById('loginClienteScreen').style.display = 'none';
@@ -79,9 +73,8 @@ function confirmarSaidaCliente() {
     });
 }
 
-// Atualiza apenas elementos fixos (sidebar, logo)
+// Mantida a atualização da interface (elementos fixos)
 function atualizarInterfaceUsuario() {
-    // Sidebar
     const sidebarEmpresa = document.getElementById('sidebarEmpresaNome');
     if (sidebarEmpresa) sidebarEmpresa.textContent = CFG.empresaNome;
     const loginEmpresa = document.getElementById('loginEmpresaNome');
@@ -99,7 +92,6 @@ function atualizarInterfaceUsuario() {
     if (loginLogoPreview) loginLogoPreview.innerHTML = logo;
 }
 
-// Preenche campos da página de configuração – chamada apenas quando a página config é carregada
 function preencherCamposConfiguracao() {
     const elNome = document.getElementById('configEmpresaNome');
     if (elNome) elNome.value = CFG.empresaNome;
