@@ -1,11 +1,13 @@
-// js/app.js - Inicialização e navegação
+// js/app.js - Navegação e inicialização
+
 function showPage(nome) {
+    // Fecha modais abertos
     fecharModal('eventoModal');
     fecharModal('funcionarioModal');
     fecharModal('qrModal');
     fecharModal('portalModal');
     
-    // Atualiza menu ativo
+    // Atualiza item ativo no menu
     document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
     document.querySelectorAll('.sidebar nav a').forEach(a => {
         if (a.getAttribute('onclick') && a.getAttribute('onclick').includes(`'${nome}'`)) {
@@ -13,25 +15,34 @@ function showPage(nome) {
         }
     });
     
-    // Mostra/esconde seletor de evento no dashboard
+    // Exibe/esconde seletor de eventos (apenas na página dashboard)
     const eventoSelector = document.getElementById('eventoSelectorDashboard');
     if (eventoSelector) eventoSelector.style.display = (nome === 'dashboard') ? 'flex' : 'none';
     
-    // Carrega a página solicitada via fetch
+    // Carrega o conteúdo da página
     fetch(`pages/${nome}.html`)
         .then(response => {
-            if (!response.ok) throw new Error('Página não encontrada');
+            if (!response.ok) throw new Error('Página não encontrada: ' + nome);
             return response.text();
         })
         .then(html => {
-            document.getElementById('main-content').innerHTML = html;
+            const main = document.getElementById('main-content');
+            if (main) {
+                main.innerHTML = html;
+            } else {
+                console.error('Elemento #main-content não encontrado no DOM');
+                return;
+            }
             
-            // Dispara ações específicas após carregar
+            // Pós‑carregamento específico por página
             if (nome === 'dashboard') {
                 preencherSelectsEventos();
                 if (eventoSelecionadoId) {
-                    document.getElementById('eventoSelect').value = eventoSelecionadoId;
-                    selecionarEvento();
+                    const select = document.getElementById('eventoSelect');
+                    if (select) {
+                        select.value = eventoSelecionadoId;
+                        selecionarEvento();
+                    }
                 }
             } else if (nome === 'financeiro') {
                 preencherSelectsEventos();
@@ -48,29 +59,26 @@ function showPage(nome) {
         })
         .catch(error => {
             console.error(error);
-            document.getElementById('main-content').innerHTML = '<p>Erro ao carregar a página.</p>';
+            const main = document.getElementById('main-content');
+            if (main) main.innerHTML = '<p style="color:red;padding:40px;">Erro ao carregar a página. Verifique o console.</p>';
         });
     
     closeMenu();
 }
 
-// Atualização da entrada no sistema para carregar a página inicial
-function entrarSistema() {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-    document.getElementById('menuToggle').style.display = 'flex';
-    atualizarInterfaceUsuario();
-    aplicarPermissoes();
-    showPage('inicio'); // carrega a página inicial dinamicamente
-    salvarDados();
-}
-
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => {
-    carregarDados();
-    atualizarInterfaceUsuario();
-    aplicarPermissoes();
-
+    // A função entrarSistema original será chamada após login, e ela NÃO chama showPage.
+    // Vamos sobrescrever entrarSistema APENAS se ela existir, para incluir o showPage.
+    const entrarSistemaOriginal = window.entrarSistema;
+    if (entrarSistemaOriginal) {
+        window.entrarSistema = function() {
+            entrarSistemaOriginal();
+            showPage('inicio'); // carrega a página inicial após login
+        };
+    }
+    
+    // Listeners globais
     document.getElementById('loginPassword').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') fazerLogin();
     });
