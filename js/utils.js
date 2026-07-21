@@ -30,8 +30,9 @@ function statusPagamento(evento) {
 }
 
 function gerarLinkPortal(evento) {
-    const slug = evento.nome.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-    return `https://portal.manostech.com.br/evento/${evento.id}/${slug}`;
+    if (!evento || !evento.token) return '#';
+    // Em produção, o domínio será portal.manostech.com.br
+    return `https://portal.manostech.com.br/portal.html?token=${evento.token}`;
 }
 
 function escapeHtml(texto) {
