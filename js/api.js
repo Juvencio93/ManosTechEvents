@@ -1,10 +1,12 @@
 // api.js – Comunicação com Supabase
+// Configuração do projeto (substitua pela sua Project URL)
 const SUPABASE_URL = 'https://uojdbrjxeapzfrulcipr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ZGrmIWRubt_0MgPi_a4mgQ_RNYdNflM';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Inicializa o cliente (já declara uma variável global 'supabase')
+supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let sessao = null;
+let sessao = null; // usuário logado (objeto retornado pelo Supabase)
 
 // ---------- Autenticação ----------
 async function apiLogin(email, senha) {
@@ -12,6 +14,7 @@ async function apiLogin(email, senha) {
     if (error) throw new Error(error.message);
     sessao = data.user;
     
+    // Busca o perfil com nome, nível e permissões
     const { data: perfil, error: perfilError } = await supabase
         .from('perfis')
         .select('*')
@@ -40,10 +43,12 @@ async function apiListarEventos() {
         .select('*')
         .order('id', { ascending: false });
     if (error) throw error;
+    // Adiciona campo visitantes vazio (para compatibilidade com o frontend)
     return data.map(e => ({ ...e, visitantes: [], totalVisitantes: 0 }));
 }
 
 async function apiCriarEvento(evento) {
+    // Gera um token aleatório seguro
     evento.token = 'tok_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
     const { data, error } = await supabase
         .from('eventos')
@@ -72,6 +77,7 @@ async function apiExcluirEvento(id) {
 
 // ---------- Visitantes ----------
 async function apiRegistrarVisitante(token, dados) {
+    // Busca o evento pelo token para obter o id
     const { data: evento, error: eventoError } = await supabase
         .from('eventos')
         .select('id')
