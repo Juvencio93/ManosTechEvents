@@ -1,13 +1,16 @@
 // api.js – Comunicação com o backend
-// URL base da API (altere para seu domínio quando publicar)
 const API_BASE = 'https://api.manostech.com.br/api';
 
-let sessao = null; // guarda dados do usuário logado e token
+let sessao = null;
+let csrfToken = null;
 
 async function apiFetch(url, options = {}) {
     const headers = { 'Content-Type': 'application/json' };
     if (sessao && sessao.token) {
         headers['Authorization'] = `Bearer ${sessao.token}`;
+    }
+    if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken;
     }
     try {
         const response = await fetch(API_BASE + url, { ...options, headers });
@@ -18,22 +21,21 @@ async function apiFetch(url, options = {}) {
         return response.json();
     } catch (e) {
         console.warn('API indisponível, usando localStorage:', e.message);
-        throw e; // será capturado por quem chamou
+        throw e;
     }
 }
 
-// Autenticação
 async function apiLogin(email, senha) {
-    // Para testes, se a API falhar, usa o localStorage
     try {
         const data = await apiFetch('/login.php', {
             method: 'POST',
             body: JSON.stringify({ email, senha })
         });
         sessao = data.usuario;
+        csrfToken = data.csrf_token;
         return data.usuario;
     } catch (e) {
-        // Fallback para localStorage
+        // Fallback localStorage
         if (email === CFG.adminEmail && senha === CFG.adminSenha) {
             sessao = {
                 nome: CFG.adminNome,
@@ -51,13 +53,11 @@ async function apiLogin(email, senha) {
     }
 }
 
-// Eventos
 async function apiListarEventos() {
     try {
         const resp = await apiFetch('/eventos.php');
         return resp.eventos;
     } catch (e) {
-        // Fallback para localStorage
         return EV;
     }
 }
@@ -68,9 +68,8 @@ async function apiCriarEvento(evento) {
             method: 'POST',
             body: JSON.stringify(evento)
         });
-        return resp; // { id, token }
+        return resp;
     } catch (e) {
-        // Fallback: salva no array local
         const novoId = Math.max(...EV.map(e => e.id), 0) + 1;
         const novo = { ...evento, id: novoId, token: 'local_' + novoId, visitantes: [] };
         EV.push(novo);
@@ -87,8 +86,10 @@ async function apiAtualizarEvento(id, evento) {
         });
     } catch (e) {
         const ev = EV.find(e => e.id === id);
-        Object.assign(ev, evento);
-        salvarDados();
+        if (ev) {
+            Object.assign(ev, evento);
+            salvarDados();
+        }
     }
 }
 
@@ -101,7 +102,6 @@ async function apiExcluirEvento(id) {
     }
 }
 
-// Visitantes
 async function apiRegistrarVisitante(token, dados) {
     try {
         return await apiFetch('/visitantes.php', {
@@ -109,7 +109,6 @@ async function apiRegistrarVisitante(token, dados) {
             body: JSON.stringify({ token, ...dados })
         });
     } catch (e) {
-        // Fallback: adiciona no array local
         const evento = EV.find(ev => ev.token === token);
         if (evento) {
             evento.visitantes.unshift(dados);
