@@ -25,7 +25,17 @@ if ($method === 'GET' && isset($_GET['token'])) {
 
 // Demais operações exigem autenticação
 require_once 'verificar_sessao.php';
-
+<?php
+session_start();
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    $headers = getallheaders();
+    $token = $headers['X-CSRF-Token'] ?? '';
+    if (!isset($_SESSION['csrf_token']) || $token !== $_SESSION['csrf_token']) {
+        http_response_code(403);
+        echo json_encode(['erro' => 'Token CSRF inválido']);
+        exit;
+    }
+}
 if ($method === 'GET') {
     // Listar todos os eventos (admin)
     $stmt = $pdo->query("SELECT * FROM eventos ORDER BY id DESC");
