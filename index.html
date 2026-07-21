@@ -58,13 +58,6 @@
         .btn-sair:hover { background: rgba(255,77,106,0.1); border-color: var(--red); }
         .main-content { margin-left: 0; padding: 36px 44px; min-height: 100vh; transition: margin-left 0.3s ease; }
         .sidebar.open ~ .main-content { margin-left: 280px; }
-        .page { display: none; }
-        .page.active { display: block; }
-        .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; gap: 16px; flex-wrap: wrap; }
-        .top-bar h2 { font-size: 26px; font-weight: 700; }
-        .evento-selector { display: flex; align-items: center; gap: 10px; background: var(--glass); backdrop-filter: blur(10px); padding: 10px 16px; border-radius: var(--r2); border: 1px solid var(--glass-border); }
-        .evento-selector span { color: var(--text2); font-size: 13px; }
-        .evento-selector select { padding: 10px 14px; background: var(--bg); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: white; font-size: 14px; min-width: 300px; font-family: inherit; }
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 28px; }
         .stat-card { background: var(--glass); backdrop-filter: blur(10px); padding: 24px 28px; border-radius: var(--r); border: 1px solid var(--glass-border); transition: all 0.3s ease; }
         .stat-card .stat-icon { font-size: 30px; margin-bottom: 10px; }
@@ -148,16 +141,16 @@
             .welcome-grid { grid-template-columns: 1fr; }
             .modal-content { max-width: 95%; padding: 20px; }
             .main-content { padding: 16px; }
-            .top-bar h2 { font-size: 20px; }
             .stat-card .stat-value { font-size: 28px; }
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
-    <body>
-    
+<body>
+    <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
     <button class="menu-toggle" id="menuToggle" onclick="toggleMenu()" aria-label="Abrir menu">☰</button>
+
     <!-- LOGIN ADMIN -->
     <div class="login-screen" id="loginScreen">
         <div class="login-card">
@@ -247,7 +240,7 @@
         <button class="btn btn-ghost btn-sm" style="margin-top:16px;" onclick="fecharModal('qrModal')">Fechar</button>
     </div></div>
 
-    <!-- MODAL PORTAL (simulação no admin) -->
+    <!-- MODAL PORTAL -->
     <div class="modal" id="portalModal"><div class="modal-content" style="text-align:center;max-width:460px;">
         <div class="portal-logo-grande" id="portalLogoGrande">🎪</div>
         <div class="carrossel-container" id="carrosselContainer"><div class="carrossel-faixa" id="carrosselFaixa"></div></div>
@@ -256,26 +249,17 @@
         <div class="input-group"><label>E-mail</label><input type="email" id="portalEmail"></div>
         <div class="input-group"><label>WhatsApp</label><input type="text" id="portalWhatsApp" oninput="formatWhatsApp(this)" placeholder="(11) 9 9999-9999" maxlength="16"></div>
         <div class="lgpd-box">
-    <label>
-        <input type="checkbox" id="portalLGPD">
-        <span>Autorizo a coleta e o uso dos meus dados pessoais, de acordo com a LGPD, para acesso à rede Wi-Fi, envio de comunicações sobre eventos futuros, promoções e novidades da Manos Tech e de seus parceiros.</span>
-    </label>
-    <div class="lgpd-resumo">📌 Seus dados poderão ser utilizados para marketing e divulgação de eventos. Você pode solicitar a remoção a qualquer momento.</div>
-    <div class="lgpd-error" id="lgpdError">⚠️ É necessário aceitar a política de privacidade.</div>
-</div>
+            <label><input type="checkbox" id="portalLGPD"> Autorizo a coleta dos meus dados conforme LGPD.</label>
+            <div class="lgpd-resumo">📌 Dados usados exclusivamente para acesso à rede Wi-Fi durante o evento.</div>
+            <div class="lgpd-error" id="lgpdError">⚠️ É necessário aceitar a política de privacidade.</div>
+        </div>
         <button class="btn btn-primary" onclick="simularConexao()">🔓 Acessar Internet</button>
         <button class="btn btn-ghost btn-sm" style="margin-top:12px;width:100%;" onclick="fecharModal('portalModal')">Fechar</button>
     </div></div>
 
-    <!-- DASHBOARD ADMIN -->
+    <!-- DASHBOARD ADMIN (shell) -->
     <div class="dashboard" id="dashboard">
-    <div class="sidebar" id="sidebar">
-        <!-- ... menu lateral ... -->
-    </div>
-    <div class="main-content" id="main-content">
-        <!-- Conteúdo carregado dinamicamente -->
-</div>
-        </div>
+        <div class="sidebar" id="sidebar">
             <div class="logo-area" onclick="showPage('configuracao')"><div class="logo-img" id="sidebarLogoImg">🏢</div><div><span class="logo-text" id="sidebarEmpresaNome">Manos Tech</span></div></div>
             <nav>
                 <a class="active" onclick="showPage('inicio')"><span class="icon">🏠</span><span class="label">Início</span></a>
@@ -289,68 +273,11 @@
             <div class="sidebar-footer"><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrador</div><button class="btn-sair" onclick="confirmarSaidaSistema()">🚪 Sair</button></div>
         </div>
         <div class="main-content" id="main-content">
-    <!-- As páginas serão carregadas aqui dinamicamente -->
-</div>
-            <div class="page active" id="page-inicio"><div class="top-bar"><h2>🏠 Início</h2></div><div class="welcome-grid"><div class="welcome-card" onclick="showPage('dashboard')"><span class="wc-icon">📊</span><div class="wc-title">Dashboard</div><div class="wc-hint">Acessar →</div></div><div class="welcome-card" onclick="showPage('eventos')"><span class="wc-icon">📅</span><div class="wc-title">Eventos</div><div class="wc-hint">Acessar →</div></div><div class="welcome-card" onclick="showPage('financeiro')"><span class="wc-icon">💰</span><div class="wc-title">Financeiro</div><div class="wc-hint">Acessar →</div></div></div></div>
-            <div class="page" id="page-dashboard">
-                <div class="top-bar"><h2>📊 Dashboard</h2><div class="evento-selector" id="eventoSelectorDashboard"><span>🎯 Evento:</span><select id="eventoSelect" onchange="selecionarEvento()"><option value="">-- Escolha --</option></select><span class="badge badge-info" id="eventoStatusMini" style="display:none;">Ativo</span></div></div>
-                <div id="dashboardContent" style="display:none;">
-                    <div class="stats-grid">
-                        <div class="stat-card"><div class="stat-icon">🔗</div><div class="stat-value" id="liveConnected">0</div><div class="stat-label">Conectados Agora</div></div>
-                        <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value" id="totalVisitantes">0</div><div class="stat-label">Total Visitantes</div></div>
-                        <div class="stat-card"><div class="stat-icon">⏱️</div><div class="stat-value" id="tempoMedio">0min</div><div class="stat-label">Tempo Médio</div></div>
-                        <div class="stat-card"><div class="stat-icon">📱</div><div class="stat-value" id="pctMobile">0%</div><div class="stat-label">Dispositivos Mobile</div></div>
-                    </div>
-                    <div class="card"><h3>🔗 Portal Cativo do Evento</h3><div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;"><div style="background:white;padding:12px;border-radius:8px;" id="dashboardQrContainer"></div><div style="flex:1;min-width:250px;"><strong style="color:var(--azul);font-size:12px;">🌐 Link do Portal:</strong><div class="link-portal-box"><code id="dashboardPortalLink">Selecione um evento</code><button class="btn btn-xs btn-primary" onclick="copiarLinkDashboard()">📋</button></div><div style="margin-top:8px;padding:8px;background:rgba(108,92,231,0.1);border-radius:6px;"><strong style="color:#6c5ce7;font-size:11px;">👤 Acesso Cliente:</strong><div style="color:var(--text2);font-size:11px;" id="dashboardClienteInfo"></div></div></div></div></div>
-                    <div class="grid-2">
-                        <div class="card"><h3>🔥 Mapa de Calor - Acessos por Hora</h3><div class="heatmap" id="heatmapContainer"></div></div>
-                        <div class="card"><h3>👥 Visitantes Recentes</h3><div id="visitantesList" style="max-height:280px;overflow-y:auto;"></div><span style="color:var(--text2);font-size:12px;" id="visitantesCount">0 visitantes</span></div>
-                    </div>
-                    <div class="grid-2">
-                        <div class="card"><h3>📱 Distribuição de Dispositivos</h3><div class="pie-chart" id="pieChart" style="background:conic-gradient(var(--azul) 0% 60%, #40a0ff 60% 85%, var(--yellow) 85% 100%);"></div><div class="pie-legend"><span><span class="dot" style="background:var(--azul);"></span> iOS</span><span><span class="dot" style="background:#40a0ff;"></span> Android</span><span><span class="dot" style="background:var(--yellow);"></span> Desktop</span></div></div>
-                        <div class="card"><h3>📋 Tabela Completa de Visitantes</h3><div style="overflow-x:auto;max-height:300px;overflow-y:auto;"><table><thead><tr><th>Nome</th><th>E-mail</th><th>WhatsApp</th><th>Horário</th><th>Dispositivo</th></tr></thead><tbody id="visitantesTableFull"></tbody></table></div></div>
-                    </div>
-                </div>
-                <div id="dashboardEmpty" style="text-align:center;padding:70px;color:var(--text2);display:block;"><div style="font-size:56px;">📊</div><h3>Selecione um evento</h3></div>
-            </div>
-            <div class="page" id="page-eventos"><div class="top-bar"><h2>📅 Eventos</h2><button class="btn btn-primary btn-sm" id="btnNovoEvento" onclick="abrirModalEvento()">+ Novo Evento</button></div><div class="card"><table><thead><tr><th>Logo</th><th>Evento</th><th>Cliente</th><th>Período</th><th>Local</th><th>Visitantes</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="eventosTable"></tbody></table></div></div>
-            <div class="page" id="page-financeiro">
-                <div class="top-bar"><h2>💰 Financeiro</h2></div>
-                <div class="card" id="resumoFinanceiroGeral">
-                    <h3>📊 Resumo Geral de Todos os Eventos</h3>
-                    <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
-                        <div class="stat-card"><div class="stat-icon">💵</div><div class="stat-value" id="resumoTotalCobrado">R$ 0</div><div class="stat-label">Total Cobrado</div></div>
-                        <div class="stat-card"><div class="stat-icon">📉</div><div class="stat-value" id="resumoTotalCusto">R$ 0</div><div class="stat-label">Custo Operacional Total</div></div>
-                        <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-value" id="resumoLucroTotal">R$ 0</div><div class="stat-label">Lucro Líquido Total</div></div>
-                    </div>
-                </div>
-                <div class="evento-selector" style="margin-bottom:20px;"><span>🎯 Evento:</span><select id="eventoSelectFinanceiro" onchange="selecionarEventoFinanceiro()"><option value="">-- Escolha --</option></select></div>
-                <div id="financeiroContent" style="display:none;">
-                    <div class="stats-grid">
-                        <div class="stat-card"><div class="stat-icon">💵</div><div class="stat-value" id="finValorCobrado">R$ 0</div><div class="stat-label">Valor Total</div></div>
-                        <div class="stat-card"><div class="stat-icon">📉</div><div class="stat-value" id="finCustoOperacional">R$ 0</div><div class="stat-label">Custo Operacional</div></div>
-                        <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-value" id="finLucro">R$ 0</div><div class="stat-label">Lucro</div></div>
-                        <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value" style="color:var(--yellow);" id="finMargem">0%</div><div class="stat-label">Margem de Lucro</div></div>
-                    </div>
-                    <div class="grid-2">
-                        <div class="card"><h3>💳 Status do Pagamento</h3><div id="finStatusPagamento" style="margin-bottom:14px;"></div><table><tr><td style="color:var(--text2);">Valor Total:</td><td style="color:var(--azul);font-weight:600;" id="finValorTotal">R$ 0</td></tr><tr><td style="color:var(--text2);">Valor Pago (entrada):</td><td style="color:var(--green);font-weight:600;" id="finValorPago">R$ 0</td></tr><tr><td style="color:var(--text2);">Saldo Devedor:</td><td style="color:var(--yellow);font-weight:600;" id="finValorPendente">R$ 0</td></tr><tr><td style="color:var(--text2);">Vencimento:</td><td id="finVencimento">-</td></tr><tr><td style="color:var(--text2);">Forma Pagto:</td><td id="finFormaPagamento">-</td></tr></table></div>
-                        <div class="card"><h3>📅 Parcelas (sobre o saldo devedor)</h3><table><thead><tr><th>Nº</th><th>Valor da Parcela</th><th>Venc.</th><th>Status</th></tr></thead><tbody id="finParcelasTable"></tbody></table></div>
-                    </div>
-                </div>
-                <div id="financeiroEmpty" style="text-align:center;padding:70px;color:var(--text2);display:block;"><div style="font-size:56px;">💰</div><h3>Selecione um evento</h3></div>
-            </div>
-            <div class="page" id="page-relatorios"><div class="top-bar"><h2>📄 Relatórios</h2></div><div class="card"><h3>Gerar Relatório</h3><div class="row"><div class="col"><div class="input-group"><label>Evento</label><select id="relatorioEventoSelect"><option value="">Selecione...</option></select></div></div></div><button class="btn btn-primary btn-sm" onclick="gerarPDF()">📥 Gerar PDF</button></div></div>
-            <div class="page" id="page-funcionarios"><div class="top-bar"><h2>👷 Funcionários</h2><button class="btn btn-primary btn-sm" onclick="abrirModalFuncionario()">+ Novo</button></div><div class="card"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Nível</th><th>Permissões</th><th>Eventos</th><th>Ações</th></tr></thead><tbody id="funcionariosTable"></tbody></table></div></div>
-            <div class="page" id="page-configuracao"><div class="top-bar"><h2>⚙️ Configuração</h2></div><div class="grid-2"><div class="config-section"><h4>🏢 Identidade</h4><div class="logo-preview" id="configLogoPreview" onclick="document.getElementById('configLogoUpload').click()"><span>🏢</span></div><input type="file" id="configLogoUpload" accept="image/*" style="display:none;" onchange="previewLogoConfig(event)"><div class="input-group"><label>Nome</label><input type="text" id="configEmpresaNome" value="Manos Tech"></div><div class="input-group"><label>E-mail</label><input type="email" id="configEmail" value="contato@manostech.com.br"></div></div><div><div class="config-section"><h4>📞 Suporte</h4><div class="input-group"><label>Telefone</label><input type="text" id="configTelefoneSuporte" value="(11) 99999-9999"></div></div><div class="config-section"><h4>👤 Admin</h4><div class="input-group"><label>Nome</label><input type="text" id="configAdminNome" value="Carlos Silva"></div><div class="input-group"><label>E-mail</label><input type="email" id="configAdminEmail" value="admin@manostech.com.br"></div><div class="input-group"><label>Nova Senha</label><input type="password" id="configAdminSenha" placeholder="••••••"></div></div></div></div>
-            <div style="display:flex;gap:12px;">
-                <button class="btn btn-primary" onclick="salvarConfiguracao()" style="max-width:250px;">💾 Salvar</button>
-                <button class="btn btn-ghost" onclick="cancelarConfiguracao()" style="max-width:250px;">Cancelar</button>
-            </div>
-        </div>
+            <!-- As páginas serão carregadas aqui dinamicamente -->
         </div>
     </div>
 
-    <!-- ÁREA DO CLIENTE -->
+    <!-- ÁREA DO CLIENTE (container fixo) -->
     <div class="dashboard" id="clienteDashboard" style="display:none;">
         <div style="margin-left:0;padding:34px;min-height:100vh;background:var(--bg);">
             <div class="cliente-header-card" style="padding:22px 30px;display:flex;align-items:center;gap:16px;margin-bottom:26px;border-radius:var(--r);">
@@ -361,45 +288,26 @@
                     <button class="btn btn-sm" style="background:#ff4d6a;color:white;" onclick="confirmarSaidaCliente()">🚪 Sair</button>
                 </div>
             </div>
-            <!-- Stats: Conectados Agora e Total Visitantes -->
             <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr);">
-                <div class="stat-card">
-                    <div class="stat-icon">🔗</div>
-                    <div class="stat-value" id="clienteLiveConnected">0</div>
-                    <div class="stat-label">Conectados Agora</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">👥</div>
-                    <div class="stat-value" id="clienteTotalVisitantes">0</div>
-                    <div class="stat-label">Total Visitantes</div>
-                </div>
+                <div class="stat-card"><div class="stat-icon">🔗</div><div class="stat-value" id="clienteLiveConnected">0</div><div class="stat-label">Conectados Agora</div></div>
+                <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value" id="clienteTotalVisitantes">0</div><div class="stat-label">Total Visitantes</div></div>
             </div>
-            <!-- Mapa de Calor -->
-            <div class="card">
-                <h3>🔥 Mapa de Calor - Acessos por Hora</h3>
-                <div class="heatmap" id="clienteHeatmapContainer"></div>
-            </div>
-            <!-- Tabela de visitantes -->
-            <div class="card">
-                <h3>📋 Visitantes</h3>
-                <table>
-                    <thead><tr><th>Nome</th><th>E-mail</th><th>WhatsApp</th><th>Horário</th></tr></thead>
-                    <tbody id="clienteVisitantesTable"></tbody>
-                </table>
-            </div>
+            <div class="card"><h3>🔥 Mapa de Calor - Acessos por Hora</h3><div class="heatmap" id="clienteHeatmapContainer"></div></div>
+            <div class="card"><h3>📋 Visitantes</h3><table><thead><tr><th>Nome</th><th>E-mail</th><th>WhatsApp</th><th>Horário</th></tr></thead><tbody id="clienteVisitantesTable"></tbody></table></div>
         </div>
     </div>
 
-   <script src="js/config.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/eventos.js"></script>
-<script src="js/dashboard.js"></script>
-<script src="js/financeiro.js"></script>
-<script src="js/relatorios.js"></script>
-<script src="js/funcionarios.js"></script>
-<script src="js/portal.js"></script>
-<script src="js/cliente.js"></script>
-<script src="js/app.js"></script>
+    <!-- Scripts JS modularizados -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/eventos.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/financeiro.js"></script>
+    <script src="js/relatorios.js"></script>
+    <script src="js/funcionarios.js"></script>
+    <script src="js/portal.js"></script>
+    <script src="js/cliente.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
