@@ -70,8 +70,9 @@ async function apiCriarEvento(evento) {
         });
         return resp;
     } catch (e) {
-        const novoId = Math.max(...EV.map(e => e.id), 0) + 1;
-        const novo = { ...evento, id: novoId, token: 'local_' + novoId, visitantes: [] };
+        // no fallback de apiCriarEvento
+const novoId = Math.max(...EV.map(e => e.id), 0) + 1;
+const token = 'local_' + Math.random().toString(36).substring(2, 10) + novoId;
         EV.push(novo);
         salvarDados();
         return { id: novoId, token: novo.token };
