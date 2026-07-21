@@ -1,15 +1,12 @@
 <?php
-if (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off') {
-    header('Location: https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
-    exit;
-}
 session_start();
 header('Content-Type: application/json');
 require_once 'config.php';
+require_once 'utils/validacao.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-// Para o portal cativo, GET com token não requer sessão
+// GET público com token (portal cativo)
 if ($method === 'GET' && isset($_GET['token'])) {
     $stmt = $pdo->prepare("SELECT * FROM eventos WHERE token = ?");
     $stmt->execute([$_GET['token']]);
@@ -25,27 +22,20 @@ if ($method === 'GET' && isset($_GET['token'])) {
 
 // Demais operações exigem autenticação
 require_once 'verificar_sessao.php';
-<?php
-session_start();
-if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    $headers = getallheaders();
-    $token = $headers['X-CSRF-Token'] ?? '';
-    if (!isset($_SESSION['csrf_token']) || $token !== $_SESSION['csrf_token']) {
-        http_response_code(403);
-        echo json_encode(['erro' => 'Token CSRF inválido']);
-        exit;
-    }
-}
+require_once 'verificar_csrf.php';
+
 if ($method === 'GET') {
-    // Listar todos os eventos (admin)
     $stmt = $pdo->query("SELECT * FROM eventos ORDER BY id DESC");
     $eventos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     echo json_encode(['eventos' => $eventos]);
-
 } elseif ($method === 'POST') {
-    // Criar evento
     $dados = json_decode(file_get_contents('php://input'), true);
-    // Gera token único
+    $erros = validarEvento($dados);
+    if (!empty($erros)) {
+        http_response_code(422);
+        echo json_encode(['erro' => 'Dados inválidos', 'detalhes' => $erros]);
+        exit;
+    }
     $token = bin2hex(random_bytes(8));
     $stmt = $pdo->prepare("INSERT INTO eventos (nome, cliente, data_inicio, data_fim, local, patrocinadores, logo_url, valor_cobrado, custo_operacional, valor_pago, vencimento, forma_pagamento, parcelas, observacoes, status_manual, cliente_usuario, cliente_senha, token)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
@@ -59,12 +49,16 @@ if ($method === 'GET') {
     ]);
     $id = $pdo->lastInsertId();
     echo json_encode(['sucesso' => true, 'id' => $id, 'token' => $token]);
-
 } elseif ($method === 'PUT') {
-    // Atualizar evento
     $id = $_GET['id'] ?? null;
     if (!$id) { http_response_code(400); echo json_encode(['erro' => 'ID não informado']); exit; }
     $dados = json_decode(file_get_contents('php://input'), true);
+    $erros = validarEvento($dados);
+    if (!empty($erros)) {
+        http_response_code(422);
+        echo json_encode(['erro' => 'Dados inválidos', 'detalhes' => $erros]);
+        exit;
+    }
     $stmt = $pdo->prepare("UPDATE eventos SET nome=?, cliente=?, data_inicio=?, data_fim=?, local=?, patrocinadores=?, logo_url=?, valor_cobrado=?, custo_operacional=?, valor_pago=?, vencimento=?, forma_pagamento=?, parcelas=?, observacoes=?, status_manual=?, cliente_usuario=?, cliente_senha=? WHERE id=?");
     $stmt->execute([
         $dados['nome'], $dados['cliente'], $dados['dataInicio'], $dados['dataFim'],
@@ -75,7 +69,6 @@ if ($method === 'GET') {
         $dados['clienteUsuario'] ?? '', $dados['clienteSenha'] ?? '', $id
     ]);
     echo json_encode(['sucesso' => true]);
-
 } elseif ($method === 'DELETE') {
     $id = $_GET['id'] ?? null;
     if (!$id) { http_response_code(400); echo json_encode(['erro' => 'ID não informado']); exit; }
