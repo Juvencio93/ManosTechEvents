@@ -101,6 +101,7 @@ async function apiLogout() {
 }
 
 // ---------- Eventos ----------
+// ---------- Eventos ----------
 async function apiListarEventos() {
     if (supabaseClient) {
         try {
@@ -108,11 +109,26 @@ async function apiListarEventos() {
                 .from('eventos')
                 .select('*')
                 .order('id', { ascending: false });
-            if (!error) {
-                return data.map(e => ({ ...toCamelCase(e), visitantes: [], totalVisitantes: 0 }));
+
+            console.log("===== EVENTOS =====");
+            console.log("Data:", data);
+            console.log("Error:", error);
+
+            if (error) {
+                console.error("Erro completo:", error);
+                throw error;
             }
-        } catch (e) {}
+
+            return data.map(e => ({
+                ...toCamelCase(e),
+                visitantes: [],
+                totalVisitantes: 0
+            }));
+        } catch (e) {
+            console.error("Catch:", e);
+        }
     }
+
     return EV;
 }
 
