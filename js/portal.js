@@ -2,21 +2,44 @@
 function abrirPortalCat(id) {
     const evento = EV.find(ev => ev.id === id);
     if (!evento) return;
-    document.getElementById('portalLogoGrande').innerHTML = evento.logoUrl ? `<img src="${evento.logoUrl}" style="max-width:100%;max-height:100%;object-fit:contain;">` : '<span style="font-size:48px;">🎪</span>';
-    const faixa = document.getElementById('carrosselFaixa');
-    const logos = evento.patrocinadoresLogos || [];
-    if (logos.length > 4) {
-        faixa.innerHTML = [...logos, ...logos].map(url => `<img src="${url}" alt="Patrocinador">`).join('');
-        faixa.style.animation = 'scrollPatrocinadores 20s linear infinite';
-    } else {
-        faixa.innerHTML = logos.map(url => `<img src="${url}" alt="Patrocinador">`).join('');
-        faixa.style.animation = 'none';
+    
+    // Logo do evento
+    const logoGrande = document.getElementById('portalLogoGrande');
+    if (logoGrande) {
+        logoGrande.innerHTML = evento.logoUrl 
+            ? `<img src="${evento.logoUrl}" style="max-width:100%;max-height:100%;object-fit:contain;" onerror="this.style.display='none'">` 
+            : '<span style="font-size:48px;">🎪</span>';
     }
-    document.getElementById('portalNome').value = '';
-    document.getElementById('portalEmail').value = '';
-    document.getElementById('portalWhatsApp').value = '';
-    document.getElementById('portalLGPD').checked = false;
-    document.getElementById('lgpdError').style.display = 'none';
+
+    // Carrossel de patrocinadores – filtrado
+    const faixa = document.getElementById('carrosselFaixa');
+    if (faixa) {
+        const logos = Array.isArray(evento.patrocinadoresLogos) ? evento.patrocinadoresLogos : [];
+        // Aceita apenas strings longas que pareçam URLs
+        const validLogos = logos.filter(url => typeof url === 'string' && url.length > 20 && (url.startsWith('http') || url.startsWith('data:')));
+        
+        if (validLogos.length > 4) {
+            const duplicados = [...validLogos, ...validLogos];
+            faixa.innerHTML = duplicados.map(url => `<img src="${url}" alt="Patrocinador" onerror="this.style.display='none'">`).join('');
+            faixa.style.animation = 'scrollPatrocinadores 20s linear infinite';
+        } else if (validLogos.length > 0) {
+            faixa.innerHTML = validLogos.map(url => `<img src="${url}" alt="Patrocinador" onerror="this.style.display='none'">`).join('');
+            faixa.style.animation = 'none';
+        } else {
+            faixa.innerHTML = '';
+        }
+    }
+
+    // Limpa campos
+    ['portalNome','portalEmail','portalWhatsApp'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    const lgpdCheck = document.getElementById('portalLGPD');
+    if (lgpdCheck) lgpdCheck.checked = false;
+    const lgpdError = document.getElementById('lgpdError');
+    if (lgpdError) lgpdError.style.display = 'none';
+
     abrirModal('portalModal');
 }
 
