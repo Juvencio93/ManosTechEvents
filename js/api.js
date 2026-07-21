@@ -71,11 +71,13 @@ async function apiCriarEvento(evento) {
         return resp;
     } catch (e) {
         // no fallback de apiCriarEvento
+// Dentro de apiCriarEvento, no bloco catch
 const novoId = Math.max(...EV.map(e => e.id), 0) + 1;
 const token = 'local_' + Math.random().toString(36).substring(2, 10) + novoId;
-        EV.push(novo);
-        salvarDados();
-        return { id: novoId, token: novo.token };
+const novo = { ...evento, id: novoId, token, visitantes: [] };
+EV.push(novo);
+salvarDados();
+return { id: novoId, token: novo.token };
     }
 }
 
