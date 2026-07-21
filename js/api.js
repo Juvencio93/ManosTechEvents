@@ -2,10 +2,10 @@
 const SUPABASE_URL = 'https://uojdbrjxeapzfrulcipr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ZGrmIWRubt_0MgPi_a4mgQ_RNYdNflM';
 
-// Inicializa cliente apenas se a biblioteca estiver disponível
-let supabase = null;
+// Inicializa cliente com nome diferente para evitar conflito com a variável global 'supabase'
+let supabaseClient = null;
 try {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 } catch (e) {
     console.warn('Supabase não pôde ser inicializado, usando localStorage.');
 }
@@ -15,12 +15,12 @@ let sessao = null;
 // ---------- Autenticação ----------
 async function apiLogin(email, senha) {
     // Tenta Supabase primeiro
-    if (supabase) {
+    if (supabaseClient) {
         try {
-            const { data, error } = await supabase.auth.signInWithPassword({ email, senha });
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, senha });
             if (!error) {
                 sessao = data.user;
-                const { data: perfil } = await supabase
+                const { data: perfil } = await supabaseClient
                     .from('perfis')
                     .select('*')
                     .eq('id', data.user.id)
@@ -58,15 +58,15 @@ async function apiLogin(email, senha) {
 }
 
 async function apiLogout() {
-    try { if (supabase) await supabase.auth.signOut(); } catch (e) {}
+    try { if (supabaseClient) await supabaseClient.auth.signOut(); } catch (e) {}
     sessao = null;
 }
 
 // ---------- Eventos ----------
 async function apiListarEventos() {
-    if (supabase) {
+    if (supabaseClient) {
         try {
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('eventos')
                 .select('*')
                 .order('id', { ascending: false });
@@ -79,9 +79,9 @@ async function apiListarEventos() {
 
 async function apiCriarEvento(evento) {
     evento.token = 'tok_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
-    if (supabase) {
+    if (supabaseClient) {
         try {
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('eventos')
                 .insert([evento])
                 .select()
@@ -98,9 +98,9 @@ async function apiCriarEvento(evento) {
 }
 
 async function apiAtualizarEvento(id, evento) {
-    if (supabase) {
+    if (supabaseClient) {
         try {
-            const { error } = await supabase.from('eventos').update(evento).eq('id', id);
+            const { error } = await supabaseClient.from('eventos').update(evento).eq('id', id);
             if (!error) return;
         } catch (e) {}
     }
@@ -110,9 +110,9 @@ async function apiAtualizarEvento(id, evento) {
 }
 
 async function apiExcluirEvento(id) {
-    if (supabase) {
+    if (supabaseClient) {
         try {
-            const { error } = await supabase.from('eventos').delete().eq('id', id);
+            const { error } = await supabaseClient.from('eventos').delete().eq('id', id);
             if (!error) return;
         } catch (e) {}
     }
@@ -122,16 +122,16 @@ async function apiExcluirEvento(id) {
 
 // ---------- Visitantes ----------
 async function apiRegistrarVisitante(token, dados) {
-    if (supabase) {
+    if (supabaseClient) {
         try {
-            const { data: evento } = await supabase
+            const { data: evento } = await supabaseClient
                 .from('eventos')
                 .select('id')
                 .eq('token', token)
                 .single();
             if (evento) {
                 dados.evento_id = evento.id;
-                await supabase.from('visitantes').insert([dados]);
+                await supabaseClient.from('visitantes').insert([dados]);
                 return;
             }
         } catch (e) {}
@@ -145,9 +145,9 @@ async function apiRegistrarVisitante(token, dados) {
 }
 
 async function apiListarVisitantes(eventoId) {
-    if (supabase) {
+    if (supabaseClient) {
         try {
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('visitantes')
                 .select('*')
                 .eq('evento_id', eventoId)
