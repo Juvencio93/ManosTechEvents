@@ -23,14 +23,20 @@ function entrarSistema() {
     salvarDados(); // ainda persiste localmente para fallback
 }
 
-function sairDoSistema() {
+async function sairDoSistema() {
+    try {
+        await apiFetch('/logout.php');
+    } catch (e) {
+        // ignora erro se a API não estiver disponível
+    }
+    sessao = null;
+    csrfToken = null;
     document.getElementById('dashboard').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('menuToggle').style.display = 'none';
     closeMenu();
     usuarioLogado = null;
     eventoSelecionadoId = null;
-    sessao = null;
 }
 
 function confirmarSaidaSistema() {
