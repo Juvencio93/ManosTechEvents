@@ -74,7 +74,7 @@ async function simularConexao() {
         email: email,
         whatsapp: whatsapp || '(não informado)',
         acesso: new Date().toLocaleString('pt-BR'),
-        hora: new Date().getHours(),
+        hora: new Date().toISOString(),
         dispositivo: navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop',
         ip: '0.0.0.0'
     };
