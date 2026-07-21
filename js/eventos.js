@@ -102,4 +102,157 @@ function removerPatrocinador(index) {
     renderizarPatrocinadores();
 }
 
+// CORRIGIDO: filtro de URLs válidas e tratamento de erro na imagem
+function renderizarPatrocinadores() {
+    const container = document.getElementById('patrocinadoresContainer');
+    if (!container) return;
+    const urls = patrocinadoresTemp.filter(url => typeof url === 'string' && url.length > 10);
+    container.innerHTML = urls.map((url, i) =>
+        `<div class="patrocinador-thumb"><img src="${url}" onerror="this.style.display='none'"><button class="remove-btn" onclick="removerPatrocinador(${i})">✕</button></div>`
+    ).join('') + '<div class="patrocinador-add" onclick="document.getElementById(\'patrocinadorUpload\').click()">+</div>';
+}
 
+async function salvarEvento() {
+    if (!usuarioLogado?.permissoes?.e) { toast('🔒 Sem permissão!'); return; }
+    esconderDicas();
+    let temErro = false;
+    const campos = [
+        { id: 'eventoNome', hint: 'hintNome' },
+        { id: 'eventoCliente', hint: 'hintCliente' },
+        { id: 'eventoDataInicio', hint: 'hintDataInicio' },
+        { id: 'eventoDataFim', hint: 'hintDataFim' },
+        { id: 'eventoLocalInput', hint: 'hintLocal' },
+        { id: 'eventoClienteUsuario', hint: 'hintClienteUsuario' },
+        { id: 'eventoClienteSenha', hint: 'hintClienteSenha' }
+    ];
+    campos.forEach(c => {
+        const el = document.getElementById(c.id);
+        if (!el.value.trim()) {
+            el.classList.add('input-error');
+            document.getElementById(c.hint).style.display = 'block';
+            temErro = true;
+        }
+    });
+    if (temErro) {
+        toast('⚠️ Preencha todos os campos obrigatórios!');
+        document.querySelector('.input-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+
+    const dados = {
+        nome: document.getElementById('eventoNome').value.trim(),
+        cliente: document.getElementById('eventoCliente').value.trim(),
+        dataInicio: document.getElementById('eventoDataInicio').value,
+        dataFim: document.getElementById('eventoDataFim').value,
+        local: document.getElementById('eventoLocalInput').value.trim(),
+        clienteUsuario: document.getElementById('eventoClienteUsuario').value.trim(),
+        clienteSenha: document.getElementById('eventoClienteSenha').value.trim(),
+        patrocinadores: document.getElementById('eventoPatrocinadores').value.trim(),
+        patrocinadoresLogos: [...patrocinadoresTemp],
+        observacoes: document.getElementById('eventoObservacoes').value.trim(),
+        valorCobrado: parseFloat(document.getElementById('eventoValorCobrado').value) || 0,
+        custoOperacional: parseFloat(document.getElementById('eventoCustoOperacional').value) || 0,
+        valorPago: parseFloat(document.getElementById('eventoValorPago').value) || 0,
+        vencimento: document.getElementById('eventoVencimento').value,
+        formaPagamento: document.getElementById('eventoFormaPagamento').value,
+        parcelas: parseInt(document.getElementById('eventoParcelas').value) || 1
+    };
+
+    try {
+        if (eventoEmEdicao) {
+            await apiAtualizarEvento(eventoEmEdicao, dados);
+            toast('✅ Evento atualizado!');
+        } else {
+            const resp = await apiCriarEvento(dados);
+            toast('✅ Evento criado!');
+            eventoSelecionadoId = resp.id;
+            const novoEvento = EV.find(e => e.id === resp.id);
+            if (novoEvento) {
+                const link = gerarLinkPortal(novoEvento);
+                document.getElementById('qrModalLink').textContent = link;
+                gerarQRCode('qrModalContainer', link);
+                abrirModal('qrModal');
+            }
+        }
+
+        fecharModal('eventoModal');
+        EV = await apiListarEventos(); // Recarrega da API (ou localStorage)
+        preencherSelectsEventos();
+        renderizarEventos();
+        salvarDados(); // fallback local
+        if (eventoSelecionadoId) {
+            const select = document.getElementById('eventoSelect');
+            if (select) {
+                select.value = eventoSelecionadoId;
+                selecionarEvento();
+            }
+        }
+        atualizarResumoFinanceiroGeral();
+    } catch (e) {
+        toast('❌ Erro ao salvar evento: ' + e.message);
+    }
+    eventoEmEdicao = null;
+    logoTemporario = null;
+    patrocinadoresTemp = [];
+}
+
+async function excluirEvento(id) {
+    if (!usuarioLogado?.permissoes?.x) { toast('🔒 Sem permissão!'); return; }
+    confirmarAcao('Deseja realmente excluir este evento?', async () => {
+        try {
+            await apiExcluirEvento(id);
+            EV = EV.filter(e => e.id !== id);
+            if (eventoSelecionadoId === id) {
+                eventoSelecionadoId = null;
+                const dashContent = document.getElementById('dashboardContent');
+                const dashEmpty = document.getElementById('dashboardEmpty');
+                if (dashContent) dashContent.style.display = 'none';
+                if (dashEmpty) dashEmpty.style.display = 'block';
+            }
+            preencherSelectsEventos();
+            renderizarEventos();
+            atualizarResumoFinanceiroGeral();
+            salvarDados();
+            toast('🗑️ Evento excluído!');
+        } catch (e) {
+            toast('❌ Erro ao excluir evento: ' + e.message);
+        }
+    });
+}
+
+function verEvento(id) {
+    const select = document.getElementById('eventoSelect');
+    if (select) {
+        select.value = id;
+        selecionarEvento();
+        showPage('dashboard');
+    } else {
+        eventoSelecionadoId = id;
+        showPage('dashboard');
+    }
+}
+
+function renderizarEventos() {
+    const p = usuarioLogado?.permissoes || {};
+    const tbody = document.getElementById('eventosTable');
+    if (!tbody) return;
+    tbody.innerHTML = EV.map(e => {
+        const status = calcularStatusEvento(e);
+        const valor = !p.f ? 'R$ ••••' : formatarMoeda(e.valorCobrado || 0);
+        let acoes = `<button class="btn btn-xs btn-primary" onclick="verEvento(${e.id})">📊</button>`;
+        if (p.e) acoes += `<button class="btn btn-xs btn-ghost" onclick="editarEvento(${e.id})">✏️</button>`;
+        acoes += `<button class="btn btn-xs btn-primary" onclick="abrirPortalCat(${e.id})">🌐</button>`;
+        if (p.x) acoes += `<button class="btn btn-xs btn-danger" onclick="excluirEvento(${e.id})">🗑️</button>`;
+        return `<tr>
+            <td><div style="width:34px;height:34px;border-radius:6px;overflow:hidden;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;">${e.logoUrl ? `<img src="${e.logoUrl}" style="width:100%;height:100%;object-fit:contain;">` : '🎪'}</div></td>
+            <td><strong>${escapeHtml(e.nome)}</strong></td>
+            <td>${escapeHtml(e.cliente)}</td>
+            <td>${formatarData(e.dataInicio)} a ${formatarData(e.dataFim)}</td>
+            <td>${escapeHtml(e.local)}</td>
+            <td>${e.totalVisitantes || 0}</td>
+            <td>${valor}</td>
+            <td><span class="badge ${statusBadgeClass(status)}">${status}</span></td>
+            <td>${acoes}</td>
+        </tr>`;
+    }).join('');
+}
