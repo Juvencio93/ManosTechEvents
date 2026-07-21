@@ -53,9 +53,9 @@ function showPage(nome) {
                 renderizarFuncionarios();
             } else if (nome === 'relatorios') {
                 preencherSelectsEventos();
-            } else if (nome === 'configuracao') {
-                atualizarInterfaceUsuario();
-            }
+           } else if (nome === 'configuracao') {
+    preencherCamposConfiguracao();
+}
         })
         .catch(error => {
             console.error(error);
