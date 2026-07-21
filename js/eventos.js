@@ -1,4 +1,4 @@
-// CRUD de Eventos (versão robusta – patrocinadores protegidos)
+// CRUD de Eventos (Supabase puro, sem localStorage)
 
 function preencherSelectsEventos() {
     const opcoes = EV.map(e => `<option value="${e.id}">${e.nome} - ${e.cliente} (${calcularStatusEvento(e)})</option>`).join('');
@@ -46,7 +46,7 @@ function editarEvento(id) {
     const logos = evento.patrocinadoresLogos || [];
     patrocinadoresTemp = Array.isArray(logos)
         ? logos
-            .map(item => (typeof item === 'string' && item.length > 10) ? item : null)
+            .map(item => (typeof item === 'string' && item.length > 10 && (item.startsWith('http') || item.startsWith('data:'))) ? item : null)
             .filter(url => url !== null)
         : [];
 
@@ -109,8 +109,7 @@ function removerPatrocinador(index) {
 function renderizarPatrocinadores() {
     const container = document.getElementById('patrocinadoresContainer');
     if (!container) return;
-    // Filtra apenas strings válidas
-    const urls = patrocinadoresTemp.filter(url => typeof url === 'string' && url.startsWith('data:') || (url.startsWith('http') && url.length > 10));
+    const urls = patrocinadoresTemp.filter(url => typeof url === 'string' && (url.startsWith('http') || url.startsWith('data:')) && url.length > 20);
     container.innerHTML = urls.map((url, i) =>
         `<div class="patrocinador-thumb"><img src="${url}" onerror="this.style.display='none'"><button class="remove-btn" onclick="removerPatrocinador(${i})">✕</button></div>`
     ).join('') + '<div class="patrocinador-add" onclick="document.getElementById(\'patrocinadorUpload\').click()">+</div>';
@@ -143,8 +142,8 @@ async function salvarEvento() {
         return;
     }
 
-    // Sanitiza patrocinadoresLogos antes de salvar
-    const logosLimpos = patrocinadoresTemp.filter(url => typeof url === 'string' && url.length > 10);
+    // Sanitiza logos para garantir que só strings válidas sejam salvas
+    const logosLimpos = patrocinadoresTemp.filter(url => typeof url === 'string' && url.length > 20 && (url.startsWith('http') || url.startsWith('data:')));
 
     const dados = {
         nome: document.getElementById('eventoNome').value.trim(),
@@ -155,7 +154,7 @@ async function salvarEvento() {
         clienteUsuario: document.getElementById('eventoClienteUsuario').value.trim(),
         clienteSenha: document.getElementById('eventoClienteSenha').value.trim(),
         patrocinadores: document.getElementById('eventoPatrocinadores').value.trim(),
-        patrocinadoresLogos: logosLimpos,    // só strings válidas
+        patrocinadoresLogos: logosLimpos,
         observacoes: document.getElementById('eventoObservacoes').value.trim(),
         valorCobrado: parseFloat(document.getElementById('eventoValorCobrado').value) || 0,
         custoOperacional: parseFloat(document.getElementById('eventoCustoOperacional').value) || 0,
@@ -183,10 +182,9 @@ async function salvarEvento() {
         }
 
         fecharModal('eventoModal');
-        EV = await apiListarEventos();
+        EV = await apiListarEventos(); // Recarrega do Supabase
         preencherSelectsEventos();
         renderizarEventos();
-        salvarDados();
         if (eventoSelecionadoId) {
             const select = document.getElementById('eventoSelect');
             if (select) {
@@ -219,7 +217,6 @@ async function excluirEvento(id) {
             preencherSelectsEventos();
             renderizarEventos();
             atualizarResumoFinanceiroGeral();
-            salvarDados();
             toast('🗑️ Evento excluído!');
         } catch (e) {
             toast('❌ Erro ao excluir evento: ' + e.message);
