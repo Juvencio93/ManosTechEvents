@@ -41,7 +41,11 @@ function editarEvento(id) {
     document.getElementById('eventoParcelas').value = evento.parcelas || 1;
     logoTemporario = evento.logoUrl;
     document.getElementById('logoPreview').innerHTML = evento.logoUrl ? `<img src="${evento.logoUrl}">` : '<span>📷 Upload</span>';
-    patrocinadoresTemp = [...(evento.patrocinadoresLogos || [])];
+
+    // CORRIGIDO: Garante que patrocinadoresLogos seja array de strings
+    const logos = evento.patrocinadoresLogos || [];
+    patrocinadoresTemp = Array.isArray(logos) ? logos.map(item => typeof item === 'string' ? item : (item.url || '')) : [];
+
     renderizarPatrocinadores();
     esconderDicas();
     abrirModal('eventoModal');
@@ -98,10 +102,13 @@ function removerPatrocinador(index) {
     renderizarPatrocinadores();
 }
 
+// CORRIGIDO: filtro de URLs válidas e tratamento de erro na imagem
 function renderizarPatrocinadores() {
     const container = document.getElementById('patrocinadoresContainer');
-    container.innerHTML = patrocinadoresTemp.map((url, i) =>
-        `<div class="patrocinador-thumb"><img src="${url}"><button class="remove-btn" onclick="removerPatrocinador(${i})">✕</button></div>`
+    if (!container) return;
+    const urls = patrocinadoresTemp.filter(url => typeof url === 'string' && url.length > 10);
+    container.innerHTML = urls.map((url, i) =>
+        `<div class="patrocinador-thumb"><img src="${url}" onerror="this.style.display='none'"><button class="remove-btn" onclick="removerPatrocinador(${i})">✕</button></div>`
     ).join('') + '<div class="patrocinador-add" onclick="document.getElementById(\'patrocinadorUpload\').click()">+</div>';
 }
 
