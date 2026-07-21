@@ -82,21 +82,37 @@ function confirmarSaidaCliente() {
 }
 
 function atualizarInterfaceUsuario() {
-    document.getElementById('sidebarEmpresaNome').textContent = CFG.empresaNome;
-    document.getElementById('loginEmpresaNome').textContent = CFG.empresaNome;
-    document.getElementById('sidebarUserName').textContent = usuarioLogado ? usuarioLogado.nome.split(' ')[0] : 'Admin';
-    document.getElementById('sidebarUserRole').textContent = usuarioLogado ? usuarioLogado.nivel : 'Administrador';
+    // Sidebar e título de login
+    const sidebarEmpresa = document.getElementById('sidebarEmpresaNome');
+    if (sidebarEmpresa) sidebarEmpresa.textContent = CFG.empresaNome;
+    const loginEmpresa = document.getElementById('loginEmpresaNome');
+    if (loginEmpresa) loginEmpresa.textContent = CFG.empresaNome;
+    
+    const sidebarUser = document.getElementById('sidebarUserName');
+    if (sidebarUser) sidebarUser.textContent = usuarioLogado ? usuarioLogado.nome.split(' ')[0] : 'Admin';
+    const sidebarRole = document.getElementById('sidebarUserRole');
+    if (sidebarRole) sidebarRole.textContent = usuarioLogado ? usuarioLogado.nivel : 'Administrador';
 
     const logo = CFG.logoUrl ? `<img src="${CFG.logoUrl}" style="max-width:100%;max-height:100%;object-fit:contain;">` : '🏢';
-    document.getElementById('sidebarLogoImg').innerHTML = logo;
-    document.getElementById('loginLogoPreview').innerHTML = logo;
+    const sidebarLogoImg = document.getElementById('sidebarLogoImg');
+    if (sidebarLogoImg) sidebarLogoImg.innerHTML = logo;
+    const loginLogoPreview = document.getElementById('loginLogoPreview');
+    if (loginLogoPreview) loginLogoPreview.innerHTML = logo;
 
-    document.getElementById('configEmpresaNome').value = CFG.empresaNome;
-    document.getElementById('configEmail').value = CFG.email;
-    document.getElementById('configTelefoneSuporte').value = CFG.telefoneSuporte;
-    document.getElementById('configAdminNome').value = CFG.adminNome;
-    document.getElementById('configAdminEmail').value = CFG.adminEmail;
-    document.getElementById('configAdminSenha').value = '';
+    // Campos de configuração (podem não estar presentes)
+    const configEmpresaNome = document.getElementById('configEmpresaNome');
+    if (configEmpresaNome) configEmpresaNome.value = CFG.empresaNome;
+    const configEmail = document.getElementById('configEmail');
+    if (configEmail) configEmail.value = CFG.email;
+    const configTelefone = document.getElementById('configTelefoneSuporte');
+    if (configTelefone) configTelefone.value = CFG.telefoneSuporte;
+    const configAdminNome = document.getElementById('configAdminNome');
+    if (configAdminNome) configAdminNome.value = CFG.adminNome;
+    const configAdminEmail = document.getElementById('configAdminEmail');
+    if (configAdminEmail) configAdminEmail.value = CFG.adminEmail;
+    const configAdminSenha = document.getElementById('configAdminSenha');
+    if (configAdminSenha) configAdminSenha.value = '';
+    
     configLogoTemp = CFG.logoUrl;
     atualizarPreviewLogoConfig();
 }
@@ -110,9 +126,12 @@ function atualizarPreviewLogoConfig() {
 
 function aplicarPermissoes() {
     const p = usuarioLogado?.permissoes || {};
-    document.getElementById('menuFinanceiro').style.display = p.f ? 'flex' : 'none';
-    document.getElementById('menuFuncionarios').style.display = p.g ? 'flex' : 'none';
-    document.getElementById('menuConfig').style.display = p.c ? 'flex' : 'none';
+    const menuFinanceiro = document.getElementById('menuFinanceiro');
+    if (menuFinanceiro) menuFinanceiro.style.display = p.f ? 'flex' : 'none';
+    const menuFuncionarios = document.getElementById('menuFuncionarios');
+    if (menuFuncionarios) menuFuncionarios.style.display = p.g ? 'flex' : 'none';
+    const menuConfig = document.getElementById('menuConfig');
+    if (menuConfig) menuConfig.style.display = p.c ? 'flex' : 'none';
     const btnNovo = document.getElementById('btnNovoEvento');
     if (btnNovo) btnNovo.style.display = p.e ? 'inline-block' : 'none';
 }
