@@ -1,27 +1,15 @@
-// Autenticação e controle de acesso (adaptado para API)
+// Autenticação e controle de acesso (com fallback localStorage)
+
 async function fazerLogin() {
     const email = document.getElementById('loginEmail').value.trim();
     const senha = document.getElementById('loginPassword').value.trim();
     try {
-        // Tenta login via Supabase
         const user = await apiLogin(email, senha);
         usuarioLogado = user;
         EV = await apiListarEventos();
         entrarSistema();
     } catch (e) {
-        // Se Supabase falhou, tenta localStorage com as credenciais padrão
-        if (email === CFG.adminEmail && senha === CFG.adminSenha) {
-            usuarioLogado = {
-                nome: CFG.adminNome,
-                nivel: 'Administrador',
-                permissoes: { v: true, d: true, vi: true, e: true, x: true, f: true, g: true, c: true, r: true }
-            };
-            EV = await apiListarEventos(); // tenta carregar eventos (local)
-            entrarSistema();
-            return;
-        }
-        // Se ainda não funcionou, exibe erro
-        alert('❌ Credenciais inválidas. Verifique seu email e senha.');
+        alert('❌ ' + e.message);
     }
 }
 
@@ -31,18 +19,13 @@ function entrarSistema() {
     document.getElementById('menuToggle').style.display = 'flex';
     atualizarInterfaceUsuario();
     aplicarPermissoes();
-    showPage('inicio'); // carrega página inicial dinamicamente
-    salvarDados(); // ainda persiste localmente para fallback
+    showPage('inicio'); // carrega a página inicial dinamicamente
+    salvarDados();
 }
 
 async function sairDoSistema() {
-    try {
-        await apiFetch('/logout.php');
-    } catch (e) {
-        // ignora erro se a API não estiver disponível
-    }
+    try { await apiLogout(); } catch (e) {}
     sessao = null;
-    csrfToken = null;
     document.getElementById('dashboard').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('menuToggle').style.display = 'none';
@@ -91,13 +74,13 @@ function confirmarSaidaCliente() {
     });
 }
 
-// Mantida a atualização da interface (elementos fixos)
+// Atualiza apenas elementos fixos (sidebar, logo)
 function atualizarInterfaceUsuario() {
     const sidebarEmpresa = document.getElementById('sidebarEmpresaNome');
     if (sidebarEmpresa) sidebarEmpresa.textContent = CFG.empresaNome;
     const loginEmpresa = document.getElementById('loginEmpresaNome');
     if (loginEmpresa) loginEmpresa.textContent = CFG.empresaNome;
-    
+
     const sidebarUser = document.getElementById('sidebarUserName');
     if (sidebarUser) sidebarUser.textContent = usuarioLogado ? usuarioLogado.nome.split(' ')[0] : 'Admin';
     const sidebarRole = document.getElementById('sidebarUserRole');
