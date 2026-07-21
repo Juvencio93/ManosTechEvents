@@ -1,0 +1,41 @@
+<div class="top-bar">
+    <h2>📊 Dashboard</h2>
+    <div class="evento-selector" id="eventoSelectorDashboard">
+        <span>🎯 Evento:</span>
+        <select id="eventoSelect" onchange="selecionarEvento()"><option value="">-- Escolha --</option></select>
+        <span class="badge badge-info" id="eventoStatusMini" style="display:none;">Ativo</span>
+    </div>
+</div>
+<div id="dashboardContent" style="display:none;">
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon">🔗</div><div class="stat-value" id="liveConnected">0</div><div class="stat-label">Conectados Agora</div></div>
+        <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value" id="totalVisitantes">0</div><div class="stat-label">Total Visitantes</div></div>
+        <div class="stat-card"><div class="stat-icon">⏱️</div><div class="stat-value" id="tempoMedio">0min</div><div class="stat-label">Tempo Médio</div></div>
+        <div class="stat-card"><div class="stat-icon">📱</div><div class="stat-value" id="pctMobile">0%</div><div class="stat-label">Dispositivos Mobile</div></div>
+    </div>
+    <div class="card">
+        <h3>🔗 Portal Cativo do Evento</h3>
+        <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
+            <div style="background:white;padding:12px;border-radius:8px;" id="dashboardQrContainer"></div>
+            <div style="flex:1;min-width:250px;">
+                <strong style="color:var(--azul);font-size:12px;">🌐 Link do Portal:</strong>
+                <div class="link-portal-box"><code id="dashboardPortalLink">Selecione um evento</code><button class="btn btn-xs btn-primary" onclick="copiarLinkDashboard()">📋</button></div>
+                <div style="margin-top:8px;padding:8px;background:rgba(108,92,231,0.1);border-radius:6px;">
+                    <strong style="color:#6c5ce7;font-size:11px;">👤 Acesso Cliente:</strong>
+                    <div style="color:var(--text2);font-size:11px;" id="dashboardClienteInfo"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="grid-2">
+        <div class="card"><h3>🔥 Mapa de Calor - Acessos por Hora</h3><div class="heatmap" id="heatmapContainer"></div></div>
+        <div class="card"><h3>👥 Visitantes Recentes</h3><div id="visitantesList" style="max-height:280px;overflow-y:auto;"></div><span style="color:var(--text2);font-size:12px;" id="visitantesCount">0 visitantes</span></div>
+    </div>
+    <div class="grid-2">
+        <div class="card"><h3>📱 Distribuição de Dispositivos</h3><div class="pie-chart" id="pieChart" style="background:conic-gradient(var(--azul) 0% 60%, #40a0ff 60% 85%, var(--yellow) 85% 100%);"></div><div class="pie-legend"><span><span class="dot" style="background:var(--azul);"></span> iOS</span><span><span class="dot" style="background:#40a0ff;"></span> Android</span><span><span class="dot" style="background:var(--yellow);"></span> Desktop</span></div></div>
+        <div class="card"><h3>📋 Tabela Completa de Visitantes</h3><div style="overflow-x:auto;max-height:300px;overflow-y:auto;"><table><thead><tr><th>Nome</th><th>E-mail</th><th>WhatsApp</th><th>Horário</th><th>Dispositivo</th></tr></thead><tbody id="visitantesTableFull"></tbody></table></div></div>
+    </div>
+</div>
+<div id="dashboardEmpty" style="text-align:center;padding:70px;color:var(--text2);display:block;">
+    <div style="font-size:56px;">📊</div><h3>Selecione um evento</h3>
+</div>
