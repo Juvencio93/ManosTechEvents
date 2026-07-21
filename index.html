@@ -282,7 +282,9 @@
             </nav>
             <div class="sidebar-footer"><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrador</div><button class="btn-sair" onclick="confirmarSaidaSistema()">🚪 Sair</button></div>
         </div>
-        <div class="main-content">
+        <div class="main-content" id="main-content">
+    <!-- As páginas serão carregadas aqui dinamicamente -->
+</div>
             <div class="page active" id="page-inicio"><div class="top-bar"><h2>🏠 Início</h2></div><div class="welcome-grid"><div class="welcome-card" onclick="showPage('dashboard')"><span class="wc-icon">📊</span><div class="wc-title">Dashboard</div><div class="wc-hint">Acessar →</div></div><div class="welcome-card" onclick="showPage('eventos')"><span class="wc-icon">📅</span><div class="wc-title">Eventos</div><div class="wc-hint">Acessar →</div></div><div class="welcome-card" onclick="showPage('financeiro')"><span class="wc-icon">💰</span><div class="wc-title">Financeiro</div><div class="wc-hint">Acessar →</div></div></div></div>
             <div class="page" id="page-dashboard">
                 <div class="top-bar"><h2>📊 Dashboard</h2><div class="evento-selector" id="eventoSelectorDashboard"><span>🎯 Evento:</span><select id="eventoSelect" onchange="selecionarEvento()"><option value="">-- Escolha --</option></select><span class="badge badge-info" id="eventoStatusMini" style="display:none;">Ativo</span></div></div>
