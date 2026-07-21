@@ -194,10 +194,12 @@ async function apiRegistrarVisitante(token, dados) {
         // Garante que evento_id seja um número inteiro
         dados.evento_id = parseInt(evento.id, 10);
 
-        const { error } = await supabaseClient
-            .from('visitantes')
-            .insert([dados]);
+        console.log("DADOS ENVIADOS AO SUPABASE:");
+console.log(dados);
 
+const { error } = await supabaseClient
+    .from('visitantes')
+    .insert([dados]);
         if (error) {
             console.error('Erro ao registrar visitante:', error);
             throw error;
