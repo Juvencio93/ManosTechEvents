@@ -32,8 +32,8 @@ async function sairDoSistema() {
     closeMenu();
     usuarioLogado = null;
     eventoSelecionadoId = null;
+    // Não chama salvarDados()
 }
-
 function confirmarSaidaSistema() {
     confirmarAcao('Deseja realmente sair do sistema?', sairDoSistema);
 }
