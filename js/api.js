@@ -5,10 +5,8 @@ const SUPABASE_KEY = 'sb_publishable_ZGrmIWRubt_0MgPi_a4mgQ_RNYdNflM';
 let supabaseClient = null;
 try {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log("Supabase iniciado:", supabaseClient);
 } catch (e) {
-    console.warn('Supabase não disponível, usando localStorage.');
-}
-
 let sessao = null;
 
 // ---------- Conversão camelCase ↔ snake_case ----------
