@@ -3,8 +3,8 @@ const STORAGE_KEY = 'sge_v9';
 let CFG = {
     empresaNome: 'Manos Tech',
     email: 'contato@manostech.com.br',
-    telefoneSuporte: '(11) 99999-9999',
-    adminNome: 'Carlos Silva',
+    telefoneSuporte: '(47) 99704-9730',
+    adminNome: 'Gabriel',
     adminEmail: 'admin@manostech.com.br',
     adminSenha: '123456',
     logoUrl: ''
@@ -44,8 +44,8 @@ const DADOS_INICIAIS = {
     ],
     funcionarios: [
         {
-            nome: 'Carlos Silva',
-            email: 'carlos@manostech.com.br',
+            nome: 'Gabriel',
+            email: 'gabriel@manostech.com.br',
             nivel: 'Administrador',
             senha: '123456',
             eventos: 'Todos',
