@@ -178,6 +178,10 @@ async function apiExcluirEvento(id) {
 
 // ---------- Visitantes ----------
 async function apiRegistrarVisitante(token, dados) {
+
+    console.log("DADOS RECEBIDOS:");
+    console.log(dados);
+
     try {
         const { data: evento, error: eventoError } = await supabaseClient
             .from('eventos')
