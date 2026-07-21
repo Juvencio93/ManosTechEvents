@@ -3,12 +3,25 @@ async function fazerLogin() {
     const email = document.getElementById('loginEmail').value.trim();
     const senha = document.getElementById('loginPassword').value.trim();
     try {
+        // Tenta login via Supabase
         const user = await apiLogin(email, senha);
         usuarioLogado = user;
         EV = await apiListarEventos();
         entrarSistema();
     } catch (e) {
-        alert('❌ ' + e.message);
+        // Se Supabase falhou, tenta localStorage com as credenciais padrão
+        if (email === CFG.adminEmail && senha === CFG.adminSenha) {
+            usuarioLogado = {
+                nome: CFG.adminNome,
+                nivel: 'Administrador',
+                permissoes: { v: true, d: true, vi: true, e: true, x: true, f: true, g: true, c: true, r: true }
+            };
+            EV = await apiListarEventos(); // tenta carregar eventos (local)
+            entrarSistema();
+            return;
+        }
+        // Se ainda não funcionou, exibe erro
+        alert('❌ Credenciais inválidas. Verifique seu email e senha.');
     }
 }
 
