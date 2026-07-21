@@ -1,5 +1,8 @@
 <?php
-// Configuração do banco de dados SQLite
+if (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off') {
+    header('Location: https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
+    exit;
+}// Configuração do banco de dados SQLite
 define('DB_PATH', __DIR__ . '/database.sqlite');
 
 try {
