@@ -180,9 +180,12 @@ function salvarEvento() {
     renderizarEventos();
     salvarDados();
     if (eventoSelecionadoId) {
-        document.getElementById('eventoSelect').value = eventoSelecionadoId;
+    const select = document.getElementById('eventoSelect');
+    if (select) {
+        select.value = eventoSelecionadoId;
         selecionarEvento();
     }
+}
     atualizarResumoFinanceiroGeral();
     eventoEmEdicao = null;
     logoTemporario = null;
