@@ -1,1 +1,578 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Cativo - Acesso Wi-Fi</title>
+    <style>
+        :root {
+            --bg: #06080d; --glass: rgba(18,24,36,0.85); --text: #e8edf3;
+            --azul: #4da8da; --green: #4dda8f; --red: #ff4d6a; --yellow: #ffb347;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: radial-gradient(ellipse at 30% 20%, #0d1a2d 0%, #040810 70%); color: var(--text); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .portal-card { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 40px 32px; width: 100%; max-width: 420px; box-shadow: 0 30px 60px rgba(0,0,0,0.5); text-align: center; }
+        .logo-evento { width: 100px; height: 100px; margin: 0 auto 16px; border-radius: 20px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+        .logo-evento img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .evento-nome { font-size: 24px; font-weight: 700; margin-bottom: 8px; background: linear-gradient(135deg, var(--azul), var(--green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #8899b0; margin-bottom: 6px; display: block; }
+        .input-group input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
+            outline: none;
+            transition: 0.3s;
+            font-family: inherit;
+        }
+        .input-group input:focus { border-color: var(--azul); box-shadow: 0 0 20px rgba(77,168,218,0.15); }
+        .phone-row { display: flex; gap: 8px; }
+        .phone-row .custom-select-wrapper { position: relative; width: 130px; flex-shrink: 0; }
+        .phone-row .custom-select {
+            width: 100%;
+            padding: 14px 30px 14px 12px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238899b0' d='M6 8.825L1.175 4 2.238 2.938 6 6.7 9.763 2.937 10.825 4z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .custom-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 300px;                 /* largura expandida */
+            background: #1a1f2e;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            margin-top: 4px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .custom-options.active { display: block; }
+        .custom-option {
+            padding: 10px 12px;
+            cursor: pointer;
+            color: white;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        .custom-option:hover, .custom-option.selected { background: rgba(77,168,218,0.2); }
+        .phone-row input { flex: 1; }
+        .lgpd-box { text-align: left; margin: 20px 0; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); font-size: 12px; color: #8899b0; }
+        .lgpd-box label { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
+        .lgpd-box input[type="checkbox"] { margin-top: 3px; accent-color: var(--azul); }
+        .btn { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--azul), #3a8ec0); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(77,168,218,0.3); }
+        .error-msg { color: var(--red); font-size: 12px; margin-top: 4px; display: none; }
+        .patrocinadores { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 16px 0; }
+        .patrocinadores img { width: 60px; height: 60px; border-radius: 8px; object-fit: contain; background: rgba(255,255,255,0.05); padding: 8px; }
+        .sucesso-msg { display: none; color: var(--green); font-weight: 600; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="portal-card" id="portalCard">
+        <div class="logo-evento" id="logoEvento">🎪</div>
+        <div class="evento-nome" id="nomeEvento">Evento</div>
+        <div class="patrocinadores" id="patrocinadoresContainer"></div>
+        <div class="input-group">
+            <label>Nome completo</label>
+            <input type="text" id="nome" placeholder="Seu nome">
+            <div class="error-msg" id="erroNome">Nome é obrigatório.</div>
+        </div>
+        <div class="input-group">
+            <label>E-mail</label>
+            <input type="email" id="email" placeholder="seu@email.com">
+            <div class="error-msg" id="erroEmail">E-mail inválido.</div>
+        </div>
+        <div class="input-group">
+            <label>WhatsApp (com código do país)</label>
+            <div class="phone-row">
+                <div class="custom-select-wrapper">
+                    <div class="custom-select" id="customSelect">🇧🇷 +55</div>
+                    <div class="custom-options" id="customOptions"></div>
+                </div>
+                <input type="text" id="whatsapp" placeholder="(DDD) 9 9999-9999" maxlength="20">
+            </div>
+            <div class="error-msg" id="erroWhatsapp">Número inválido para o país selecionado.</div>
+        </div>
+        <div class="lgpd-box">
+            <label>
+                <input type="checkbox" id="lgpdCheck">
+                <span>Autorizo a coleta e o uso dos meus dados pessoais, de acordo com a LGPD, para acesso à rede Wi-Fi, envio de comunicações sobre eventos futuros, promoções e novidades da Manos Tech e de seus parceiros.</span>
+            </label>
+            <div class="lgpd-resumo">📌 Seus dados poderão ser utilizados para marketing e divulgação de eventos. Você pode solicitar a remoção a qualquer momento.</div>
+            <div class="error-msg" id="erroLGPD" style="margin-top:8px;">É necessário aceitar a política de privacidade.</div>
+        </div>
+        <button class="btn" onclick="conectar()">🔓 Acessar Internet</button>
+        <div class="sucesso-msg" id="sucessoMsg">✅ Conectado! Você será redirecionado...</div>
+    </div>
 
+    <script>
+        // Lista de países (label: exibição resumida, name: nome completo)
+        const countries = [
+            { code: '93', label: '🇦🇫 +93', name: '🇦🇫 Afghanistan (افغانستان)+93' },
+            { code: '355', label: '🇦🇱 +355', name: '🇦🇱 Albania (Shqipëri)+355' },
+            { code: '213', label: '🇩🇿 +213', name: '🇩🇿 Algeria (الجزائر)+213' },
+            { code: '1', label: '🇦🇸 +1', name: '🇦🇸 American Samoa+1' },
+            { code: '376', label: '🇦🇩 +376', name: '🇦🇩 Andorra+376' },
+            { code: '244', label: '🇦🇴 +244', name: '🇦🇴 Angola+244' },
+            { code: '1', label: '🇦🇮 +1', name: '🇦🇮 Anguilla+1' },
+            { code: '1', label: '🇦🇬 +1', name: '🇦🇬 Antigua and Barbuda+1' },
+            { code: '54', label: '🇦🇷 +54', name: '🇦🇷 Argentina+54' },
+            { code: '374', label: '🇦🇲 +374', name: '🇦🇲 Armenia (Հայաստան)+374' },
+            { code: '297', label: '🇦🇼 +297', name: '🇦🇼 Aruba+297' },
+            { code: '61', label: '🇦🇺 +61', name: '🇦🇺 Australia+61' },
+            { code: '43', label: '🇦🇹 +43', name: '🇦🇹 Austria (Österreich)+43' },
+            { code: '994', label: '🇦🇿 +994', name: '🇦🇿 Azerbaijan (Azərbaycan)+994' },
+            { code: '1', label: '🇧🇸 +1', name: '🇧🇸 Bahamas+1' },
+            { code: '973', label: '🇧🇭 +973', name: '🇧🇭 Bahrain (البحرين)+973' },
+            { code: '880', label: '🇧🇩 +880', name: '🇧🇩 Bangladesh (বাংলাদেশ)+880' },
+            { code: '1', label: '🇧🇧 +1', name: '🇧🇧 Barbados+1' },
+            { code: '375', label: '🇧🇾 +375', name: '🇧🇾 Belarus (Беларусь)+375' },
+            { code: '32', label: '🇧🇪 +32', name: '🇧🇪 Belgium (België)+32' },
+            { code: '501', label: '🇧🇿 +501', name: '🇧🇿 Belize+501' },
+            { code: '229', label: '🇧🇯 +229', name: '🇧🇯 Benin (Bénin)+229' },
+            { code: '1', label: '🇧🇲 +1', name: '🇧🇲 Bermuda+1' },
+            { code: '975', label: '🇧🇹 +975', name: '🇧🇹 Bhutan (འབྲུག)+975' },
+            { code: '591', label: '🇧🇴 +591', name: '🇧🇴 Bolivia+591' },
+            { code: '387', label: '🇧🇦 +387', name: '🇧🇦 Bosnia and Herzegovina (Босна и Херцеговина)+387' },
+            { code: '267', label: '🇧🇼 +267', name: '🇧🇼 Botswana+267' },
+            { code: '55', label: '🇧🇷 +55', name: '🇧🇷 Brazil (Brasil)+55' },
+            { code: '246', label: '🇮🇴 +246', name: '🇮🇴 British Indian Ocean Territory+246' },
+            { code: '1', label: '🇻🇬 +1', name: '🇻🇬 British Virgin Islands+1' },
+            { code: '673', label: '🇧🇳 +673', name: '🇧🇳 Brunei+673' },
+            { code: '359', label: '🇧🇬 +359', name: '🇧🇬 Bulgaria (България)+359' },
+            { code: '226', label: '🇧🇫 +226', name: '🇧🇫 Burkina Faso+226' },
+            { code: '257', label: '🇧🇮 +257', name: '🇧🇮 Burundi (Uburundi)+257' },
+            { code: '855', label: '🇰🇭 +855', name: '🇰🇭 Cambodia (កម្ពុជា)+855' },
+            { code: '237', label: '🇨🇲 +237', name: '🇨🇲 Cameroon (Cameroun)+237' },
+            { code: '1', label: '🇨🇦 +1', name: '🇨🇦 Canada+1' },
+            { code: '238', label: '🇨🇻 +238', name: '🇨🇻 Cape Verde (Kabu Verdi)+238' },
+            { code: '599', label: '🇧🇶 +599', name: '🇧🇶 Caribbean Netherlands+599' },
+            { code: '1', label: '🇰🇾 +1', name: '🇰🇾 Cayman Islands+1' },
+            { code: '236', label: '🇨🇫 +236', name: '🇨🇫 Central African Republic (République centrafricaine)+236' },
+            { code: '235', label: '🇹🇩 +235', name: '🇹🇩 Chad (Tchad)+235' },
+            { code: '56', label: '🇨🇱 +56', name: '🇨🇱 Chile+56' },
+            { code: '86', label: '🇨🇳 +86', name: '🇨🇳 China (中国)+86' },
+            { code: '61', label: '🇨🇽 +61', name: '🇨🇽 Christmas Island+61' },
+            { code: '61', label: '🇨🇨 +61', name: '🇨🇨 Cocos (Keeling) Islands+61' },
+            { code: '57', label: '🇨🇴 +57', name: '🇨🇴 Colombia+57' },
+            { code: '269', label: '🇰🇲 +269', name: '🇰🇲 Comoros (جزر القمر)+269' },
+            { code: '243', label: '🇨🇩 +243', name: '🇨🇩 Congo (DRC) (Jamhuri ya Kidemokrasia ya Kongo)+243' },
+            { code: '242', label: '🇨🇬 +242', name: '🇨🇬 Congo (Republic) (Congo-Brazzaville)+242' },
+            { code: '682', label: '🇨🇰 +682', name: '🇨🇰 Cook Islands+682' },
+            { code: '506', label: '🇨🇷 +506', name: '🇨🇷 Costa Rica+506' },
+            { code: '225', label: '🇨🇮 +225', name: '🇨🇮 Côte d\'Ivoire+225' },
+            { code: '385', label: '🇭🇷 +385', name: '🇭🇷 Croatia (Hrvatska)+385' },
+            { code: '53', label: '🇨🇺 +53', name: '🇨🇺 Cuba+53' },
+            { code: '599', label: '🇨🇼 +599', name: '🇨🇼 Curaçao+599' },
+            { code: '357', label: '🇨🇾 +357', name: '🇨🇾 Cyprus (Κύπρος)+357' },
+            { code: '420', label: '🇨🇿 +420', name: '🇨🇿 Czech Republic (Česká republika)+420' },
+            { code: '45', label: '🇩🇰 +45', name: '🇩🇰 Denmark (Danmark)+45' },
+            { code: '253', label: '🇩🇯 +253', name: '🇩🇯 Djibouti+253' },
+            { code: '1', label: '🇩🇲 +1', name: '🇩🇲 Dominica+1' },
+            { code: '1', label: '🇩🇴 +1', name: '🇩🇴 Dominican Republic (República Dominicana)+1' },
+            { code: '593', label: '🇪🇨 +593', name: '🇪🇨 Ecuador+593' },
+            { code: '20', label: '🇪🇬 +20', name: '🇪🇬 Egypt (مصر)+20' },
+            { code: '503', label: '🇸🇻 +503', name: '🇸🇻 El Salvador+503' },
+            { code: '240', label: '🇬🇶 +240', name: '🇬🇶 Equatorial Guinea (Guinea Ecuatorial)+240' },
+            { code: '291', label: '🇪🇷 +291', name: '🇪🇷 Eritrea+291' },
+            { code: '372', label: '🇪🇪 +372', name: '🇪🇪 Estonia (Eesti)+372' },
+            { code: '251', label: '🇪🇹 +251', name: '🇪🇹 Ethiopia+251' },
+            { code: '500', label: '🇫🇰 +500', name: '🇫🇰 Falkland Islands (Islas Malvinas)+500' },
+            { code: '298', label: '🇫🇴 +298', name: '🇫🇴 Faroe Islands (Føroyar)+298' },
+            { code: '679', label: '🇫🇯 +679', name: '🇫🇯 Fiji+679' },
+            { code: '358', label: '🇫🇮 +358', name: '🇫🇮 Finland (Suomi)+358' },
+            { code: '33', label: '🇫🇷 +33', name: '🇫🇷 France+33' },
+            { code: '594', label: '🇬🇫 +594', name: '🇬🇫 French Guiana (Guyane française)+594' },
+            { code: '689', label: '🇵🇫 +689', name: '🇵🇫 French Polynesia (Polynésie française)+689' },
+            { code: '241', label: '🇬🇦 +241', name: '🇬🇦 Gabon+241' },
+            { code: '220', label: '🇬🇲 +220', name: '🇬🇲 Gambia+220' },
+            { code: '995', label: '🇬🇪 +995', name: '🇬🇪 Georgia (საქართველო)+995' },
+            { code: '49', label: '🇩🇪 +49', name: '🇩🇪 Germany (Deutschland)+49' },
+            { code: '233', label: '🇬🇭 +233', name: '🇬🇭 Ghana (Gaana)+233' },
+            { code: '350', label: '🇬🇮 +350', name: '🇬🇮 Gibraltar+350' },
+            { code: '30', label: '🇬🇷 +30', name: '🇬🇷 Greece (Ελλάδα)+30' },
+            { code: '299', label: '🇬🇱 +299', name: '🇬🇱 Greenland (Kalaallit Nunaat)+299' },
+            { code: '1', label: '🇬🇩 +1', name: '🇬🇩 Grenada+1' },
+            { code: '590', label: '🇬🇵 +590', name: '🇬🇵 Guadeloupe+590' },
+            { code: '1', label: '🇬🇺 +1', name: '🇬🇺 Guam+1' },
+            { code: '502', label: '🇬🇹 +502', name: '🇬🇹 Guatemala+502' },
+            { code: '44', label: '🇬🇬 +44', name: '🇬🇬 Guernsey+44' },
+            { code: '224', label: '🇬🇳 +224', name: '🇬🇳 Guinea (Guinée)+224' },
+            { code: '245', label: '🇬🇼 +245', name: '🇬🇼 Guinea-Bissau (Guiné Bissau)+245' },
+            { code: '592', label: '🇬🇾 +592', name: '🇬🇾 Guyana+592' },
+            { code: '509', label: '🇭🇹 +509', name: '🇭🇹 Haiti+509' },
+            { code: '504', label: '🇭🇳 +504', name: '🇭🇳 Honduras+504' },
+            { code: '852', label: '🇭🇰 +852', name: '🇭🇰 Hong Kong (香港)+852' },
+            { code: '36', label: '🇭🇺 +36', name: '🇭🇺 Hungary (Magyarország)+36' },
+            { code: '354', label: '🇮🇸 +354', name: '🇮🇸 Iceland (Ísland)+354' },
+            { code: '91', label: '🇮🇳 +91', name: '🇮🇳 India (भारत)+91' },
+            { code: '62', label: '🇮🇩 +62', name: '🇮🇩 Indonesia+62' },
+            { code: '98', label: '🇮🇷 +98', name: '🇮🇷 Iran (ایران)+98' },
+            { code: '964', label: '🇮🇶 +964', name: '🇮🇶 Iraq (العراق)+964' },
+            { code: '353', label: '🇮🇪 +353', name: '🇮🇪 Ireland+353' },
+            { code: '44', label: '🇮🇲 +44', name: '🇮🇲 Isle of Man+44' },
+            { code: '972', label: '🇮🇱 +972', name: '🇮🇱 Israel (ישראל)+972' },
+            { code: '39', label: '🇮🇹 +39', name: '🇮🇹 Italy (Italia)+39' },
+            { code: '1', label: '🇯🇲 +1', name: '🇯🇲 Jamaica+1' },
+            { code: '81', label: '🇯🇵 +81', name: '🇯🇵 Japan (日本)+81' },
+            { code: '44', label: '🇯🇪 +44', name: '🇯🇪 Jersey+44' },
+            { code: '962', label: '🇯🇴 +962', name: '🇯🇴 Jordan (الأردن)+962' },
+            { code: '7', label: '🇰🇿 +7', name: '🇰🇿 Kazakhstan (Казахстан)+7' },
+            { code: '254', label: '🇰🇪 +254', name: '🇰🇪 Kenya+254' },
+            { code: '686', label: '🇰🇮 +686', name: '🇰🇮 Kiribati+686' },
+            { code: '383', label: '🇽🇰 +383', name: '🇽🇰 Kosovo+383' },
+            { code: '965', label: '🇰🇼 +965', name: '🇰🇼 Kuwait (الكويت)+965' },
+            { code: '996', label: '🇰🇬 +996', name: '🇰🇬 Kyrgyzstan (Кыргызстан)+996' },
+            { code: '856', label: '🇱🇦 +856', name: '🇱🇦 Laos (ລາວ)+856' },
+            { code: '371', label: '🇱🇻 +371', name: '🇱🇻 Latvia (Latvija)+371' },
+            { code: '961', label: '🇱🇧 +961', name: '🇱🇧 Lebanon (لبنان)+961' },
+            { code: '266', label: '🇱🇸 +266', name: '🇱🇸 Lesotho+266' },
+            { code: '231', label: '🇱🇷 +231', name: '🇱🇷 Liberia+231' },
+            { code: '218', label: '🇱🇾 +218', name: '🇱🇾 Libya (ليبيا)+218' },
+            { code: '423', label: '🇱🇮 +423', name: '🇱🇮 Liechtenstein+423' },
+            { code: '370', label: '🇱🇹 +370', name: '🇱🇹 Lithuania (Lietuva)+370' },
+            { code: '352', label: '🇱🇺 +352', name: '🇱🇺 Luxembourg+352' },
+            { code: '853', label: '🇲🇴 +853', name: '🇲🇴 Macau (澳門)+853' },
+            { code: '389', label: '🇲🇰 +389', name: '🇲🇰 Macedonia (Македонија)+389' },
+            { code: '261', label: '🇲🇬 +261', name: '🇲🇬 Madagascar (Madagasikara)+261' },
+            { code: '265', label: '🇲🇼 +265', name: '🇲🇼 Malawi+265' },
+            { code: '60', label: '🇲🇾 +60', name: '🇲🇾 Malaysia+60' },
+            { code: '960', label: '🇲🇻 +960', name: '🇲🇻 Maldives+960' },
+            { code: '223', label: '🇲🇱 +223', name: '🇲🇱 Mali+223' },
+            { code: '356', label: '🇲🇹 +356', name: '🇲🇹 Malta+356' },
+            { code: '692', label: '🇲🇭 +692', name: '🇲🇭 Marshall Islands+692' },
+            { code: '596', label: '🇲🇶 +596', name: '🇲🇶 Martinique+596' },
+            { code: '222', label: '🇲🇷 +222', name: '🇲🇷 Mauritania (موريتانيا)+222' },
+            { code: '230', label: '🇲🇺 +230', name: '🇲🇺 Mauritius (Moris)+230' },
+            { code: '262', label: '🇾🇹 +262', name: '🇾🇹 Mayotte+262' },
+            { code: '52', label: '🇲🇽 +52', name: '🇲🇽 Mexico (México)+52' },
+            { code: '691', label: '🇫🇲 +691', name: '🇫🇲 Micronesia+691' },
+            { code: '373', label: '🇲🇩 +373', name: '🇲🇩 Moldova (Republica Moldova)+373' },
+            { code: '377', label: '🇲🇨 +377', name: '🇲🇨 Monaco+377' },
+            { code: '976', label: '🇲🇳 +976', name: '🇲🇳 Mongolia (Монгол)+976' },
+            { code: '382', label: '🇲🇪 +382', name: '🇲🇪 Montenegro (Crna Gora)+382' },
+            { code: '1', label: '🇲🇸 +1', name: '🇲🇸 Montserrat+1' },
+            { code: '212', label: '🇲🇦 +212', name: '🇲🇦 Morocco (المغرب)+212' },
+            { code: '258', label: '🇲🇿 +258', name: '🇲🇿 Mozambique (Moçambique)+258' },
+            { code: '95', label: '🇲🇲 +95', name: '🇲🇲 Myanmar (Burma) (မြန်မာ)+95' },
+            { code: '264', label: '🇳🇦 +264', name: '🇳🇦 Namibia (Namibië)+264' },
+            { code: '674', label: '🇳🇷 +674', name: '🇳🇷 Nauru+674' },
+            { code: '977', label: '🇳🇵 +977', name: '🇳🇵 Nepal (नेपाल)+977' },
+            { code: '31', label: '🇳🇱 +31', name: '🇳🇱 Netherlands (Nederland)+31' },
+            { code: '687', label: '🇳🇨 +687', name: '🇳🇨 New Caledonia (Nouvelle-Calédonie)+687' },
+            { code: '64', label: '🇳🇿 +64', name: '🇳🇿 New Zealand+64' },
+            { code: '505', label: '🇳🇮 +505', name: '🇳🇮 Nicaragua+505' },
+            { code: '227', label: '🇳🇪 +227', name: '🇳🇪 Niger (Nijar)+227' },
+            { code: '234', label: '🇳🇬 +234', name: '🇳🇬 Nigeria+234' },
+            { code: '683', label: '🇳🇺 +683', name: '🇳🇺 Niue+683' },
+            { code: '672', label: '🇳🇫 +672', name: '🇳🇫 Norfolk Island+672' },
+            { code: '850', label: '🇰🇵 +850', name: '🇰🇵 North Korea (조선 민주주의 인민 공화국)+850' },
+            { code: '1', label: '🇲🇵 +1', name: '🇲🇵 Northern Mariana Islands+1' },
+            { code: '47', label: '🇳🇴 +47', name: '🇳🇴 Norway (Norge)+47' },
+            { code: '968', label: '🇴🇲 +968', name: '🇴🇲 Oman (عُمان)+968' },
+            { code: '92', label: '🇵🇰 +92', name: '🇵🇰 Pakistan (پاکستان)+92' },
+            { code: '680', label: '🇵🇼 +680', name: '🇵🇼 Palau+680' },
+            { code: '970', label: '🇵🇸 +970', name: '🇵🇸 Palestine (فلسطين)+970' },
+            { code: '507', label: '🇵🇦 +507', name: '🇵🇦 Panama (Panamá)+507' },
+            { code: '675', label: '🇵🇬 +675', name: '🇵🇬 Papua New Guinea+675' },
+            { code: '595', label: '🇵🇾 +595', name: '🇵🇾 Paraguay+595' },
+            { code: '51', label: '🇵🇪 +51', name: '🇵🇪 Peru (Perú)+51' },
+            { code: '63', label: '🇵🇭 +63', name: '🇵🇭 Philippines+63' },
+            { code: '48', label: '🇵🇱 +48', name: '🇵🇱 Poland (Polska)+48' },
+            { code: '351', label: '🇵🇹 +351', name: '🇵🇹 Portugal+351' },
+            { code: '1', label: '🇵🇷 +1', name: '🇵🇷 Puerto Rico+1' },
+            { code: '974', label: '🇶🇦 +974', name: '🇶🇦 Qatar (قطر)+974' },
+            { code: '262', label: '🇷🇪 +262', name: '🇷🇪 Réunion (La Réunion)+262' },
+            { code: '40', label: '🇷🇴 +40', name: '🇷🇴 Romania (România)+40' },
+            { code: '7', label: '🇷🇺 +7', name: '🇷🇺 Russia (Россия)+7' },
+            { code: '250', label: '🇷🇼 +250', name: '🇷🇼 Rwanda+250' },
+            { code: '590', label: '🇧🇱 +590', name: '🇧🇱 Saint Barthélemy+590' },
+            { code: '290', label: '🇸🇭 +290', name: '🇸🇭 Saint Helena+290' },
+            { code: '1', label: '🇰🇳 +1', name: '🇰🇳 Saint Kitts and Nevis+1' },
+            { code: '1', label: '🇱🇨 +1', name: '🇱🇨 Saint Lucia+1' },
+            { code: '590', label: '🇲🇫 +590', name: '🇲🇫 Saint Martin (Saint-Martin (partie française))+590' },
+            { code: '508', label: '🇵🇲 +508', name: '🇵🇲 Saint Pierre and Miquelon (Saint-Pierre-et-Miquelon)+508' },
+            { code: '1', label: '🇻🇨 +1', name: '🇻🇨 Saint Vincent and the Grenadines+1' },
+            { code: '685', label: '🇼🇸 +685', name: '🇼🇸 Samoa+685' },
+            { code: '378', label: '🇸🇲 +378', name: '🇸🇲 San Marino+378' },
+            { code: '239', label: '🇸🇹 +239', name: '🇸🇹 São Tomé and Príncipe (São Tomé e Príncipe)+239' },
+            { code: '966', label: '🇸🇦 +966', name: '🇸🇦 Saudi Arabia (المملكة العربية السعودية)+966' },
+            { code: '221', label: '🇸🇳 +221', name: '🇸🇳 Senegal (Sénégal)+221' },
+            { code: '381', label: '🇷🇸 +381', name: '🇷🇸 Serbia (Србија)+381' },
+            { code: '248', label: '🇸🇨 +248', name: '🇸🇨 Seychelles+248' },
+            { code: '232', label: '🇸🇱 +232', name: '🇸🇱 Sierra Leone+232' },
+            { code: '65', label: '🇸🇬 +65', name: '🇸🇬 Singapore+65' },
+            { code: '1', label: '🇸🇽 +1', name: '🇸🇽 Sint Maarten+1' },
+            { code: '421', label: '🇸🇰 +421', name: '🇸🇰 Slovakia (Slovensko)+421' },
+            { code: '386', label: '🇸🇮 +386', name: '🇸🇮 Slovenia (Slovenija)+386' },
+            { code: '677', label: '🇸🇧 +677', name: '🇸🇧 Solomon Islands+677' },
+            { code: '252', label: '🇸🇴 +252', name: '🇸🇴 Somalia (Soomaaliya)+252' },
+            { code: '27', label: '🇿🇦 +27', name: '🇿🇦 South Africa+27' },
+            { code: '82', label: '🇰🇷 +82', name: '🇰🇷 South Korea (대한민국)+82' },
+            { code: '211', label: '🇸🇸 +211', name: '🇸🇸 South Sudan (جنوب السودان)+211' },
+            { code: '34', label: '🇪🇸 +34', name: '🇪🇸 Spain (España)+34' },
+            { code: '94', label: '🇱🇰 +94', name: '🇱🇰 Sri Lanka (ශ්‍රී ලංකාව)+94' },
+            { code: '249', label: '🇸🇩 +249', name: '🇸🇩 Sudan (السودان)+249' },
+            { code: '597', label: '🇸🇷 +597', name: '🇸🇷 Suriname+597' },
+            { code: '47', label: '🇸🇯 +47', name: '🇸🇯 Svalbard and Jan Mayen+47' },
+            { code: '268', label: '🇸🇿 +268', name: '🇸🇿 Swaziland+268' },
+            { code: '46', label: '🇸🇪 +46', name: '🇸🇪 Sweden (Sverige)+46' },
+            { code: '41', label: '🇨🇭 +41', name: '🇨🇭 Switzerland (Schweiz)+41' },
+            { code: '963', label: '🇸🇾 +963', name: '🇸🇾 Syria (سوريا)+963' },
+            { code: '886', label: '🇹🇼 +886', name: '🇹🇼 Taiwan (台灣)+886' },
+            { code: '992', label: '🇹🇯 +992', name: '🇹🇯 Tajikistan+992' },
+            { code: '255', label: '🇹🇿 +255', name: '🇹🇿 Tanzania+255' },
+            { code: '66', label: '🇹🇭 +66', name: '🇹🇭 Thailand (ไทย)+66' },
+            { code: '670', label: '🇹🇱 +670', name: '🇹🇱 Timor-Leste+670' },
+            { code: '228', label: '🇹🇬 +228', name: '🇹🇬 Togo+228' },
+            { code: '690', label: '🇹🇰 +690', name: '🇹🇰 Tokelau+690' },
+            { code: '676', label: '🇹🇴 +676', name: '🇹🇴 Tonga+676' },
+            { code: '1', label: '🇹🇹 +1', name: '🇹🇹 Trinidad and Tobago+1' },
+            { code: '216', label: '🇹🇳 +216', name: '🇹🇳 Tunisia (تونس)+216' },
+            { code: '90', label: '🇹🇷 +90', name: '🇹🇷 Turkey (Türkiye)+90' },
+            { code: '993', label: '🇹🇲 +993', name: '🇹🇲 Turkmenistan+993' },
+            { code: '1', label: '🇹🇨 +1', name: '🇹🇨 Turks and Caicos Islands+1' },
+            { code: '688', label: '🇹🇻 +688', name: '🇹🇻 Tuvalu+688' },
+            { code: '1', label: '🇻🇮 +1', name: '🇻🇮 U.S. Virgin Islands+1' },
+            { code: '256', label: '🇺🇬 +256', name: '🇺🇬 Uganda+256' },
+            { code: '380', label: '🇺🇦 +380', name: '🇺🇦 Ukraine (Україна)+380' },
+            { code: '971', label: '🇦🇪 +971', name: '🇦🇪 United Arab Emirates (الإمارات العربية المتحدة)+971' },
+            { code: '44', label: '🇬🇧 +44', name: '🇬🇧 United Kingdom+44' },
+            { code: '1', label: '🇺🇸 +1', name: '🇺🇸 United States+1' },
+            { code: '598', label: '🇺🇾 +598', name: '🇺🇾 Uruguay+598' },
+            { code: '998', label: '🇺🇿 +998', name: '🇺🇿 Uzbekistan (Oʻzbekiston)+998' },
+            { code: '678', label: '🇻🇺 +678', name: '🇻🇺 Vanuatu+678' },
+            { code: '39', label: '🇻🇦 +39', name: '🇻🇦 Vatican City (Città del Vaticano)+39' },
+            { code: '58', label: '🇻🇪 +58', name: '🇻🇪 Venezuela+58' },
+            { code: '84', label: '🇻🇳 +84', name: '🇻🇳 Vietnam (Việt Nam)+84' },
+            { code: '681', label: '🇼🇫 +681', name: '🇼🇫 Wallis and Futuna (Wallis-et-Futuna)+681' },
+            { code: '212', label: '🇪🇭 +212', name: '🇪🇭 Western Sahara (الصحراء الغربية)+212' },
+            { code: '967', label: '🇾🇪 +967', name: '🇾🇪 Yemen (اليمن)+967' },
+            { code: '260', label: '🇿🇲 +260', name: '🇿🇲 Zambia+260' },
+            { code: '263', label: '🇿🇼 +263', name: '🇿🇼 Zimbabwe+263' },
+            { code: '358', label: '🇦🇽 +358', name: '🇦🇽 Åland Islands+358' },
+            { code: 'outro', label: '🌎 Outro', name: '🌎 Outro país' }
+        ];
+
+        let selectedCountry = countries.find(c => c.code === '55');
+
+        function renderOptions() {
+            const container = document.getElementById('customOptions');
+            container.innerHTML = countries.map(c =>
+                `<div class="custom-option${c.code === selectedCountry.code ? ' selected' : ''}" data-code="${c.code}" data-label="${c.label}" data-name="${c.name}">${c.name}</div>`
+            ).join('');
+
+            document.querySelectorAll('.custom-option').forEach(opt => {
+                opt.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const code = this.dataset.code;
+                    const label = this.dataset.label;
+                    selectedCountry = countries.find(c => c.code === code);
+                    document.getElementById('customSelect').textContent = label;
+                    container.classList.remove('active');
+                    renderOptions();
+                    atualizarMascara(code);
+                });
+            });
+        }
+
+        document.getElementById('customSelect').addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.getElementById('customOptions').classList.toggle('active');
+        });
+
+        document.addEventListener('click', function() {
+            document.getElementById('customOptions').classList.remove('active');
+        });
+
+        renderOptions();
+
+        // ---------- Restante do código ----------
+        const REDIRECT_URL = 'https://www.google.com';
+        const params = new URLSearchParams(window.location.search);
+        const eventoId = parseInt(params.get('id'));
+
+        function carregarEvento() {
+            if (!eventoId) {
+                document.getElementById('nomeEvento').textContent = 'Evento não especificado';
+                return null;
+            }
+            try {
+                const dados = localStorage.getItem('sge_v9');
+                if (dados) {
+                    const parsed = JSON.parse(dados);
+                    const eventos = parsed.eventos || [];
+                    return eventos.find(ev => ev.id === eventoId);
+                }
+            } catch (e) {}
+            return null;
+        }
+
+        const evento = carregarEvento();
+
+        if (evento) {
+            document.getElementById('nomeEvento').textContent = evento.nome;
+            if (evento.logoUrl) {
+                document.getElementById('logoEvento').innerHTML = `<img src="${evento.logoUrl}" alt="Logo">`;
+            }
+            const patrocinadoresContainer = document.getElementById('patrocinadoresContainer');
+            if (evento.patrocinadoresLogos && evento.patrocinadoresLogos.length > 0) {
+                patrocinadoresContainer.innerHTML = evento.patrocinadoresLogos.map(url => `<img src="${url}" alt="Patrocinador">`).join('');
+            } else {
+                patrocinadoresContainer.style.display = 'none';
+            }
+        } else {
+            document.getElementById('nomeEvento').textContent = 'Evento não encontrado';
+        }
+
+        function escapeHtml(text) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function validarEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function atualizarMascara(ddi) {
+            const input = document.getElementById('whatsapp');
+            input.value = '';
+            input.placeholder = (ddi === '55') ? '(DDD) 9 9999-9999' : 'Número sem formatação';
+            if (ddi === 'outro') {
+                input.placeholder = 'Código do país + número (ex: +xxx xxxxxx)';
+                input.maxLength = 20;
+            }
+        }
+
+        function mascaraBrasil(input) {
+            let valor = input.value.replace(/\D/g, '');
+            if (valor.length > 11) valor = valor.slice(0, 11);
+            let formatado = '';
+            if (valor.length > 0) formatado += '(' + valor.substring(0,2);
+            if (valor.length > 2) formatado += ') ' + valor.substring(2,3);
+            if (valor.length > 3) formatado += ' ' + valor.substring(3,7);
+            if (valor.length > 7) formatado += '-' + valor.substring(7,11);
+            let cursor = input.selectionStart;
+            let diff = formatado.length - input.value.length;
+            input.value = formatado;
+            input.setSelectionRange(cursor + diff, cursor + diff);
+        }
+
+        function aplicarMascara(event) {
+            const input = event.target;
+            const ddi = selectedCountry ? selectedCountry.code : '55';
+            if (ddi === '55') {
+                mascaraBrasil(input);
+            } else {
+                let digits = input.value.replace(/\D/g, '');
+                if (digits.length > 15) digits = digits.slice(0, 15);
+                input.value = digits;
+            }
+        }
+
+        function validarWhatsApp(numero, ddi) {
+            const digits = numero.replace(/\D/g, '');
+            if (ddi === '55') {
+                return digits.length === 10 || digits.length === 11;
+            } else if (ddi === 'outro') {
+                return digits.length >= 7 && digits.length <= 15;
+            } else {
+                return digits.length >= 7 && digits.length <= 15;
+            }
+        }
+
+        document.getElementById('whatsapp').addEventListener('input', aplicarMascara);
+
+        function conectar() {
+            document.querySelectorAll('.error-msg').forEach(el => el.style.display = 'none');
+
+            const nome = document.getElementById('nome').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const ddi = selectedCountry ? selectedCountry.code : '55';
+            const whatsapp = document.getElementById('whatsapp').value.trim();
+            const lgpd = document.getElementById('lgpdCheck').checked;
+
+            let valido = true;
+
+            if (!nome) {
+                document.getElementById('erroNome').style.display = 'block';
+                valido = false;
+            }
+            if (!validarEmail(email)) {
+                document.getElementById('erroEmail').style.display = 'block';
+                valido = false;
+            }
+            if (whatsapp && !validarWhatsApp(whatsapp, ddi)) {
+                document.getElementById('erroWhatsapp').style.display = 'block';
+                valido = false;
+            }
+            if (!lgpd) {
+                document.getElementById('erroLGPD').style.display = 'block';
+                valido = false;
+            }
+
+            if (!valido) return;
+
+            if (!evento) {
+                alert('Evento não encontrado. Contate o suporte.');
+                return;
+            }
+
+            const whatsappCompleto = ddi === 'outro' ? '+' + whatsapp : '+' + ddi + ' ' + whatsapp;
+
+            const visitante = {
+                nome: escapeHtml(nome),
+                email: email,
+                whatsapp: whatsappCompleto,
+                acesso: new Date().toLocaleString('pt-BR'),
+                hora: new Date().getHours(),
+                dispositivo: navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop',
+                ip: '0.0.0.0'
+            };
+
+            try {
+                const dados = localStorage.getItem('sge_v9');
+                if (dados) {
+                    const parsed = JSON.parse(dados);
+                    const eventos = parsed.eventos || [];
+                    const idx = eventos.findIndex(ev => ev.id === eventoId);
+                    if (idx !== -1) {
+                        eventos[idx].visitantes.unshift(visitante);
+                        eventos[idx].totalVisitantes = eventos[idx].visitantes.length;
+                        parsed.eventos = eventos;
+                        localStorage.setItem('sge_v9', JSON.stringify(parsed));
+                    }
+                }
+            } catch (e) {
+                console.error('Erro ao salvar visitante', e);
+            }
+
+            document.getElementById('sucessoMsg').style.display = 'block';
+            document.querySelector('.btn').disabled = true;
+            setTimeout(() => {
+                window.location.href = REDIRECT_URL;
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
