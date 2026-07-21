@@ -3,10 +3,18 @@ const SUPABASE_URL = 'https://uojdbrjxeapzfrulcipr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ZGrmIWRubt_0MgPi_a4mgQ_RNYdNflM';
 
 let supabaseClient = null;
+
 try {
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
     console.log("Supabase iniciado:", supabaseClient);
+
 } catch (e) {
+    console.error("Erro ao iniciar Supabase:", e);
+}
+
 let sessao = null;
 
 // ---------- Conversão camelCase ↔ snake_case ----------
