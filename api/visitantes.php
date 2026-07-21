@@ -38,7 +38,6 @@ if ($method === 'POST') {
 
 // GET: listar visitantes de um evento (requer sessão)
 require_once 'verificar_sessao.php';
-<?php
 session_start();
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     $headers = getallheaders();
