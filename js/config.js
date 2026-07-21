@@ -17,31 +17,32 @@ let FN = [];
 const DADOS_INICIAIS = {
     config: CFG,
     eventos: [
-        {
-            id: 1,
-            nome: 'Feira de Tecnologia 2026',
-            cliente: 'TechCorp',
-            dataInicio: '2026-07-07',
-            dataFim: '2026-07-10',
-            local: 'Centro de Convenções SP',
-            patrocinadores: 'TechCorp • InovaSoft',
-            patrocinadoresLogos: [],
-            logoUrl: '',
-            valorCobrado: 8500,
-            custoOperacional: 3200,
-            valorPago: 5000,
-            vencimento: '2026-06-20',
-            formaPagamento: 'pix',
-            parcelas: 1,
-            observacoes: '',
-            statusManual: '',
-            clienteUsuario: 'techcorp',
-            clienteSenha: '123456',
-            visitantes: [],
-            totalVisitantes: 0,
-            tempoMedio: 42,
-            pctMobile: 87
-        }
+       {
+    id: 1,
+    nome: 'Feira de Tecnologia 2026',
+    cliente: 'TechCorp',
+    dataInicio: '2026-07-07',
+    dataFim: '2026-07-10',
+    local: 'Centro de Convenções SP',
+    patrocinadores: 'TechCorp • InovaSoft',
+    patrocinadoresLogos: [],
+    logoUrl: '',
+    valorCobrado: 8500,
+    custoOperacional: 3200,
+    valorPago: 5000,
+    vencimento: '2026-06-20',
+    formaPagamento: 'pix',
+    parcelas: 1,
+    observacoes: '',
+    statusManual: '',
+    clienteUsuario: 'techcorp',
+    clienteSenha: '123456',
+    token: 'KA92JH82S',   // Token fixo para exemplo
+    visitantes: [],
+    totalVisitantes: 0,
+    tempoMedio: 42,
+    pctMobile: 87
+}
     ],
     funcionarios: [
         {
