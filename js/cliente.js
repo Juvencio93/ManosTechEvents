@@ -55,7 +55,7 @@ function salvarConfiguracao() {
     }
     if (configLogoTemp !== null && configLogoTemp !== undefined) CFG.logoUrl = configLogoTemp;
     atualizarInterfaceUsuario();
-    salvarDados();
+    
     toast('✅ Configurações salvas!');
 }
 
