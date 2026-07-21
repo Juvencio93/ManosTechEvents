@@ -1,4 +1,5 @@
-// CRUD de Eventos
+// CRUD de Eventos (adaptado para API)
+
 function preencherSelectsEventos() {
     const opcoes = EV.map(e => `<option value="${e.id}">${e.nome} - ${e.cliente} (${calcularStatusEvento(e)})</option>`).join('');
     ['eventoSelect', 'eventoSelectFinanceiro'].forEach(id => {
@@ -104,7 +105,7 @@ function renderizarPatrocinadores() {
     ).join('') + '<div class="patrocinador-add" onclick="document.getElementById(\'patrocinadorUpload\').click()">+</div>';
 }
 
-function salvarEvento() {
+async function salvarEvento() {
     if (!usuarioLogado?.permissoes?.e) { toast('🔒 Sem permissão!'); return; }
     esconderDicas();
     let temErro = false;
@@ -150,62 +151,65 @@ function salvarEvento() {
         parcelas: parseInt(document.getElementById('eventoParcelas').value) || 1
     };
 
-    if (eventoEmEdicao) {
-        const ev = EV.find(e => e.id === eventoEmEdicao);
-        Object.assign(ev, dados);
-        ev.logoUrl = logoTemporario || ev.logoUrl;
-        toast('✅ Evento atualizado!');
-    } else {
-        const novoId = Math.max(...EV.map(e => e.id), 0) + 1;
-        EV.push({
-            id: novoId,
-            ...dados,
-            logoUrl: logoTemporario || '',
-            visitantes: [],
-            totalVisitantes: 0,
-            tempoMedio: 0,
-            pctMobile: 0,
-            statusManual: ''
-        });
-        toast('✅ Evento criado!');
-        eventoSelecionadoId = novoId;
-        const link = gerarLinkPortal(EV[EV.length-1]);
-        document.getElementById('qrModalLink').textContent = link;
-        gerarQRCode('qrModalContainer', link);
-        abrirModal('qrModal');
-    }
+    try {
+        if (eventoEmEdicao) {
+            await apiAtualizarEvento(eventoEmEdicao, dados);
+            toast('✅ Evento atualizado!');
+        } else {
+            const resp = await apiCriarEvento(dados);
+            toast('✅ Evento criado!');
+            eventoSelecionadoId = resp.id;
+            const novoEvento = EV.find(e => e.id === resp.id);
+            if (novoEvento) {
+                const link = gerarLinkPortal(novoEvento);
+                document.getElementById('qrModalLink').textContent = link;
+                gerarQRCode('qrModalContainer', link);
+                abrirModal('qrModal');
+            }
+        }
 
-    fecharModal('eventoModal');
-    preencherSelectsEventos();
-    renderizarEventos();
-    salvarDados();
-    if (eventoSelecionadoId) {
-    const select = document.getElementById('eventoSelect');
-    if (select) {
-        select.value = eventoSelecionadoId;
-        selecionarEvento();
+        fecharModal('eventoModal');
+        EV = await apiListarEventos(); // Recarrega da API (ou localStorage)
+        preencherSelectsEventos();
+        renderizarEventos();
+        salvarDados(); // fallback local
+        if (eventoSelecionadoId) {
+            const select = document.getElementById('eventoSelect');
+            if (select) {
+                select.value = eventoSelecionadoId;
+                selecionarEvento();
+            }
+        }
+        atualizarResumoFinanceiroGeral();
+    } catch (e) {
+        toast('❌ Erro ao salvar evento: ' + e.message);
     }
-}
-    atualizarResumoFinanceiroGeral();
     eventoEmEdicao = null;
     logoTemporario = null;
     patrocinadoresTemp = [];
 }
 
-function excluirEvento(id) {
+async function excluirEvento(id) {
     if (!usuarioLogado?.permissoes?.x) { toast('🔒 Sem permissão!'); return; }
-    confirmarAcao('Deseja realmente excluir este evento?', () => {
-        EV = EV.filter(e => e.id !== id);
-        if (eventoSelecionadoId === id) {
-            eventoSelecionadoId = null;
-            document.getElementById('dashboardContent').style.display = 'none';
-            document.getElementById('dashboardEmpty').style.display = 'block';
+    confirmarAcao('Deseja realmente excluir este evento?', async () => {
+        try {
+            await apiExcluirEvento(id);
+            EV = EV.filter(e => e.id !== id);
+            if (eventoSelecionadoId === id) {
+                eventoSelecionadoId = null;
+                const dashContent = document.getElementById('dashboardContent');
+                const dashEmpty = document.getElementById('dashboardEmpty');
+                if (dashContent) dashContent.style.display = 'none';
+                if (dashEmpty) dashEmpty.style.display = 'block';
+            }
+            preencherSelectsEventos();
+            renderizarEventos();
+            atualizarResumoFinanceiroGeral();
+            salvarDados();
+            toast('🗑️ Evento excluído!');
+        } catch (e) {
+            toast('❌ Erro ao excluir evento: ' + e.message);
         }
-        preencherSelectsEventos();
-        renderizarEventos();
-        atualizarResumoFinanceiroGeral();
-        salvarDados();
-        toast('🗑️ Evento excluído!');
     });
 }
 
@@ -216,10 +220,8 @@ function verEvento(id) {
         selecionarEvento();
         showPage('dashboard');
     } else {
-        // Se o select não existe ainda (página dashboard não carregada), apenas redireciona
         eventoSelecionadoId = id;
         showPage('dashboard');
-        // A página dashboard, ao carregar, vai preencher o select e então selecionar
     }
 }
 
@@ -240,7 +242,7 @@ function renderizarEventos() {
             <td>${escapeHtml(e.cliente)}</td>
             <td>${formatarData(e.dataInicio)} a ${formatarData(e.dataFim)}</td>
             <td>${escapeHtml(e.local)}</td>
-            <td>${e.totalVisitantes}</td>
+            <td>${e.totalVisitantes || 0}</td>
             <td>${valor}</td>
             <td><span class="badge ${statusBadgeClass(status)}">${status}</span></td>
             <td>${acoes}</td>
