@@ -23,13 +23,13 @@ $stmt->execute([$email]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if ($user && password_verify($senha, $user['senha_hash'])) {
-    $_SESSION['usuario'] = [
-        'id' => $user['id'],
-        'nome' => $user['nome'],
-        'email' => $user['email'],
-        'nivel' => $user['nivel'],
-        'permissoes' => json_decode($user['permissoes'], true)
-    ];
+    $_SESSION['usuario'] = [...];
+    // Gerar CSRF token
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    echo json_encode(['sucesso' => true, 'usuario' => $_SESSION['usuario'], 'csrf_token' => $_SESSION['csrf_token']]);
+}
     echo json_encode(['sucesso' => true, 'usuario' => $_SESSION['usuario']]);
 } else {
     http_response_code(401);
