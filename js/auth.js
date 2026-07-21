@@ -24,13 +24,11 @@ function entrarSistema() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
     document.getElementById('menuToggle').style.display = 'flex';
+    // Apenas atualiza elementos globais (sidebar, logo)
     atualizarInterfaceUsuario();
-    preencherSelectsEventos();
-    renderizarEventos();
-    renderizarFuncionarios();
     aplicarPermissoes();
-    atualizarResumoFinanceiroGeral();
     salvarDados();
+    // O carregamento da página inicial e preenchimento de selects será feito por showPage('inicio')
 }
 
 function sairDoSistema() {
@@ -81,8 +79,9 @@ function confirmarSaidaCliente() {
     });
 }
 
+// Atualiza apenas elementos fixos (sidebar, logo)
 function atualizarInterfaceUsuario() {
-    // Sidebar e título de login
+    // Sidebar
     const sidebarEmpresa = document.getElementById('sidebarEmpresaNome');
     if (sidebarEmpresa) sidebarEmpresa.textContent = CFG.empresaNome;
     const loginEmpresa = document.getElementById('loginEmpresaNome');
@@ -98,21 +97,22 @@ function atualizarInterfaceUsuario() {
     if (sidebarLogoImg) sidebarLogoImg.innerHTML = logo;
     const loginLogoPreview = document.getElementById('loginLogoPreview');
     if (loginLogoPreview) loginLogoPreview.innerHTML = logo;
+}
 
-    // Campos de configuração (podem não estar presentes)
-    const configEmpresaNome = document.getElementById('configEmpresaNome');
-    if (configEmpresaNome) configEmpresaNome.value = CFG.empresaNome;
-    const configEmail = document.getElementById('configEmail');
-    if (configEmail) configEmail.value = CFG.email;
-    const configTelefone = document.getElementById('configTelefoneSuporte');
-    if (configTelefone) configTelefone.value = CFG.telefoneSuporte;
-    const configAdminNome = document.getElementById('configAdminNome');
-    if (configAdminNome) configAdminNome.value = CFG.adminNome;
-    const configAdminEmail = document.getElementById('configAdminEmail');
-    if (configAdminEmail) configAdminEmail.value = CFG.adminEmail;
-    const configAdminSenha = document.getElementById('configAdminSenha');
-    if (configAdminSenha) configAdminSenha.value = '';
-    
+// Preenche campos da página de configuração – chamada apenas quando a página config é carregada
+function preencherCamposConfiguracao() {
+    const elNome = document.getElementById('configEmpresaNome');
+    if (elNome) elNome.value = CFG.empresaNome;
+    const elEmail = document.getElementById('configEmail');
+    if (elEmail) elEmail.value = CFG.email;
+    const elTelefone = document.getElementById('configTelefoneSuporte');
+    if (elTelefone) elTelefone.value = CFG.telefoneSuporte;
+    const elAdminNome = document.getElementById('configAdminNome');
+    if (elAdminNome) elAdminNome.value = CFG.adminNome;
+    const elAdminEmail = document.getElementById('configAdminEmail');
+    if (elAdminEmail) elAdminEmail.value = CFG.adminEmail;
+    const elAdminSenha = document.getElementById('configAdminSenha');
+    if (elAdminSenha) elAdminSenha.value = '';
     configLogoTemp = CFG.logoUrl;
     atualizarPreviewLogoConfig();
 }
