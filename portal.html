@@ -17,7 +17,7 @@
         .evento-nome { font-size: 24px; font-weight: 700; margin-bottom: 8px; background: linear-gradient(135deg, var(--azul), var(--green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .input-group { margin-bottom: 20px; text-align: left; }
         .input-group label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #8899b0; margin-bottom: 6px; display: block; }
-        .input-group input {
+        .input-group input, .input-group select {
             width: 100%;
             padding: 14px 16px;
             background: rgba(0,0,0,0.3);
@@ -29,7 +29,18 @@
             transition: 0.3s;
             font-family: inherit;
         }
-        .input-group input:focus { border-color: var(--azul); box-shadow: 0 0 20px rgba(77,168,218,0.15); }
+        .input-group input:focus, .input-group select:focus { border-color: var(--azul); box-shadow: 0 0 20px rgba(77,168,218,0.15); }
+        .input-group select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238899b0' d='M6 8.825L1.175 4 2.238 2.938 6 6.7 9.763 2.937 10.825 4z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 12px;
+            cursor: pointer;
+        }
+        .input-group select option { background: #1a1f2e; color: white; }
         .phone-row { display: flex; gap: 8px; }
         .phone-row .custom-select-wrapper { position: relative; width: 130px; flex-shrink: 0; }
         .phone-row .custom-select {
@@ -55,7 +66,7 @@
             position: absolute;
             top: 100%;
             left: 0;
-            width: 300px;                 /* largura expandida */
+            width: 300px;
             background: #1a1f2e;
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 12px;
@@ -126,6 +137,43 @@
     </div>
 
     <script>
+        const REDIRECT_URL = 'https://www.google.com';
+        const params = new URLSearchParams(window.location.search);
+        const eventoToken = params.get('token');   // Agora usa token
+
+        function carregarEvento() {
+            if (!eventoToken) {
+                document.getElementById('nomeEvento').textContent = 'Evento não especificado';
+                return null;
+            }
+            try {
+                const dados = localStorage.getItem('sge_v9');
+                if (dados) {
+                    const parsed = JSON.parse(dados);
+                    const eventos = parsed.eventos || [];
+                    return eventos.find(ev => ev.token === eventoToken);
+                }
+            } catch (e) {}
+            return null;
+        }
+
+        const evento = carregarEvento();
+
+        if (evento) {
+            document.getElementById('nomeEvento').textContent = evento.nome;
+            if (evento.logoUrl) {
+                document.getElementById('logoEvento').innerHTML = `<img src="${evento.logoUrl}" alt="Logo">`;
+            }
+            const patrocinadoresContainer = document.getElementById('patrocinadoresContainer');
+            if (evento.patrocinadoresLogos && evento.patrocinadoresLogos.length > 0) {
+                patrocinadoresContainer.innerHTML = evento.patrocinadoresLogos.map(url => `<img src="${url}" alt="Patrocinador">`).join('');
+            } else {
+                patrocinadoresContainer.style.display = 'none';
+            }
+        } else {
+            document.getElementById('nomeEvento').textContent = 'Evento não encontrado';
+        }
+
         // Lista de países (label: exibição resumida, name: nome completo)
         const countries = [
             { code: '93', label: '🇦🇫 +93', name: '🇦🇫 Afghanistan (افغانستان)+93' },
@@ -407,44 +455,6 @@
 
         renderOptions();
 
-        // ---------- Restante do código ----------
-        const REDIRECT_URL = 'https://www.google.com';
-   const params = new URLSearchParams(window.location.search);
-const eventoToken = params.get('token');   // Agora usa token
-
-function carregarEvento() {
-    if (!eventoToken) {
-        document.getElementById('nomeEvento').textContent = 'Evento não especificado';
-        return null;
-    }
-    try {
-        const dados = localStorage.getItem('sge_v9');
-        if (dados) {
-            const parsed = JSON.parse(dados);
-            const eventos = parsed.eventos || [];
-            return eventos.find(ev => ev.token === eventoToken);
-        }
-    } catch (e) {}
-    return null;
-}
-
-        const evento = carregarEvento();
-
-        if (evento) {
-            document.getElementById('nomeEvento').textContent = evento.nome;
-            if (evento.logoUrl) {
-                document.getElementById('logoEvento').innerHTML = `<img src="${evento.logoUrl}" alt="Logo">`;
-            }
-            const patrocinadoresContainer = document.getElementById('patrocinadoresContainer');
-            if (evento.patrocinadoresLogos && evento.patrocinadoresLogos.length > 0) {
-                patrocinadoresContainer.innerHTML = evento.patrocinadoresLogos.map(url => `<img src="${url}" alt="Patrocinador">`).join('');
-            } else {
-                patrocinadoresContainer.style.display = 'none';
-            }
-        } else {
-            document.getElementById('nomeEvento').textContent = 'Evento não encontrado';
-        }
-
         function escapeHtml(text) {
             const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
             return text.replace(/[&<>"']/g, m => map[m]);
@@ -555,7 +565,7 @@ function carregarEvento() {
                 if (dados) {
                     const parsed = JSON.parse(dados);
                     const eventos = parsed.eventos || [];
-                    const idx = eventos.findIndex(ev => ev.id === eventoId);
+                    const idx = eventos.findIndex(ev => ev.token === eventoToken);
                     if (idx !== -1) {
                         eventos[idx].visitantes.unshift(visitante);
                         eventos[idx].totalVisitantes = eventos[idx].visitantes.length;
@@ -573,6 +583,8 @@ function carregarEvento() {
                 window.location.href = REDIRECT_URL;
             }, 2500);
         }
+
+        atualizarMascara('55');
     </script>
 </body>
 </html>
