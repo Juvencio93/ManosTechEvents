@@ -25,7 +25,7 @@ function formatWhatsApp(input) {
     input.value = valor;
 }
 
-function simularConexao() {
+async function simularConexao() {
     const nome = document.getElementById('portalNome').value.trim();
     const email = document.getElementById('portalEmail').value.trim();
     const whatsapp = document.getElementById('portalWhatsApp').value.trim();
@@ -39,24 +39,38 @@ function simularConexao() {
         document.getElementById('lgpdError').style.display = 'block';
         return;
     }
+
     const evento = EV.find(ev => ev.id === eventoSelecionadoId) || eventoClienteAtual;
-    if (evento) {
-        const agora = new Date();
-        evento.visitantes.unshift({
-            nome: escapeHtml(nome),
-            email: email,
-            whatsapp: whatsapp || '(não informado)',
-            acesso: agora.toLocaleString('pt-BR'),
-            hora: agora.getHours(),
-            dispositivo: ['iPhone 15 Pro', 'Samsung S24', 'MacBook Pro'][Math.floor(Math.random() * 3)],
-            ip: '192.168.1.' + Math.floor(Math.random() * 255)
-        });
-        evento.totalVisitantes = evento.visitantes.length;
-        salvarDados();
-        if (eventoSelecionadoId === evento.id) selecionarEvento();
-        if (eventoClienteAtual?.id === evento.id) abrirAreaClienteEvento(evento);
-        renderizarEventos();
+    if (!evento) {
+        alert('Evento não encontrado.');
+        return;
     }
+
+    const dados = {
+        nome: escapeHtml(nome),
+        email: email,
+        whatsapp: whatsapp || '(não informado)',
+        acesso: new Date().toLocaleString('pt-BR'),
+        hora: new Date().getHours(),
+        dispositivo: navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop',
+        ip: '0.0.0.0'
+    };
+
+    // Tenta registrar via API; se falhar, o fallback em api.js já salva localmente
+    await apiRegistrarVisitante(evento.token, dados);
+    
+    // Atualiza a lista local de visitantes (caso o fallback tenha sido usado)
+    const idx = EV.findIndex(ev => ev.id === evento.id);
+    if (idx !== -1) {
+        EV[idx].visitantes.unshift(dados);
+        EV[idx].totalVisitantes = EV[idx].visitantes.length;
+    }
+    
+    salvarDados();
+    if (eventoSelecionadoId === evento.id) selecionarEvento();
+    if (eventoClienteAtual?.id === evento.id) abrirAreaClienteEvento(evento);
+    renderizarEventos();
+    
     fecharModal('portalModal');
     toast('✅ Conectado!');
 }
