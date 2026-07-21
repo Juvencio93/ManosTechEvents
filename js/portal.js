@@ -69,15 +69,19 @@ async function simularConexao() {
         return;
     }
 
-    const dados = {
-        nome: escapeHtml(nome),
-        email: email,
-        whatsapp: whatsapp || '(não informado)',
-        acesso: new Date().toLocaleString('pt-BR'),
-        hora: new Date().toISOString(),
-        dispositivo: navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop',
-        ip: '0.0.0.0'
-    };
+    const agora = new Date();
+
+const dados = {
+    nome: escapeHtml(nome),
+    email: email,
+    whatsapp: whatsapp || '(não informado)',
+
+    acesso: agora.toISOString(),
+    hora: agora.getHours(),
+
+    dispositivo: navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop',
+    ip: '0.0.0.0'
+};
 
     // Tenta registrar via API; se falhar, o fallback em api.js já salva localmente
     await apiRegistrarVisitante(evento.token, dados);
