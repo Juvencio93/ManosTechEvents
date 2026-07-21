@@ -38,6 +38,17 @@ if ($method === 'POST') {
 
 // GET: listar visitantes de um evento (requer sessão)
 require_once 'verificar_sessao.php';
+<?php
+session_start();
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    $headers = getallheaders();
+    $token = $headers['X-CSRF-Token'] ?? '';
+    if (!isset($_SESSION['csrf_token']) || $token !== $_SESSION['csrf_token']) {
+        http_response_code(403);
+        echo json_encode(['erro' => 'Token CSRF inválido']);
+        exit;
+    }
+}
 $evento_id = $_GET['evento_id'] ?? null;
 if (!$evento_id) {
     http_response_code(400);
