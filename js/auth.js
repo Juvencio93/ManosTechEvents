@@ -5,11 +5,10 @@ async function fazerLogin() {
     try {
         const user = await apiLogin(email, senha);
         usuarioLogado = user;
-        // Carrega eventos da API (ou localStorage)
         EV = await apiListarEventos();
         entrarSistema();
     } catch (e) {
-        alert(e.message);
+        alert('❌ ' + e.message);
     }
 }
 
