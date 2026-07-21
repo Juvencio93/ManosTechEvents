@@ -207,9 +207,17 @@ function excluirEvento(id) {
 }
 
 function verEvento(id) {
-    document.getElementById('eventoSelect').value = id;
-    selecionarEvento();
-    showPage('dashboard');
+    const select = document.getElementById('eventoSelect');
+    if (select) {
+        select.value = id;
+        selecionarEvento();
+        showPage('dashboard');
+    } else {
+        // Se o select não existe ainda (página dashboard não carregada), apenas redireciona
+        eventoSelecionadoId = id;
+        showPage('dashboard');
+        // A página dashboard, ao carregar, vai preencher o select e então selecionar
+    }
 }
 
 function renderizarEventos() {
