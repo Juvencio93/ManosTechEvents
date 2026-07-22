@@ -1,4 +1,4 @@
-// Autenticação e controle de acesso (com log extra no login do cliente)
+// Autenticação e controle de acesso
 
 async function fazerLogin() {
     const email = document.getElementById('loginEmail').value.trim();
@@ -56,10 +56,10 @@ function fazerLoginCliente() {
     const senha = document.getElementById('clienteSenha').value.trim();
     const evento = EV.find(ev => ev.clienteUsuario === usuario && ev.clienteSenha === senha);
     if (evento) {
-        console.log('✅ Login do cliente OK. Evento:', evento.nome);
+        console.log('✅ Login do cliente OK. Chamando abrirAreaClienteEvento...');
         document.getElementById('loginClienteScreen').style.display = 'none';
         document.getElementById('clienteDashboard').style.display = 'block';
-        abrirAreaClienteEvento(evento);  // <-- chamada obrigatória
+        abrirAreaClienteEvento(evento);  // <-- essencial
     } else {
         alert('❌ Usuário ou senha inválidos!');
     }
