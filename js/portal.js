@@ -1,4 +1,4 @@
-// Lista de países (compartilhada com portal standalone)
+// Lista de países (compartilhada)
 const countries = [
     { code: '93', label: '🇦🇫 +93', name: '🇦🇫 Afghanistan (افغانستان)+93' },
     { code: '355', label: '🇦🇱 +355', name: '🇦🇱 Albania (Shqipëri)+355' },
@@ -264,7 +264,6 @@ function renderOptionsModal() {
             document.getElementById('customSelectModal').textContent = label;
             container.classList.remove('active');
             renderOptionsModal();
-            // Limpa o campo de WhatsApp
             document.getElementById('portalWhatsApp').value = '';
         });
     });
@@ -287,7 +286,7 @@ function abrirPortalCat(id) {
         }
     }
 
-    // Carrossel de patrocinadores
+    // Patrocinadores
     const faixa = document.getElementById('carrosselFaixa');
     if (faixa) {
         const logos = Array.isArray(evento.patrocinadoresLogos) ? evento.patrocinadoresLogos : [];
@@ -304,21 +303,19 @@ function abrirPortalCat(id) {
         }
     }
 
-    // Seletor de país (modal)
+    // Resetar o seletor de país
     selectedCountryModal = countries.find(c => c.code === '55');
     document.getElementById('customSelectModal').textContent = selectedCountryModal.label;
     renderOptionsModal();
 
-    // Toggle do dropdown
-    document.getElementById('customSelectModal').onclick = function(e) {
+    // Configurar o toggle do dropdown (uma única vez)
+    const selectEl = document.getElementById('customSelectModal');
+    selectEl.onclick = function(e) {
         e.stopPropagation();
         document.getElementById('customOptionsModal').classList.toggle('active');
     };
-    document.addEventListener('click', function() {
-        document.getElementById('customOptionsModal').classList.remove('active');
-    }, { once: true });
 
-    // Limpa campos
+    // Limpar campos
     ['portalNome','portalEmail','portalWhatsApp'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
