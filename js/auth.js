@@ -1,13 +1,17 @@
 // Autenticação (Supabase puro)
 
 async function fazerLogin() {
-    const emailEl = document.getElementById('loginEmail');
-    const senhaEl = document.getElementById('loginPassword');
-
-    if (!emailEl || !senhaEl) {
-        alert('❌ Erro interno: campos de login não encontrados.');
-        return;
+    const email = document.getElementById('loginEmail').value.trim();
+    const senha = document.getElementById('loginPassword').value.trim();
+    try {
+        const user = await apiLogin(email, senha);   // senha é enviada como password pelo api.js
+        usuarioLogado = user;
+        EV = await apiListarEventos();
+        entrarSistema();
+    } catch (e) {
+        alert('❌ ' + e.message);
     }
+}
 
     const email = emailEl.value.trim();
     const senha = senhaEl.value.trim();
