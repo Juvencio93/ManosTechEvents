@@ -1,4 +1,4 @@
-// CRUD de Eventos (Supabase) – logoUrl incluído no salvamento
+// CRUD de Eventos (Supabase) – com ocultação de campos financeiros
 
 function preencherSelectsEventos() {
     const opcoes = EV.map(e => `<option value="${e.id}">${e.nome} - ${e.cliente} (${calcularStatusEvento(e)})</option>`).join('');
@@ -15,11 +15,13 @@ function abrirModalEvento() {
     eventoEmEdicao = null;
     document.getElementById('eventoModalTitle').textContent = '📅 Novo Evento';
     limparFormularioEvento();
-    // Esconde a seção financeira se o usuário não tiver permissão
-const financeiroFields = document.getElementById('financeiroFields');
-if (financeiroFields) {
-    financeiroFields.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
-}
+    
+    // Ocultar campos financeiros se sem permissão
+    const financeiroFields = document.getElementById('financeiroFields');
+    if (financeiroFields) {
+        financeiroFields.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
+    }
+    
     abrirModal('eventoModal');
 }
 
@@ -57,11 +59,13 @@ function editarEvento(id) {
 
     renderizarPatrocinadores();
     esconderDicas();
-    // Esconde a seção financeira se o usuário não tiver permissão
-const financeiroFields = document.getElementById('financeiroFields');
-if (financeiroFields) {
-    financeiroFields.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
-}
+    
+    // Ocultar campos financeiros se sem permissão
+    const financeiroFields = document.getElementById('financeiroFields');
+    if (financeiroFields) {
+        financeiroFields.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
+    }
+    
     abrirModal('eventoModal');
 }
 
@@ -167,7 +171,7 @@ async function salvarEvento() {
         clienteSenha: document.getElementById('eventoClienteSenha').value.trim(),
         patrocinadores: document.getElementById('eventoPatrocinadores').value.trim(),
         patrocinadoresLogos: logosLimpos,
-        logoUrl: logoTemporario || null,   // <-- CORREÇÃO AQUI
+        logoUrl: logoTemporario || null,
         observacoes: document.getElementById('eventoObservacoes').value.trim(),
         valorCobrado: parseFloat(document.getElementById('eventoValorCobrado').value) || 0,
         custoOperacional: parseFloat(document.getElementById('eventoCustoOperacional').value) || 0,
@@ -176,7 +180,7 @@ async function salvarEvento() {
         formaPagamento: document.getElementById('eventoFormaPagamento').value,
         parcelas: parseInt(document.getElementById('eventoParcelas').value) || 1
     };
-    console.log('🖼️ logoTemporario:', logoTemporario);
+
     console.log('Dados a serem salvos (camelCase):', JSON.stringify(dados, null, 2));
 
     try {
