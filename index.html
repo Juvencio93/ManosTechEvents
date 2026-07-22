@@ -5,13 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SGE | Manos Tech</title>
     <link rel="stylesheet" href="assets/css/admin.css">
+    <!-- Todas as telas começam ocultas para evitar flash -->
+    <style>
+        #loginScreen,
+        #loginClienteScreen,
+        #dashboard,
+        #clienteDashboard {
+            display: none !important;
+        }
+    </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
-    <button class="menu-toggle" id="menuToggle" onclick="toggleMenu()" aria-label="Abrir menu" style="display: none;">☰</button>
+    <button class="menu-toggle" id="menuToggle" onclick="toggleMenu()" aria-label="Abrir menu">☰</button>
 
     <!-- LOGIN ADMIN -->
     <div class="login-screen" id="loginScreen">
@@ -27,7 +36,7 @@
     </div>
 
     <!-- LOGIN CLIENTE -->
-    <div class="login-screen" id="loginClienteScreen" style="display:none;">
+    <div class="login-screen" id="loginClienteScreen">
         <div class="login-card">
             <div class="login-logo" id="clienteLoginLogo">🏢</div>
             <div class="login-title" id="clienteLoginEmpresaNome" style="color:#6c5ce7;">Manos Tech</div>
@@ -150,7 +159,7 @@
     </div>
 
     <!-- ÁREA DO CLIENTE -->
-    <div class="dashboard" id="clienteDashboard" style="display:none;">
+    <div class="dashboard" id="clienteDashboard">
         <div style="margin-left:0;padding:34px;min-height:100vh;background:var(--bg);">
             <div class="cliente-header-card" style="padding:22px 30px;display:flex;align-items:center;gap:16px;margin-bottom:26px;border-radius:var(--r);">
                 <div class="logo-preview" style="width:60px;height:60px;" id="clienteLogoHeader">🎪</div>
@@ -189,19 +198,18 @@
         </div>
     </div>
 
-    <!-- Scripts JS modularizados -->
-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/api.js?v=2"></script>     <!-- API primeiro -->
-<script src="js/config.js?v=2"></script>  <!-- Config depois -->
-<script src="js/utils.js?v=2"></script>
-<script src="js/auth.js?v=2"></script>
-<script src="js/eventos.js?v=2"></script>
-<script src="js/dashboard.js?v=2"></script>
-<script src="js/financeiro.js?v=2"></script>
-<script src="js/relatorios.js?v=2"></script>
-<script src="js/funcionarios.js?v=2"></script>
-<script src="js/portal.js?v=2"></script>
-<script src="js/cliente.js?v=2"></script>
-<script src="js/app.js?v=2"></script>
+    <!-- Scripts JS modularizados (ordem correta) -->
+    <script src="js/api.js?v=2"></script>
+    <script src="js/config.js?v=2"></script>
+    <script src="js/utils.js?v=2"></script>
+    <script src="js/auth.js?v=2"></script>
+    <script src="js/eventos.js?v=2"></script>
+    <script src="js/dashboard.js?v=2"></script>
+    <script src="js/financeiro.js?v=2"></script>
+    <script src="js/relatorios.js?v=2"></script>
+    <script src="js/funcionarios.js?v=2"></script>
+    <script src="js/portal.js?v=2"></script>
+    <script src="js/cliente.js?v=2"></script>
+    <script src="js/app.js?v=2"></script>
 </body>
 </html>
