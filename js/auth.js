@@ -25,12 +25,13 @@ function entrarSistema() {
 async function sairDoSistema() {
     try { await apiLogout(); } catch (e) {}
     sessao = null;
+    usuarioLogado = null;
+    eventoSelecionadoId = null;
     document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('clienteDashboard').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('menuToggle').style.display = 'none';
     closeMenu();
-    usuarioLogado = null;
-    eventoSelecionadoId = null;
 }
 
 function confirmarSaidaSistema() {
