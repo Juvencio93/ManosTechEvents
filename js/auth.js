@@ -55,7 +55,7 @@ async function fazerLoginCliente() {
     const usuario = document.getElementById('clienteUsuario').value.trim();
     const senha = document.getElementById('clienteSenha').value.trim();
     
-    // Se EV estiver vazio, carrega eventos do Supabase primeiro
+    // Garante que a lista de eventos esteja carregada
     if (!EV || EV.length === 0) {
         try {
             EV = await apiListarEventos();
