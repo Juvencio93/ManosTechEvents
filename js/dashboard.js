@@ -33,6 +33,14 @@ async function selecionarEvento() {
 
     const total = visitantes.length;
     document.getElementById('totalVisitantes').textContent = total;
+    let conectados = 0;
+try {
+    conectados = await mikrotikAtivos();
+} catch (e) {
+    console.warn('Usando estimativa para conectados');
+    conectados = total > 0 ? Math.max(1, Math.floor(total * 0.3)) : 0;
+}
+document.getElementById('liveConnected').textContent = conectados;
     const conectados = total > 0 ? Math.max(1, Math.floor(total * 0.3)) : 0;
     document.getElementById('liveConnected').textContent = conectados;
     document.getElementById('tempoMedio').textContent = (evento.tempoMedio || 0) + 'min';
