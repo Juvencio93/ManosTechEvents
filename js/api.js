@@ -1,4 +1,4 @@
-// api.js – Comunicação exclusiva com Supabase (com serialização de arrays e atualização de totalVisitantes)
+// api.js – Supabase (totalVisitantes real, retorna total após registro)
 const SUPABASE_URL = 'https://uojdbrjxeapzfrulcipr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ZGrmIWRubt_0MgPi_a4mgQ_RNYdNflM';
 
@@ -7,7 +7,6 @@ window.__SUPABASE__ = supabaseClient;
 
 let sessao = null;
 
-// ---------- Autenticação ----------
 async function apiLogin(email, password) {
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
@@ -26,7 +25,6 @@ async function apiLogout() {
     sessao = null;
 }
 
-// ---------- Eventos ----------
 async function apiListarEventos() {
     const { data, error } = await supabaseClient
         .from('eventos')
@@ -35,11 +33,10 @@ async function apiListarEventos() {
     if (error) throw error;
     return data.map(e => {
         const evento = toCamelCase(e);
-        // Desserializa patrocinadores_logos se for string JSON
         if (typeof evento.patrocinadoresLogos === 'string') {
             try { evento.patrocinadoresLogos = JSON.parse(evento.patrocinadoresLogos); } catch (_) { evento.patrocinadoresLogos = []; }
         }
-        evento.visitantes = []; // será preenchido sob demanda
+        evento.visitantes = []; // preenchido sob demanda
         return evento;
     });
 }
@@ -47,21 +44,13 @@ async function apiListarEventos() {
 async function apiCriarEvento(evento) {
     evento.token = 'tok_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
     const dadosSnake = toSnakeCase(evento);
-    console.log('📤 Enviando ao Supabase (snake_case):', JSON.stringify(dadosSnake, null, 2));
-
     const { data, error } = await supabaseClient
         .from('eventos')
         .insert([dadosSnake])
         .select('*')
         .single();
-
-    console.log('📥 Resposta do Supabase:', { data, error });
     if (error) throw error;
-    const result = toCamelCase(data);
-    if (typeof result.patrocinadoresLogos === 'string') {
-        try { result.patrocinadoresLogos = JSON.parse(result.patrocinadoresLogos); } catch (_) { result.patrocinadoresLogos = []; }
-    }
-    return result;
+    return toCamelCase(data);
 }
 
 async function apiAtualizarEvento(id, evento) {
@@ -77,7 +66,6 @@ async function apiExcluirEvento(id) {
     if (error) throw error;
 }
 
-// ---------- Visitantes ----------
 async function apiRegistrarVisitante(token, dados) {
     const { data: evento } = await supabaseClient
         .from('eventos')
@@ -90,8 +78,10 @@ async function apiRegistrarVisitante(token, dados) {
         .from('visitantes')
         .insert([toSnakeCase(dados)]);
     if (error) throw error;
-    // Atualiza o totalVisitantes no evento
-    await atualizarTotalVisitantes(evento.id);
+
+    // Atualiza o total e retorna o novo total
+    const total = await atualizarTotalVisitantes(evento.id);
+    return { totalVisitantes: total };
 }
 
 async function apiListarVisitantes(eventoId) {
@@ -104,7 +94,6 @@ async function apiListarVisitantes(eventoId) {
     return data.map(toCamelCase);
 }
 
-// ---------- Função auxiliar para atualizar totalVisitantes ----------
 async function atualizarTotalVisitantes(eventoId) {
     try {
         const { count, error } = await supabaseClient
@@ -116,20 +105,20 @@ async function atualizarTotalVisitantes(eventoId) {
                 .from('eventos')
                 .update({ totalVisitantes: count })
                 .eq('id', eventoId);
+            return count;
         }
     } catch (e) {
-        console.warn('Não foi possível atualizar totalVisitantes:', e);
+        console.warn('Falha ao atualizar totalVisitantes:', e);
     }
+    return null;
 }
 
-// ---------- Helpers ----------
 function toSnakeCase(obj) {
     const novo = {};
     for (const chave in obj) {
         if (obj[chave] === undefined) continue;
         let snake = chave.replace(/[A-Z]/g, letra => '_' + letra.toLowerCase());
         let valor = obj[chave];
-        // Se for array, serializa como JSON string (para colunas text no Supabase)
         if (Array.isArray(valor)) {
             valor = JSON.stringify(valor);
         }
