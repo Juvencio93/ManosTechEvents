@@ -1,4 +1,4 @@
-// config.js – Estado global com restauração de sessão e exibição imediata
+// config.js – Estado global com restauração de sessão e exibição garantida
 let CFG = {
     empresaNome: 'Manos Tech',
     email: 'contato@manostech.com.br',
@@ -24,7 +24,7 @@ let patrocinadoresTemp = [];
 let eventoClienteAtual = null;
 let callbackConfirmacao = null;
 
-// Inicialização: ocorre assim que o DOM estiver pronto
+// Inicialização
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Carrega configurações
     try {
@@ -38,17 +38,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     } catch (e) {
-        console.warn('Configurações padrão.');
+        console.warn('Usando configurações padrão.');
     }
 
-    // 2. Tenta restaurar sessão e exibe a tela correta imediatamente
+    // 2. Tenta restaurar sessão
+    let sessaoRestaurada = false;
     try {
         if (typeof apiRestaurarSessao === 'function') {
             const user = await apiRestaurarSessao();
             if (user) {
                 usuarioLogado = user;
                 EV = await apiListarEventos();
-                // Exibe o dashboard diretamente (sem flash)
+                // Exibe o dashboard diretamente
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('loginClienteScreen').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'block';
@@ -56,16 +57,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 atualizarInterfaceUsuario();
                 aplicarPermissoes();
                 showPage('inicio');
-                return;
+                sessaoRestaurada = true;
             }
         }
     } catch (e) {
         console.warn('Nenhuma sessão ativa.');
     }
 
-    // Se não há sessão, mostra a tela de login do admin
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('loginClienteScreen').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'none';
-    document.getElementById('clienteDashboard').style.display = 'none';
+    // 3. Se nenhuma sessão foi restaurada, exibe a tela de login
+    if (!sessaoRestaurada) {
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('loginClienteScreen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('clienteDashboard').style.display = 'none';
+    }
 });
