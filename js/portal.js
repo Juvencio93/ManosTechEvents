@@ -264,9 +264,45 @@ function renderOptionsModal() {
             document.getElementById('customSelectModal').textContent = label;
             container.classList.remove('active');
             renderOptionsModal();
+            // Atualiza placeholder do campo de WhatsApp
+            atualizarPlaceholderModal(code);
             document.getElementById('portalWhatsApp').value = '';
         });
     });
+}
+
+function atualizarPlaceholderModal(ddi) {
+    const input = document.getElementById('portalWhatsApp');
+    if (!input) return;
+    if (ddi === '55') {
+        input.placeholder = '(DDD) 9 9999-9999';
+    } else {
+        input.placeholder = 'Número sem formatação';
+    }
+}
+
+// Máscara para Brasil dentro do modal (usada no evento input)
+function aplicarMascaraModal(event) {
+    const input = event.target;
+    const ddi = selectedCountryModal ? selectedCountryModal.code : '55';
+    if (ddi === '55') {
+        let valor = input.value.replace(/\D/g, '');
+        if (valor.length > 11) valor = valor.slice(0, 11);
+        let formatado = '';
+        if (valor.length > 0) formatado += '(' + valor.substring(0,2);
+        if (valor.length > 2) formatado += ') ' + valor.substring(2,3);
+        if (valor.length > 3) formatado += ' ' + valor.substring(3,7);
+        if (valor.length > 7) formatado += '-' + valor.substring(7,11);
+        let cursor = input.selectionStart;
+        let diff = formatado.length - input.value.length;
+        input.value = formatado;
+        input.setSelectionRange(cursor + diff, cursor + diff);
+    } else {
+        // Apenas permite dígitos, sem formatação
+        let digits = input.value.replace(/\D/g, '');
+        if (digits.length > 15) digits = digits.slice(0, 15);
+        input.value = digits;
+    }
 }
 
 function abrirPortalCat(id) {
@@ -276,7 +312,10 @@ function abrirPortalCat(id) {
         return;
     }
 
-    // Logo do evento
+    // Define eventoSelecionadoId para uso em simularConexao
+    eventoSelecionadoId = id;
+
+    // Logo do evento – verifica se há logoUrl e se é uma URL válida
     const logoGrande = document.getElementById('portalLogoGrande');
     if (logoGrande) {
         if (evento.logoUrl && (evento.logoUrl.startsWith('http') || evento.logoUrl.startsWith('data:'))) {
@@ -303,20 +342,28 @@ function abrirPortalCat(id) {
         }
     }
 
-    // Resetar o seletor de país
+    // Resetar o seletor de país para Brasil
     selectedCountryModal = countries.find(c => c.code === '55');
     document.getElementById('customSelectModal').textContent = selectedCountryModal.label;
     renderOptionsModal();
 
-    // Configurar o toggle do dropdown (uma única vez)
+    // Configurar o toggle do dropdown (apenas uma vez)
     const selectEl = document.getElementById('customSelectModal');
     selectEl.onclick = function(e) {
         e.stopPropagation();
         document.getElementById('customOptionsModal').classList.toggle('active');
     };
 
-    // Limpar campos
-    ['portalNome','portalEmail','portalWhatsApp'].forEach(id => {
+    // Limpar campos e configurar placeholder padrão
+    const whatsappInput = document.getElementById('portalWhatsApp');
+    if (whatsappInput) {
+        whatsappInput.value = '';
+        whatsappInput.placeholder = '(DDD) 9 9999-9999';
+        // Adiciona listener para máscara (uma vez)
+        whatsappInput.removeEventListener('input', aplicarMascaraModal);
+        whatsappInput.addEventListener('input', aplicarMascaraModal);
+    }
+    ['portalNome','portalEmail'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
@@ -329,6 +376,7 @@ function abrirPortalCat(id) {
 }
 
 function formatWhatsApp(input) {
+    // Usado pelo input do modal antigo; manteremos compatibilidade
     let valor = input.value.replace(/[^\d+\-() ]/g, '');
     input.value = valor;
 }
@@ -341,10 +389,19 @@ async function simularConexao() {
 
     if (!nome) { alert('⚠️ Preencha seu nome!'); return; }
     if (!email) { alert('⚠️ Preencha seu e-mail!'); return; }
-    if (whatsapp && whatsapp.replace(/\D/g, '').length < 7) {
-        alert('⚠️ Número de WhatsApp inválido. Mínimo 7 dígitos.');
-        return;
+
+    // Validação inteligente: para Brasil, 10 ou 11 dígitos; para outros, apenas se preenchido, mínimo 7.
+    if (whatsapp) {
+        const digits = whatsapp.replace(/\D/g, '');
+        if (ddi === '55' && digits.length !== 10 && digits.length !== 11) {
+            alert('⚠️ Número de WhatsApp inválido para Brasil. Use DDD + número (11 dígitos).');
+            return;
+        } else if (ddi !== '55' && digits.length < 7) {
+            alert('⚠️ Número de WhatsApp inválido. Mínimo 7 dígitos.');
+            return;
+        }
     }
+
     if (!document.getElementById('portalLGPD')?.checked) {
         document.getElementById('lgpdError').style.display = 'block';
         return;
@@ -377,6 +434,8 @@ async function simularConexao() {
         toast('❌ Erro ao registrar: ' + e.message);
     }
 }
+
+// Fechar o dropdown ao clicar fora
 document.addEventListener('click', function(event) {
     const options = document.getElementById('customOptionsModal');
     const select = document.getElementById('customSelectModal');
