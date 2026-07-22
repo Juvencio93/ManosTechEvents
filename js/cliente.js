@@ -81,3 +81,20 @@ function cancelarConfiguracao() {
     showPage('inicio');
     toast('Alterações canceladas.');
 }
+async function gerarRelatorioCliente() {
+    if (!eventoClienteAtual) {
+        alert('Nenhum evento carregado.');
+        return;
+    }
+    // Busca os visitantes atualizados antes de gerar o PDF
+    let visitantes = [];
+    try {
+        visitantes = await apiListarVisitantes(eventoClienteAtual.id);
+    } catch (e) {
+        console.warn('Usando dados locais para o relatório');
+        visitantes = eventoClienteAtual.visitantes || [];
+    }
+    // Cria uma cópia do evento com os visitantes preenchidos
+    const eventoCompleto = { ...eventoClienteAtual, visitantes, totalVisitantes: visitantes.length };
+    gerarPDFEvento(eventoCompleto);
+}
