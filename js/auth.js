@@ -97,10 +97,12 @@ function confirmarSaidaCliente() {
 }
 
 function atualizarInterfaceUsuario() {
-    const sidebarEmpresa = document.getElementById('sidebarEmpresaNome');
-    if (sidebarEmpresa) sidebarEmpresa.textContent = CFG.empresaNome;
-    const loginEmpresa = document.getElementById('loginEmpresaNome');
-    if (loginEmpresa) loginEmpresa.textContent = CFG.empresaNome;
+    const logo = CFG.logoUrl ? `<img src="${CFG.logoUrl}" style="max-width:100%;max-height:100%;object-fit:contain;">` : '🏢';
+    document.getElementById('sidebarLogoImg').innerHTML = logo;
+    document.getElementById('loginLogoPreview').innerHTML = logo;
+    // Adicione esta linha para o logo do login cliente
+    const clienteLoginLogo = document.getElementById('clienteLoginLogo');
+    if (clienteLoginLogo) clienteLoginLogo.innerHTML = logo;
 
     const sidebarUser = document.getElementById('sidebarUserName');
     if (sidebarUser) sidebarUser.textContent = usuarioLogado ? usuarioLogado.nome.split(' ')[0] : 'Admin';
