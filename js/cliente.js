@@ -62,12 +62,32 @@ async function salvarConfiguracao() {
     CFG.telefoneSuporte = document.getElementById('configTelefoneSuporte').value.trim();
     CFG.adminNome = document.getElementById('configAdminNome').value.trim();
     CFG.adminEmail = document.getElementById('configAdminEmail').value.trim();
-    // Não salvamos senha aqui
+
+    const novaSenha = document.getElementById('configAdminSenha').value.trim();
+
     if (configLogoTemp !== null && configLogoTemp !== undefined) {
         CFG.logoUrl = configLogoTemp;
     }
+
     try {
         await apiSalvarConfig(CFG);
+
+        // Atualiza o nome do usuário logado (se for admin)
+        if (usuarioLogado && usuarioLogado.nivel === 'Administrador') {
+            usuarioLogado.nome = CFG.adminNome;
+        }
+
+        // Altera a senha se o campo foi preenchido
+        if (novaSenha) {
+            if (novaSenha.length < 4) {
+                toast('⚠️ Senha deve ter no mínimo 4 caracteres');
+                return;
+            }
+            await apiAlterarSenha(novaSenha);
+            document.getElementById('configAdminSenha').value = '';
+            toast('✅ Senha alterada com sucesso!');
+        }
+
         atualizarInterfaceUsuario();
         toast('✅ Configurações salvas!');
     } catch (e) {
