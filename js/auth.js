@@ -51,15 +51,26 @@ function voltarLoginAdmin() {
     if (loginScreen) loginScreen.style.display = 'flex';
 }
 
-function fazerLoginCliente() {
+async function fazerLoginCliente() {
     const usuario = document.getElementById('clienteUsuario').value.trim();
     const senha = document.getElementById('clienteSenha').value.trim();
+    
+    // Se EV estiver vazio, carrega eventos do Supabase primeiro
+    if (!EV || EV.length === 0) {
+        try {
+            EV = await apiListarEventos();
+        } catch (e) {
+            alert('❌ Erro ao conectar ao servidor. Tente novamente.');
+            return;
+        }
+    }
+    
     const evento = EV.find(ev => ev.clienteUsuario === usuario && ev.clienteSenha === senha);
     if (evento) {
         console.log('✅ Login do cliente OK. Chamando abrirAreaClienteEvento...');
         document.getElementById('loginClienteScreen').style.display = 'none';
         document.getElementById('clienteDashboard').style.display = 'block';
-        abrirAreaClienteEvento(evento);  // <-- essencial
+        abrirAreaClienteEvento(evento);
     } else {
         alert('❌ Usuário ou senha inválidos!');
     }
