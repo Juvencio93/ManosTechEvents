@@ -102,8 +102,7 @@
         <button class="btn btn-ghost btn-sm" style="margin-top:16px;" onclick="fecharModal('qrModal')">Fechar</button>
     </div></div>
 
-    <!-- MODAL PORTAL -->
-    <!-- MODAL PORTAL -->
+   <!-- MODAL PORTAL -->
 <div class="modal" id="portalModal"><div class="modal-content" style="text-align:center;max-width:460px;">
     <div class="portal-logo-grande" id="portalLogoGrande">🎪</div>
     <div class="carrossel-container" id="carrosselContainer"><div class="carrossel-faixa" id="carrosselFaixa"></div></div>
@@ -119,10 +118,14 @@
             </div>
             <input type="text" id="portalWhatsApp" placeholder="(DDD) 9 9999-9999" maxlength="20">
         </div>
+        <div class="error-msg" id="erroWhatsapp">Número inválido para o país selecionado.</div>
     </div>
     <div class="lgpd-box">
-        <label><input type="checkbox" id="portalLGPD"> Autorizo a coleta dos meus dados conforme LGPD.</label>
-        <div class="lgpd-resumo">📌 Dados usados exclusivamente para acesso à rede Wi-Fi durante o evento.</div>
+        <label>
+            <input type="checkbox" id="portalLGPD">
+            <span>Autorizo a coleta e o uso dos meus dados pessoais, de acordo com a LGPD, para acesso à rede Wi-Fi, envio de comunicações sobre eventos futuros, promoções e novidades da Manos Tech e de seus parceiros.</span>
+        </label>
+        <div class="lgpd-resumo">📌 Seus dados poderão ser utilizados para marketing e divulgação de eventos. Você pode solicitar a remoção a qualquer momento.</div>
         <div class="lgpd-error" id="lgpdError">⚠️ É necessário aceitar a política de privacidade.</div>
     </div>
     <button class="btn btn-primary" onclick="simularConexao()">🔓 Acessar Internet</button>
