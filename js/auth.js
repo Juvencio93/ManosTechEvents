@@ -62,31 +62,41 @@ function voltarLoginAdmin() {
     if (loginScreen) loginScreen.style.display = 'flex';
 }
 
-async function fazerLoginCliente() {
-    const usuario = document.getElementById('clienteUsuario').value.trim();
-    const senha = document.getElementById('clienteSenha').value.trim();
-
-    if (!EV || EV.length === 0) {
-        try {
-            const eventos = await apiListarEventos();
-            EV = eventos;
-        } catch (e) {
-            alert('❌ Erro ao conectar ao servidor. Tente novamente.');
+async function fazerLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const senha = document.getElementById('loginPassword').value.trim();
+    try {
+        // Tenta login via Supabase (admin)
+        const user = await apiLogin(email, senha);
+        usuarioLogado = user;
+        EV = await apiListarEventos();
+        // Carrega funcionários após login
+        if (typeof carregarFuncionarios === 'function') {
+            await carregarFuncionarios();
+        }
+        entrarSistema();
+    } catch (e) {
+        // Se falhar, tenta funcionário local
+        // Se FN estiver vazio, tenta carregar do Supabase antes
+        if (!FN || FN.length === 0) {
+            try {
+                if (typeof carregarFuncionarios === 'function') {
+                    await carregarFuncionarios();
+                }
+            } catch (err) {
+                console.warn('Não foi possível carregar funcionários.');
+            }
+        }
+        const func = FN.find(f => f.email === email && f.senha === senha);
+        if (func) {
+            usuarioLogado = func;
+            EV = await apiListarEventos();
+            entrarSistema();
             return;
         }
-    }
-
-    const evento = EV.find(ev => ev.clienteUsuario === usuario && ev.clienteSenha === senha);
-    if (evento) {
-        localStorage.setItem('clienteSession', JSON.stringify({ eventoId: evento.id }));
-        document.getElementById('loginClienteScreen').style.display = 'none';
-        document.getElementById('clienteDashboard').style.display = 'block';
-        abrirAreaClienteEvento(evento);
-    } else {
-        alert('❌ Usuário ou senha inválidos!');
+        alert('❌ ' + e.message);
     }
 }
-
 function confirmarSaidaCliente() {
     confirmarAcao('Deseja realmente sair?', () => {
         localStorage.removeItem('clienteSession');
