@@ -67,10 +67,8 @@ async function salvarConfiguracao() {
     }
 
     try {
-        // Salva configurações gerais (tabela config)
         await apiSalvarConfig(CFG);
 
-        // Atualiza o nome no perfil do Supabase (tabela perfis)
         if (sessao?.id) {
             const { error: perfilError } = await supabaseClient
                 .from('perfis')
@@ -78,18 +76,15 @@ async function salvarConfiguracao() {
                 .eq('id', sessao.id);
             if (perfilError) {
                 console.warn('Erro ao atualizar nome no perfil:', perfilError);
-                // Não interrompe: a configuração geral já foi salva
             }
         }
 
-        // Atualiza o nome do usuário logado (para exibição imediata)
-     if (usuarioLogado && usuarioLogado.nivel === 'Administrador') {
-    usuarioLogado.nome = CFG.adminNome;
-    const userEl = document.getElementById('sidebarUserName');
-    if (userEl) userEl.textContent = CFG.adminNome.split(' ')[0];
-}
+        if (usuarioLogado && usuarioLogado.nivel === 'Administrador') {
+            usuarioLogado.nome = CFG.adminNome;
+            const userEl = document.getElementById('sidebarUserName');
+            if (userEl) userEl.textContent = CFG.adminNome.split(' ')[0];
+        }
 
-        // Altera senha se preenchida
         if (novaSenha) {
             if (novaSenha.length < 4) {
                 toast('⚠️ Senha deve ter no mínimo 4 caracteres');
@@ -100,7 +95,7 @@ async function salvarConfiguracao() {
                 document.getElementById('configAdminSenha').value = '';
                 toast('🔒 Senha alterada. Você será desconectado para usar a nova senha.');
                 setTimeout(() => sairDoSistema(), 2000);
-                return;
+                return; // não redireciona porque o usuário será deslogado
             } catch (e) {
                 toast('❌ Erro ao alterar senha: ' + e.message);
                 return;
@@ -109,6 +104,7 @@ async function salvarConfiguracao() {
 
         atualizarInterfaceUsuario();
         toast('✅ Configurações salvas!');
+        showPage('inicio'); // redireciona para o menu principal
     } catch (e) {
         toast('❌ Erro ao salvar configurações: ' + e.message);
     }
