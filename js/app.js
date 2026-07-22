@@ -22,7 +22,6 @@ function showPage(nome) {
         .then(html => {
             document.getElementById('main-content').innerHTML = html;
 
-            // Oculta card Financeiro se usuário não tiver permissão
             if (nome === 'inicio') {
                 const cardFinanceiro = document.getElementById('cardFinanceiro');
                 if (cardFinanceiro) {
@@ -30,7 +29,6 @@ function showPage(nome) {
                 }
             }
 
-            // Ações pós‑carregamento (com verificação de existência das funções)
             if (nome === 'dashboard') {
                 if (typeof preencherSelectsEventos === 'function') preencherSelectsEventos();
                 if (eventoSelecionadoId) {
