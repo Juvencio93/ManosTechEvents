@@ -1,9 +1,7 @@
-// Área do Cliente – versão final com atualização forçada
+// Área do Cliente – Sincronizada com o Dashboard
 
 async function abrirAreaClienteEvento(evento) {
-    console.log('🚀 abrirAreaClienteEvento chamada para:', evento.nome);
     eventoClienteAtual = evento;
-
     document.getElementById('clienteEventoNome').textContent = evento.nome;
     document.getElementById('clienteLogoHeader').innerHTML = evento.logoUrl
         ? `<img src="${evento.logoUrl}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'">`
@@ -12,10 +10,8 @@ async function abrirAreaClienteEvento(evento) {
     let visitantes = [];
     try {
         visitantes = await apiListarVisitantes(evento.id);
-        console.log('📊 Visitantes recebidos:', visitantes);
     } catch (e) {
-        console.error('❌ Falha ao buscar visitantes:', e);
-        alert('Erro ao carregar visitantes. Usando dados locais.');
+        console.warn('Usando dados locais para o relatório');
         visitantes = evento.visitantes || [];
     }
 
@@ -23,7 +19,6 @@ async function abrirAreaClienteEvento(evento) {
     document.getElementById('clienteTotalVisitantes').textContent = total;
     document.getElementById('clienteLiveConnected').textContent = total > 0 ? Math.max(1, Math.floor(total * 0.3)) : 0;
 
-    // Mapa de calor
     const horas = {};
     for (let h = 8; h <= 20; h++) horas[h] = 0;
     visitantes.forEach(v => {
@@ -35,15 +30,17 @@ async function abrirAreaClienteEvento(evento) {
         `<div class="heatmap-bar" style="height:${Math.max((c / max) * 140, 4)}px;" title="${h}h: ${c}"></div>`
     ).join('');
 
-    // Tabela
     document.getElementById('clienteVisitantesTable').innerHTML = visitantes.slice(0, 50).map(v =>
         `<tr><td><strong>${escapeHtml(v.nome)}</strong></td><td>${escapeHtml(v.email)}</td><td>${escapeHtml(v.whatsapp)}</td><td>${v.acesso}</td></tr>`
     ).join('');
-
-    console.log('✅ Área do cliente atualizada. Total:', total);
 }
 
-// Configuração
+async function atualizarAreaClienteSeAtiva() {
+    if (eventoClienteAtual) {
+        await abrirAreaClienteEvento(eventoClienteAtual);
+    }
+}
+
 function previewLogoConfig(event) {
     const file = event.target.files[0];
     if (file) {
@@ -56,6 +53,7 @@ function previewLogoConfig(event) {
     }
 }
 
+// ===== FUNÇÃO CORRIGIDA =====
 async function salvarConfiguracao() {
     CFG.empresaNome = document.getElementById('configEmpresaNome').value.trim() || 'Manos Tech';
     CFG.email = document.getElementById('configEmail').value.trim();
@@ -69,16 +67,29 @@ async function salvarConfiguracao() {
     }
 
     try {
+        // Salva configurações gerais (tabela config)
         await apiSalvarConfig(CFG);
 
-        // Atualiza o nome do admin logado (se for admin)
+        // Atualiza o nome no perfil do Supabase (tabela perfis)
+        if (sessao?.id) {
+            const { error: perfilError } = await supabaseClient
+                .from('perfis')
+                .update({ nome: CFG.adminNome })
+                .eq('id', sessao.id);
+            if (perfilError) {
+                console.warn('Erro ao atualizar nome no perfil:', perfilError);
+                // Não interrompe: a configuração geral já foi salva
+            }
+        }
+
+        // Atualiza o nome do usuário logado (para exibição imediata)
         if (usuarioLogado && usuarioLogado.nivel === 'Administrador') {
             usuarioLogado.nome = CFG.adminNome;
-            // Força a atualização do rodapé imediatamente
             const userEl = document.getElementById('sidebarUserName');
             if (userEl) userEl.textContent = CFG.adminNome.split(' ')[0];
         }
 
+        // Altera senha se preenchida
         if (novaSenha) {
             if (novaSenha.length < 4) {
                 toast('⚠️ Senha deve ter no mínimo 4 caracteres');
@@ -88,7 +99,6 @@ async function salvarConfiguracao() {
                 await apiAlterarSenha(novaSenha);
                 document.getElementById('configAdminSenha').value = '';
                 toast('🔒 Senha alterada. Você será desconectado para usar a nova senha.');
-                // Força logout após breve pausa para a mensagem aparecer
                 setTimeout(() => sairDoSistema(), 2000);
                 return;
             } catch (e) {
@@ -104,26 +114,24 @@ async function salvarConfiguracao() {
     }
 }
 
-function cancelarConfiguracao() {
-    carregarDados();
-    atualizarInterfaceUsuario();
-    showPage('inicio');
-    toast('Alterações canceladas.');
-}
 async function gerarRelatorioCliente() {
     if (!eventoClienteAtual) {
         alert('Nenhum evento carregado.');
         return;
     }
-    // Busca os visitantes atualizados antes de gerar o PDF
     let visitantes = [];
     try {
         visitantes = await apiListarVisitantes(eventoClienteAtual.id);
     } catch (e) {
-        console.warn('Usando dados locais para o relatório');
         visitantes = eventoClienteAtual.visitantes || [];
     }
-    // Cria uma cópia do evento com os visitantes preenchidos
     const eventoCompleto = { ...eventoClienteAtual, visitantes, totalVisitantes: visitantes.length };
     gerarPDFEvento(eventoCompleto);
+}
+
+function cancelarConfiguracao() {
+    carregarDados();
+    atualizarInterfaceUsuario();
+    showPage('inicio');
+    toast('Alterações canceladas.');
 }
