@@ -245,6 +245,7 @@ const countries = [
     { code: '263', label: '🇿🇼 +263', name: '🇿🇼 Zimbabwe+263' },
     { code: '358', label: '🇦🇽 +358', name: '🇦🇽 Åland Islands+358' },
     { code: 'outro', label: '🌎 Outro', name: '🌎 Outro país' }
+
 ];
 
 let selectedCountryModal = countries.find(c => c.code === '55');
@@ -361,11 +362,9 @@ function abrirPortalCat(id) {
     if (selectEl) selectEl.textContent = selectedCountryModal.label;
     renderOptionsModal();
 
-    // Força o dropdown começar escondido
     const optionsEl = document.getElementById('customOptionsModal');
     if (optionsEl) optionsEl.style.display = 'none';
 
-    // Toggle do dropdown
     if (selectEl) {
         selectEl.onclick = function(e) {
             e.stopPropagation();
@@ -374,7 +373,6 @@ function abrirPortalCat(id) {
         };
     }
 
-    // Limpar campos
     const whatsappInput = document.getElementById('portalWhatsApp');
     if (whatsappInput) {
         whatsappInput.value = '';
@@ -457,7 +455,16 @@ async function simularConexao() {
     };
 
     try {
-        await apiRegistrarVisitante(evento.token, visitante);
+        const resultado = await apiRegistrarVisitante(evento.token, visitante);
+        // Atualiza o totalVisitantes no array EV
+        if (resultado && resultado.totalVisitantes !== null) {
+            const ev = EV.find(e => e.id === eventoSelecionadoId);
+            if (ev) ev.totalVisitantes = resultado.totalVisitantes;
+            if (eventoClienteAtual && eventoClienteAtual.id === eventoSelecionadoId) {
+                eventoClienteAtual.totalVisitantes = resultado.totalVisitantes;
+            }
+        }
+
         if (eventoSelecionadoId === evento.id) selecionarEvento();
         if (eventoClienteAtual?.id === evento.id) abrirAreaClienteEvento(evento);
         renderizarEventos();
@@ -468,7 +475,6 @@ async function simularConexao() {
     }
 }
 
-// Fechar dropdown ao clicar fora
 document.addEventListener('click', function(event) {
     const options = document.getElementById('customOptionsModal');
     const select = document.getElementById('customSelectModal');
