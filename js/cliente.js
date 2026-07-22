@@ -56,23 +56,23 @@ function previewLogoConfig(event) {
     }
 }
 
-function salvarConfiguracao() {
+async function salvarConfiguracao() {
     CFG.empresaNome = document.getElementById('configEmpresaNome').value.trim() || 'Manos Tech';
     CFG.email = document.getElementById('configEmail').value.trim();
     CFG.telefoneSuporte = document.getElementById('configTelefoneSuporte').value.trim();
-    const novoNome = document.getElementById('configAdminNome').value.trim();
-    if (novoNome) CFG.adminNome = novoNome;
-    const novoEmail = document.getElementById('configAdminEmail').value.trim();
-    if (novoEmail && validarEmail(novoEmail)) CFG.adminEmail = novoEmail;
-    const novaSenha = document.getElementById('configAdminSenha').value.trim();
-    if (novaSenha) {
-        if (novaSenha.length < 4) { toast('⚠️ Senha: mínimo 4 caracteres'); return; }
-        CFG.adminSenha = novaSenha;
+    CFG.adminNome = document.getElementById('configAdminNome').value.trim();
+    CFG.adminEmail = document.getElementById('configAdminEmail').value.trim();
+    // Não salvamos senha aqui
+    if (configLogoTemp !== null && configLogoTemp !== undefined) {
+        CFG.logoUrl = configLogoTemp;
     }
-    if (configLogoTemp !== null && configLogoTemp !== undefined) CFG.logoUrl = configLogoTemp;
-    atualizarInterfaceUsuario();
-    salvarDados();
-    toast('✅ Configurações salvas!');
+    try {
+        await apiSalvarConfig(CFG);
+        atualizarInterfaceUsuario();
+        toast('✅ Configurações salvas!');
+    } catch (e) {
+        toast('❌ Erro ao salvar configurações: ' + e.message);
+    }
 }
 
 function cancelarConfiguracao() {
