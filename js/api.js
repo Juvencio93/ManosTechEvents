@@ -180,3 +180,7 @@ function toCamelCase(obj) {
     }
     return novo;
 }
+async function apiAlterarSenha(novaSenha) {
+    const { error } = await supabaseClient.auth.updateUser({ password: novaSenha });
+    if (error) throw error;
+}
