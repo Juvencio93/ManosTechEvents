@@ -127,60 +127,8 @@ table th { color: var(--text2); font-weight: 600; font-size: 11px; text-transfor
 .confirm-modal .modal-content p { margin: 20px 0 30px; font-size: 16px; color: var(--text); }
 .confirm-buttons { display: flex; gap: 12px; justify-content: center; }
 .confirm-buttons .btn { width: auto; padding: 12px 30px; }
-@media (max-width: 768px) {
-    .login-card { width: 95%; padding: 32px 24px; }
-    .stats-grid { grid-template-columns: 1fr; }
-    .grid-2 { grid-template-columns: 1fr; }
-    .welcome-grid { grid-template-columns: 1fr; }
-    .modal-content { max-width: 95%; padding: 20px; }
-    .main-content { padding: 16px; }
-    .stat-card .stat-value { font-size: 28px; }
-    /* Seletor de país customizado (modal portal) */
-.phone-row .custom-select-wrapper { position: relative; width: 130px; flex-shrink: 0; }
-.phone-row .custom-select {
-    width: 100%;
-    padding: 14px 30px 14px 12px;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 12px;
-    color: white;
-    font-size: 15px;
-    cursor: pointer;
-    user-select: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238899b0' d='M6 8.825L1.175 4 2.238 2.938 6 6.7 9.763 2.937 10.825 4z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 12px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.custom-options {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 300px;
-    background: #1a1f2e;
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 12px;
-    max-height: 250px;
-    overflow-y: auto;
-    z-index: 100;
-    display: none;
-    margin-top: 4px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-}
-.custom-options.active { display: block; }
-.custom-option {
-    padding: 10px 12px;
-    cursor: pointer;
-    color: white;
-    font-size: 14px;
-    white-space: nowrap;
-}
-.custom-option:hover, .custom-option.selected { background: rgba(77,168,218,0.2); 
-}
-    /* Seletor de país customizado (modal portal) */
+
+/* ====== SELEÇÃO DE PAÍS (MODAL PORTAL) – FORA DA MEDIA QUERY ====== */
 .phone-row .custom-select-wrapper { position: relative; width: 130px; flex-shrink: 0; }
 .phone-row .custom-select {
     width: 100%;
@@ -224,3 +172,14 @@ table th { color: var(--text2); font-weight: 600; font-size: 11px; text-transfor
     white-space: nowrap;
 }
 .custom-option:hover, .custom-option.selected { background: rgba(77,168,218,0.2); }
+
+/* ====== MEDIA QUERY (apenas ajustes responsivos) ====== */
+@media (max-width: 768px) {
+    .login-card { width: 95%; padding: 32px 24px; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .welcome-grid { grid-template-columns: 1fr; }
+    .modal-content { max-width: 95%; padding: 20px; }
+    .main-content { padding: 16px; }
+    .stat-card .stat-value { font-size: 28px; }
+}
