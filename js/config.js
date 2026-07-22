@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 aplicarPermissoes();
                 showPage('inicio');
                 sessaoRestaurada = true;
+                console.log('✅ Sessão de admin restaurada.');
             }
         }
     } catch (e) {
@@ -66,33 +67,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!sessaoRestaurada) {
         try {
             const clienteData = localStorage.getItem('clienteSession');
+            console.log('🔍 Verificando clienteSession:', clienteData);
             if (clienteData) {
                 const { eventoId } = JSON.parse(clienteData);
-                // Carrega eventos (se ainda não estiverem)
+                console.log('🔍 Evento ID:', eventoId);
+                // Carrega eventos se necessário
                 if (EV.length === 0) {
                     EV = await apiListarEventos();
+                    console.log('📋 Eventos carregados:', EV.length);
                 }
                 const evento = EV.find(ev => ev.id === eventoId);
                 if (evento) {
-                    // Exibe diretamente a área do cliente
-                    document.getElementById('loginScreen').style.display = 'none';
-                    document.getElementById('loginClienteScreen').style.display = 'none';
-                    document.getElementById('dashboard').style.display = 'none';
-                    document.getElementById('clienteDashboard').style.display = 'block';
-                    abrirAreaClienteEvento(evento);
-                    sessaoRestaurada = true;
+                    console.log('🎯 Evento encontrado para o cliente:', evento.nome);
+                    if (typeof abrirAreaClienteEvento !== 'function') {
+                        console.error('❌ Função abrirAreaClienteEvento não definida!');
+                    } else {
+                        // Exibe a área do cliente
+                        document.getElementById('loginScreen').style.display = 'none';
+                        document.getElementById('loginClienteScreen').style.display = 'none';
+                        document.getElementById('dashboard').style.display = 'none';
+                        document.getElementById('clienteDashboard').style.display = 'block';
+                        abrirAreaClienteEvento(evento);
+                        sessaoRestaurada = true;
+                        console.log('✅ Sessão de cliente restaurada.');
+                    }
                 } else {
-                    // Se o evento não existe mais, limpa a sessão inválida
+                    console.warn('❌ Evento não encontrado. Removendo sessão de cliente.');
                     localStorage.removeItem('clienteSession');
                 }
             }
         } catch (e) {
-            console.warn('Sessão de cliente inválida.');
+            console.error('❌ Erro ao restaurar sessão de cliente:', e);
+            localStorage.removeItem('clienteSession');
         }
     }
 
     // 4. Se nenhuma sessão foi restaurada, mostra o login do admin
     if (!sessaoRestaurada) {
+        console.log('🔑 Nenhuma sessão ativa. Exibindo login admin.');
         document.getElementById('loginScreen').style.display = 'flex';
         document.getElementById('loginClienteScreen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'none';
