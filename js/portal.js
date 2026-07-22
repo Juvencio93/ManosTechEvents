@@ -1,4 +1,5 @@
-// Lista de países (compartilhada)
+// js/portal.js – Versão final estável e segura (compatível com patrocinadores como string ou array)
+
 const countries = [
     { code: '93', label: '🇦🇫 +93', name: '🇦🇫 Afghanistan (افغانستان)+93' },
     { code: '355', label: '🇦🇱 +355', name: '🇦🇱 Albania (Shqipëri)+355' },
@@ -244,7 +245,6 @@ const countries = [
     { code: '263', label: '🇿🇼 +263', name: '🇿🇼 Zimbabwe+263' },
     { code: '358', label: '🇦🇽 +358', name: '🇦🇽 Åland Islands+358' },
     { code: 'outro', label: '🌎 Outro', name: '🌎 Outro país' }
-
 ];
 
 let selectedCountryModal = countries.find(c => c.code === '55');
@@ -327,11 +327,22 @@ function abrirPortalCat(id) {
         }
     }
 
-    // Patrocinadores
+    // Patrocinadores – aceita tanto array quanto string JSON
+    const logosRaw = evento.patrocinadoresLogos;
+    let logos = [];
+    if (Array.isArray(logosRaw)) {
+        logos = logosRaw;
+    } else if (typeof logosRaw === 'string') {
+        try {
+            logos = JSON.parse(logosRaw);
+        } catch (e) {
+            logos = [];
+        }
+    }
+    const logosValidos = logos.filter(url => typeof url === 'string' && url.length > 20 && (url.startsWith('http') || url.startsWith('data:')));
+
     const faixa = document.getElementById('carrosselFaixa');
     if (faixa) {
-        const logos = Array.isArray(evento.patrocinadoresLogos) ? evento.patrocinadoresLogos : [];
-        const logosValidos = logos.filter(url => typeof url === 'string' && url.length > 20 && (url.startsWith('http') || url.startsWith('data:')));
         if (logosValidos.length > 4) {
             const duplicados = [...logosValidos, ...logosValidos];
             faixa.innerHTML = duplicados.map(url => `<img src="${url}" alt="Patrocinador" onerror="this.style.display='none'">`).join('');
