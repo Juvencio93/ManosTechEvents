@@ -1,17 +1,21 @@
-// Área do Cliente – Sincronizada com o Dashboard
+// Área do Cliente – com logs e fallback visível
 
 async function abrirAreaClienteEvento(evento) {
+    console.log('🚀 abrirAreaClienteEvento executada para:', evento.nome);
     eventoClienteAtual = evento;
     document.getElementById('clienteEventoNome').textContent = evento.nome;
     document.getElementById('clienteLogoHeader').innerHTML = evento.logoUrl
         ? `<img src="${evento.logoUrl}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'">`
         : '🎪';
 
-    // Busca os mesmos visitantes que o dashboard usa
     let visitantes = [];
     try {
+        console.log('🔍 Buscando visitantes para ID:', evento.id);
         visitantes = await apiListarVisitantes(evento.id);
+        console.log('📊 Visitantes retornados:', visitantes);
     } catch (e) {
+        console.error('❌ Erro ao buscar visitantes:', e);
+        alert('Erro ao carregar visitantes. Usando dados locais.');
         visitantes = evento.visitantes || [];
     }
 
@@ -19,7 +23,7 @@ async function abrirAreaClienteEvento(evento) {
     document.getElementById('clienteTotalVisitantes').textContent = total;
     document.getElementById('clienteLiveConnected').textContent = total > 0 ? Math.max(1, Math.floor(total * 0.3)) : 0;
 
-    // Mapa de calor (igual ao dashboard)
+    // Mapa de calor
     const horas = {};
     for (let h = 8; h <= 20; h++) horas[h] = 0;
     visitantes.forEach(v => {
@@ -31,20 +35,21 @@ async function abrirAreaClienteEvento(evento) {
         `<div class="heatmap-bar" style="height:${Math.max((c / max) * 140, 4)}px;" title="${h}h: ${c}"></div>`
     ).join('');
 
-    // Tabela de visitantes
+    // Tabela
     document.getElementById('clienteVisitantesTable').innerHTML = visitantes.slice(0, 50).map(v =>
         `<tr><td><strong>${escapeHtml(v.nome)}</strong></td><td>${escapeHtml(v.email)}</td><td>${escapeHtml(v.whatsapp)}</td><td>${v.acesso}</td></tr>`
     ).join('');
+
+    console.log('✅ Área do cliente atualizada. Total:', total);
 }
 
-// Atualiza a área do cliente sempre que o dashboard for atualizado (chamada externa)
 async function atualizarAreaClienteSeAtiva() {
     if (eventoClienteAtual) {
+        console.log('🔄 Atualizando área do cliente a partir do dashboard...');
         await abrirAreaClienteEvento(eventoClienteAtual);
     }
 }
 
-// Configuração (mantida)
 function previewLogoConfig(event) {
     const file = event.target.files[0];
     if (file) {
