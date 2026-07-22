@@ -229,6 +229,67 @@ async function apiExcluirFuncionario(id) {
         .eq('id', id);
     if (error) throw error;
 }
+function showPage(nome) {
+    fecharModal('eventoModal');
+    fecharModal('funcionarioModal');
+    fecharModal('qrModal');
+    fecharModal('portalModal');
+    
+    document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
+    document.querySelectorAll('.sidebar nav a').forEach(a => {
+        if (a.getAttribute('onclick') && a.getAttribute('onclick').includes(`'${nome}'`)) {
+            a.classList.add('active');
+        }
+    });
+    
+    const eventoSelector = document.getElementById('eventoSelectorDashboard');
+    if (eventoSelector) eventoSelector.style.display = (nome === 'dashboard') ? 'flex' : 'none';
+    
+    fetch(`pages/${nome}.html`)
+        .then(response => {
+            if (!response.ok) throw new Error('Página não encontrada');
+            return response.text();
+        })
+        .then(html => {
+            document.getElementById('main-content').innerHTML = html;
+            
+            // Oculta card Financeiro se usuário não tiver permissão
+            if (nome === 'inicio') {
+                const cardFinanceiro = document.getElementById('cardFinanceiro');
+                if (cardFinanceiro) {
+                    cardFinanceiro.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
+                }
+            }
+            
+            if (nome === 'dashboard') {
+                preencherSelectsEventos();
+                if (eventoSelecionadoId) {
+                    const select = document.getElementById('eventoSelect');
+                    if (select) {
+                        select.value = eventoSelecionadoId;
+                        selecionarEvento();
+                    }
+                }
+            } else if (nome === 'financeiro') {
+                preencherSelectsEventos();
+                atualizarResumoFinanceiroGeral();
+            } else if (nome === 'eventos') {
+                renderizarEventos();
+            } else if (nome === 'funcionarios') {
+                renderizarFuncionarios();
+            } else if (nome === 'relatorios') {
+                preencherSelectsEventos();
+            } else if (nome === 'configuracao') {
+                preencherCamposConfiguracao();
+            }
+        })
+        .catch(error => {
+            console.error(error);
+            document.getElementById('main-content').innerHTML = '<p>Erro ao carregar a página.</p>';
+        });
+    
+    closeMenu();
+}
 
 // ---------- Helpers ----------
 function toSnakeCase(obj) {
