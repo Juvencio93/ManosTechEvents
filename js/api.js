@@ -1,4 +1,4 @@
-// api.js – Comunicação exclusiva com Supabase (com serialização de arrays)
+// api.js – Comunicação exclusiva com Supabase (com serialização de arrays e atualização de totalVisitantes)
 const SUPABASE_URL = 'https://uojdbrjxeapzfrulcipr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ZGrmIWRubt_0MgPi_a4mgQ_RNYdNflM';
 
@@ -39,8 +39,7 @@ async function apiListarEventos() {
         if (typeof evento.patrocinadoresLogos === 'string') {
             try { evento.patrocinadoresLogos = JSON.parse(evento.patrocinadoresLogos); } catch (_) { evento.patrocinadoresLogos = []; }
         }
-        evento.visitantes = [];
-        evento.totalVisitantes = 0;
+        evento.visitantes = []; // será preenchido sob demanda
         return evento;
     });
 }
@@ -80,16 +79,19 @@ async function apiExcluirEvento(id) {
 
 // ---------- Visitantes ----------
 async function apiRegistrarVisitante(token, dados) {
-    // Depois de inserir o visitante com sucesso (antes do catch)
-const { error: updateError } = await supabaseClient
-    .from('eventos')
-    .update({ totalVisitantes: supabaseClient.raw('total_visitantes + 1') })
-    .eq('id', evento.id);
+    const { data: evento } = await supabaseClient
+        .from('eventos')
+        .select('id')
         .eq('token', token)
         .single();
     if (!evento) throw new Error('Evento não encontrado');
     dados.evento_id = parseInt(evento.id, 10);
-    await supabaseClient.from('visitantes').insert([toSnakeCase(dados)]);
+    const { error } = await supabaseClient
+        .from('visitantes')
+        .insert([toSnakeCase(dados)]);
+    if (error) throw error;
+    // Atualiza o totalVisitantes no evento
+    await atualizarTotalVisitantes(evento.id);
 }
 
 async function apiListarVisitantes(eventoId) {
@@ -99,8 +101,25 @@ async function apiListarVisitantes(eventoId) {
         .eq('evento_id', eventoId)
         .order('id', { ascending: false });
     if (error) throw error;
-    // Dentro de apiListarEventos, troque o return atual por:
-return data.map(e => ({ ...toCamelCase(e), visitantes: [] }));
+    return data.map(toCamelCase);
+}
+
+// ---------- Função auxiliar para atualizar totalVisitantes ----------
+async function atualizarTotalVisitantes(eventoId) {
+    try {
+        const { count, error } = await supabaseClient
+            .from('visitantes')
+            .select('*', { count: 'exact', head: true })
+            .eq('evento_id', eventoId);
+        if (!error && count !== null) {
+            await supabaseClient
+                .from('eventos')
+                .update({ totalVisitantes: count })
+                .eq('id', eventoId);
+        }
+    } catch (e) {
+        console.warn('Não foi possível atualizar totalVisitantes:', e);
+    }
 }
 
 // ---------- Helpers ----------
