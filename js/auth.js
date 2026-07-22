@@ -55,35 +55,22 @@ async function fazerLoginCliente() {
     const usuario = document.getElementById('clienteUsuario').value.trim();
     const senha = document.getElementById('clienteSenha').value.trim();
 
-    console.log('👤 Tentativa de login cliente:', usuario);
-
-    // Se EV estiver vazio, tenta carregar do Supabase
     if (!EV || EV.length === 0) {
-        console.log('📭 EV vazio. Carregando eventos...');
         try {
             const eventos = await apiListarEventos();
-            console.log('📋 Eventos recebidos:', eventos);
             EV = eventos;
         } catch (e) {
-            console.error('❌ Erro ao carregar eventos:', e);
             alert('❌ Erro ao conectar ao servidor. Tente novamente.');
             return;
         }
     }
 
-    console.log('🔎 EV atual (length):', EV.length);
-    console.log('🔎 Procurando por:', usuario, '/', senha);
-
     const evento = EV.find(ev => ev.clienteUsuario === usuario && ev.clienteSenha === senha);
-    console.log('🎯 Evento encontrado:', evento);
-
     if (evento) {
-        console.log('✅ Login do cliente OK. Chamando abrirAreaClienteEvento...');
         document.getElementById('loginClienteScreen').style.display = 'none';
         document.getElementById('clienteDashboard').style.display = 'block';
         abrirAreaClienteEvento(evento);
     } else {
-        console.warn('❌ Nenhum evento corresponde às credenciais fornecidas.');
         alert('❌ Usuário ou senha inválidos!');
     }
 }
@@ -97,23 +84,26 @@ function confirmarSaidaCliente() {
 }
 
 function atualizarInterfaceUsuario() {
-    const logo = CFG.logoUrl ? `<img src="${CFG.logoUrl}" style="max-width:100%;max-height:100%;object-fit:contain;">` : '🏢';
-    document.getElementById('sidebarLogoImg').innerHTML = logo;
-    document.getElementById('loginLogoPreview').innerHTML = logo;
-    // Adicione esta linha para o logo do login cliente
-    const clienteLoginLogo = document.getElementById('clienteLoginLogo');
-    if (clienteLoginLogo) clienteLoginLogo.innerHTML = logo;
+    const sidebarEmpresa = document.getElementById('sidebarEmpresaNome');
+    if (sidebarEmpresa) sidebarEmpresa.textContent = CFG.empresaNome;
+    const loginEmpresa = document.getElementById('loginEmpresaNome');
+    if (loginEmpresa) loginEmpresa.textContent = CFG.empresaNome;
 
     const sidebarUser = document.getElementById('sidebarUserName');
     if (sidebarUser) sidebarUser.textContent = usuarioLogado ? usuarioLogado.nome.split(' ')[0] : 'Admin';
     const sidebarRole = document.getElementById('sidebarUserRole');
     if (sidebarRole) sidebarRole.textContent = usuarioLogado ? usuarioLogado.nivel : 'Administrador';
 
-    const logo = CFG.logoUrl ? `<img src="${CFG.logoUrl}" style="max-width:100%;max-height:100%;object-fit:contain;">` : '🏢';
+    // Renomeada para evitar conflito com outras variáveis globais
+    const logotipo = CFG.logoUrl ? `<img src="${CFG.logoUrl}" style="max-width:100%;max-height:100%;object-fit:contain;">` : '🏢';
     const sidebarLogoImg = document.getElementById('sidebarLogoImg');
-    if (sidebarLogoImg) sidebarLogoImg.innerHTML = logo;
+    if (sidebarLogoImg) sidebarLogoImg.innerHTML = logotipo;
     const loginLogoPreview = document.getElementById('loginLogoPreview');
-    if (loginLogoPreview) loginLogoPreview.innerHTML = logo;
+    if (loginLogoPreview) loginLogoPreview.innerHTML = logotipo;
+    const clienteLoginLogo = document.getElementById('clienteLoginLogo');
+    if (clienteLoginLogo) clienteLoginLogo.innerHTML = logotipo;
+    const clienteLoginEmpresaNome = document.getElementById('clienteLoginEmpresaNome');
+    if (clienteLoginEmpresaNome) clienteLoginEmpresaNome.textContent = CFG.empresaNome;
 }
 
 function preencherCamposConfiguracao() {
