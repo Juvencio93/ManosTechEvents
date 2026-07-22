@@ -31,10 +31,9 @@ function statusPagamento(evento) {
 
 function gerarLinkPortal(evento) {
     if (!evento || !evento.token) return '#';
-    // Use o domínio real do portal quando estiver em produção
-    return `https://portal.manostech.com.br/portal.html?token=${evento.token}`;
+    // URL base correta do GitHub Pages
+    return `https://juvencio93.github.io/ManosTechEvents/portal.html?token=${evento.token}`;
 }
-
 function escapeHtml(texto) {
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
     return String(texto).replace(/[&<>"']/g, m => map[m]);
