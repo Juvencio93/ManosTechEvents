@@ -94,12 +94,10 @@ function atualizarInterfaceUsuario() {
     const sidebarRole = document.getElementById('sidebarUserRole');
     if (sidebarRole) sidebarRole.textContent = usuarioLogado ? usuarioLogado.nivel : 'Administrador';
 
-    // Renomeada para evitar conflito com outras variáveis globais
+    // variável renomeada para 'logotipo' a fim de evitar conflitos
     const logotipo = CFG.logoUrl ? `<img src="${CFG.logoUrl}" style="max-width:100%;max-height:100%;object-fit:contain;">` : '🏢';
-    const sidebarLogoImg = document.getElementById('sidebarLogoImg');
-    if (sidebarLogoImg) sidebarLogoImg.innerHTML = logotipo;
-    const loginLogoPreview = document.getElementById('loginLogoPreview');
-    if (loginLogoPreview) loginLogoPreview.innerHTML = logotipo;
+    document.getElementById('sidebarLogoImg').innerHTML = logotipo;
+    document.getElementById('loginLogoPreview').innerHTML = logotipo;
     const clienteLoginLogo = document.getElementById('clienteLoginLogo');
     if (clienteLoginLogo) clienteLoginLogo.innerHTML = logotipo;
     const clienteLoginEmpresaNome = document.getElementById('clienteLoginEmpresaNome');
