@@ -267,4 +267,4 @@ function renderizarEventos() {
             <td>${acoes}</td>
         </tr>`;
     }).join('');
-}
+
