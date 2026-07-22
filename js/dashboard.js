@@ -1,4 +1,4 @@
-// Dashboard (carrega visitantes do Supabase)
+// Dashboard (carrega visitantes do Supabase e exibe "Conectados Agora" realista)
 
 async function selecionarEvento() {
     const select = document.getElementById('eventoSelect');
@@ -34,7 +34,9 @@ async function selecionarEvento() {
 
     const total = visitantes.length;
     document.getElementById('totalVisitantes').textContent = total;
-    document.getElementById('liveConnected').textContent = total > 0 ? Math.floor(Math.random() * 50) + 30 : 0;
+    // Estimativa realista: 30% do total estão online agora (mínimo 1 se houver visitantes)
+    const conectados = total > 0 ? Math.max(1, Math.floor(total * 0.3)) : 0;
+    document.getElementById('liveConnected').textContent = conectados;
     document.getElementById('tempoMedio').textContent = (evento.tempoMedio || 0) + 'min';
     document.getElementById('pctMobile').textContent = (evento.pctMobile || 0) + '%';
 
@@ -91,7 +93,6 @@ function copiarLinkDashboard() {
     navigator.clipboard.writeText(link).then(() => toast('📋 Link copiado!'));
 }
 
-// Necessário para o modal QR
 function copiarQR() {
     const link = document.getElementById('qrModalLink');
     if (link) {
