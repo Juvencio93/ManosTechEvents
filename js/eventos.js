@@ -166,7 +166,7 @@ async function salvarEvento() {
         formaPagamento: document.getElementById('eventoFormaPagamento').value,
         parcelas: parseInt(document.getElementById('eventoParcelas').value) || 1
     };
-
+    console.log('🖼️ logoTemporario:', logoTemporario);
     console.log('Dados a serem salvos (camelCase):', JSON.stringify(dados, null, 2));
 
     try {
