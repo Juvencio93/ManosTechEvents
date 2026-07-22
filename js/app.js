@@ -11,13 +11,7 @@ function showPage(nome) {
             a.classList.add('active');
         }
     });
-    if (nome === 'inicio') {
-    // Após carregar o HTML da página inicial
-    const cardFinanceiro = document.getElementById('cardFinanceiro');
-    if (cardFinanceiro) {
-        cardFinanceiro.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
-    }
-}
+    
     const eventoSelector = document.getElementById('eventoSelectorDashboard');
     if (eventoSelector) eventoSelector.style.display = (nome === 'dashboard') ? 'flex' : 'none';
     
@@ -28,6 +22,15 @@ function showPage(nome) {
         })
         .then(html => {
             document.getElementById('main-content').innerHTML = html;
+            
+            // Oculta card Financeiro se usuário não tiver permissão
+            if (nome === 'inicio') {
+                const cardFinanceiro = document.getElementById('cardFinanceiro');
+                if (cardFinanceiro) {
+                    cardFinanceiro.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
+                }
+            }
+            
             if (nome === 'dashboard') {
                 preencherSelectsEventos();
                 if (eventoSelecionadoId) {
