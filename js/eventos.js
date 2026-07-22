@@ -1,4 +1,4 @@
-// CRUD de Eventos (Supabase) - versão corrigida com logs
+// CRUD de Eventos (Supabase) - versão corrigida e sem erros de sintaxe
 
 function preencherSelectsEventos() {
     const opcoes = EV.map(e => `<option value="${e.id}">${e.nome} - ${e.cliente} (${calcularStatusEvento(e)})</option>`).join('');
@@ -266,4 +266,5 @@ function renderizarEventos() {
             <td><span class="badge ${statusBadgeClass(status)}">${status}</span></td>
             <td>${acoes}</td>
         </tr>`;
-        }
+    }).join('');
+}
