@@ -20,7 +20,11 @@ function abrirModalEvento() {
     if (financeiroFields) {
         financeiroFields.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
     }
-    
+    // Esconde a seção financeira se o usuário não tiver permissão
+const financeiroFields = document.getElementById('financeiroFields');
+if (financeiroFields) {
+    financeiroFields.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
+}
     abrirModal('eventoModal');
 }
 
@@ -62,7 +66,11 @@ function editarEvento(id) {
     if (financeiroFields) {
         financeiroFields.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
     }
-    
+    // Esconde a seção financeira se o usuário não tiver permissão
+const financeiroFields = document.getElementById('financeiroFields');
+if (financeiroFields) {
+    financeiroFields.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
+}
     abrirModal('eventoModal');
 }
 
