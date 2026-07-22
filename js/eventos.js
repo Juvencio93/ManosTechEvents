@@ -118,6 +118,8 @@ function renderizarPatrocinadores() {
 async function salvarEvento() {
     if (!usuarioLogado?.permissoes?.e) { toast('🔒 Sem permissão!'); return; }
     esconderDicas();
+    // Dentro de salvarEvento, após criar/atualizar:
+EV = await apiListarEventos();
     let temErro = false;
     const campos = [
         { id: 'eventoNome', hint: 'hintNome' },
