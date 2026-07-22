@@ -1,20 +1,19 @@
-// app.js – Inicialização e navegação (não sobrescreve entrarSistema)
 function showPage(nome) {
     fecharModal('eventoModal');
     fecharModal('funcionarioModal');
     fecharModal('qrModal');
     fecharModal('portalModal');
-    
+
     document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
     document.querySelectorAll('.sidebar nav a').forEach(a => {
         if (a.getAttribute('onclick') && a.getAttribute('onclick').includes(`'${nome}'`)) {
             a.classList.add('active');
         }
     });
-    
+
     const eventoSelector = document.getElementById('eventoSelectorDashboard');
     if (eventoSelector) eventoSelector.style.display = (nome === 'dashboard') ? 'flex' : 'none';
-    
+
     fetch(`pages/${nome}.html`)
         .then(response => {
             if (!response.ok) throw new Error('Página não encontrada');
@@ -22,7 +21,7 @@ function showPage(nome) {
         })
         .then(html => {
             document.getElementById('main-content').innerHTML = html;
-            
+
             // Oculta card Financeiro se usuário não tiver permissão
             if (nome === 'inicio') {
                 const cardFinanceiro = document.getElementById('cardFinanceiro');
@@ -30,39 +29,39 @@ function showPage(nome) {
                     cardFinanceiro.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
                 }
             }
-            
+
+            // Ações pós‑carregamento (com verificação de existência das funções)
             if (nome === 'dashboard') {
-                preencherSelectsEventos();
+                if (typeof preencherSelectsEventos === 'function') preencherSelectsEventos();
                 if (eventoSelecionadoId) {
                     const select = document.getElementById('eventoSelect');
                     if (select) {
                         select.value = eventoSelecionadoId;
-                        selecionarEvento();
+                        if (typeof selecionarEvento === 'function') selecionarEvento();
                     }
                 }
             } else if (nome === 'financeiro') {
-                preencherSelectsEventos();
-                atualizarResumoFinanceiroGeral();
+                if (typeof preencherSelectsEventos === 'function') preencherSelectsEventos();
+                if (typeof atualizarResumoFinanceiroGeral === 'function') atualizarResumoFinanceiroGeral();
             } else if (nome === 'eventos') {
-                renderizarEventos();
+                if (typeof renderizarEventos === 'function') renderizarEventos();
             } else if (nome === 'funcionarios') {
-                renderizarFuncionarios();
+                if (typeof renderizarFuncionarios === 'function') renderizarFuncionarios();
             } else if (nome === 'relatorios') {
-                preencherSelectsEventos();
+                if (typeof preencherSelectsEventos === 'function') preencherSelectsEventos();
             } else if (nome === 'configuracao') {
-                preencherCamposConfiguracao();
+                if (typeof preencherCamposConfiguracao === 'function') preencherCamposConfiguracao();
             }
         })
         .catch(error => {
             console.error(error);
             document.getElementById('main-content').innerHTML = '<p>Erro ao carregar a página.</p>';
         });
-    
+
     closeMenu();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Apenas listeners globais, sem modificar entrarSistema
     document.getElementById('loginPassword').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') fazerLogin();
     });
