@@ -198,3 +198,28 @@ function toCamelCase(obj) {
     }
     return novo;
 }
+// Restaura sessão existente (se houver)
+async function apiRestaurarSessao() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) {
+        sessao = session.user;
+        try {
+            const { data: perfil } = await supabaseClient
+                .from('perfis')
+                .select('*')
+                .eq('id', sessao.id)
+                .single();
+            if (perfil) {
+                return {
+                    nome: perfil.nome,
+                    email: sessao.email,
+                    nivel: perfil.nivel,
+                    permissoes: perfil.permissoes
+                };
+            }
+        } catch (e) {
+            console.warn('Perfil não encontrado na restauração.');
+        }
+    }
+    return null;
+}
