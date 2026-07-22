@@ -32,17 +32,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('menuToggle').style.display = 'flex';
                 atualizarInterfaceUsuario();
                 aplicarPermissoes();
-
-                // Verifica se main-content existe antes de carregar a página
-                const main = document.getElementById('main-content');
-                if (main) {
+                // Carrega a página inicial
+                if (document.getElementById('main-content')) {
                     showPage('inicio');
-                } else {
-                    console.error('Elemento #main-content não encontrado!');
-                    // Tenta recriar se necessário (mas o HTML deve ter)
                 }
                 sessaoRestaurada = true;
-                console.log('✅ Sessão de admin restaurada.');
             }
         }
     } catch (e) {
@@ -66,7 +60,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     document.getElementById('clienteDashboard').style.display = 'block';
                     abrirAreaClienteEvento(evento);
                     sessaoRestaurada = true;
-                    console.log('✅ Sessão de cliente restaurada.');
                 } else {
                     localStorage.removeItem('clienteSession');
                 }
