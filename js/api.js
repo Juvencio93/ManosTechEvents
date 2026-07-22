@@ -21,15 +21,16 @@ async function apiLogin(email, password) {
 
     if (perfilError) throw new Error('Perfil não encontrado');
 
-    // Se for o admin e o nome na configuração for diferente do perfil, atualiza o perfil
-    if (perfil.email === 'admin@manostech.com.br' || perfil.nivel === 'Administrador') {
-        if (CFG.adminNome && perfil.nome !== CFG.adminNome) {
-            // Atualiza o nome no perfil para refletir a configuração
+    // Se for Administrador e o nome da configuração for diferente, atualiza o perfil
+    if (perfil.nivel === 'Administrador' && CFG.adminNome && perfil.nome !== CFG.adminNome) {
+        try {
             await supabaseClient
                 .from('perfis')
                 .update({ nome: CFG.adminNome })
                 .eq('id', data.user.id);
-            perfil.nome = CFG.adminNome;
+            perfil.nome = CFG.adminNome;  // reflete a mudança imediatamente
+        } catch (e) {
+            console.warn('Não foi possível atualizar o nome do perfil:', e.message);
         }
     }
 
