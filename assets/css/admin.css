@@ -16,8 +16,57 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .login-sub { color: var(--text2); margin: 6px 0 32px; font-size: 14px; }
 .input-group { margin-bottom: 22px; text-align: left; }
 .input-group label { display: block; margin-bottom: 6px; color: var(--text2); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-.input-group input, .input-group select, .input-group textarea { width: 100%; padding: 14px 16px; background: var(--bg); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--r2); color: white; font-size: 15px; font-family: inherit; transition: all 0.3s ease; }
-.input-group input:focus, .input-group select:focus, .input-group textarea:focus { outline: none; border-color: var(--azul); box-shadow: 0 0 0 4px rgba(77,168,218,0.1), 0 0 20px var(--azul-glow); }
+
+/* Inputs e selects com vidro (glass) */
+.input-group input,
+.input-group select,
+.input-group textarea {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: var(--r2);
+    color: white;
+    font-size: 15px;
+    font-family: inherit;
+    transition: all 0.3s ease;
+}
+.input-group input:focus,
+.input-group select:focus,
+.input-group textarea:focus {
+    outline: none;
+    border-color: var(--azul);
+    box-shadow: 0 0 0 4px rgba(77,168,218,0.1), 0 0 20px var(--azul-glow);
+}
+
+/* ===== CORREÇÃO COM FUNDO GLASS ===== */
+select {
+    background: var(--glass) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    color: white !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    border-radius: var(--r2);
+    padding: 14px 16px;
+    font-size: 15px;
+    outline: none;
+    font-family: inherit;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238899b0' d='M6 8.825L1.175 4 2.238 2.938 6 6.7 9.763 2.937 10.825 4z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 16px center !important;
+    background-size: 12px;
+}
+select option {
+    background: #121824;
+    color: white;
+}
+
 .input-group textarea { resize: vertical; min-height: 70px; }
 .input-group .input-error { border-color: var(--red) !important; }
 .input-group .hint-msg { color: var(--yellow); font-size: 10px; margin-top: 4px; display: none; }
@@ -128,12 +177,14 @@ table th { color: var(--text2); font-weight: 600; font-size: 11px; text-transfor
 .confirm-buttons { display: flex; gap: 12px; justify-content: center; }
 .confirm-buttons .btn { width: auto; padding: 12px 30px; }
 
-/* ====== SELEÇÃO DE PAÍS (MODAL PORTAL) – FORA DA MEDIA QUERY ====== */
+/* Seletor de país customizado (modal portal) */
 .phone-row .custom-select-wrapper { position: relative; width: 130px; flex-shrink: 0; }
 .phone-row .custom-select {
     width: 100%;
     padding: 14px 30px 14px 12px;
-    background: rgba(0,0,0,0.3);
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 12px;
     color: white;
@@ -153,7 +204,7 @@ table th { color: var(--text2); font-weight: 600; font-size: 11px; text-transfor
     top: 100%;
     left: 0;
     width: 300px;
-    background: #1a1f2e;
+    background: #121824;
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 12px;
     max-height: 250px;
@@ -173,7 +224,6 @@ table th { color: var(--text2); font-weight: 600; font-size: 11px; text-transfor
 }
 .custom-option:hover, .custom-option.selected { background: rgba(77,168,218,0.2); }
 
-/* ====== MEDIA QUERY (apenas ajustes responsivos) ====== */
 @media (max-width: 768px) {
     .login-card { width: 95%; padding: 32px 24px; }
     .stats-grid { grid-template-columns: 1fr; }
@@ -182,30 +232,4 @@ table th { color: var(--text2); font-weight: 600; font-size: 11px; text-transfor
     .modal-content { max-width: 95%; padding: 20px; }
     .main-content { padding: 16px; }
     .stat-card .stat-value { font-size: 28px; }
-}
-/* Corrigir fundo das caixas de seleção nativas */
-select {
-    background: rgba(0,0,0,0.3) !important;
-    color: white !important;
-    border: 1px solid rgba(255,255,255,0.08) !important;
-    border-radius: var(--r2);
-    padding: 14px 16px;
-    font-size: 15px;
-    outline: none;
-    font-family: inherit;
-    cursor: pointer;
-    /* Remove a seta padrão (opcional – se quiser manter a seta branca) */
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238899b0' d='M6 8.825L1.175 4 2.238 2.938 6 6.7 9.763 2.937 10.825 4z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 16px center;
-    background-size: 12px;
-}
-
-/* Corrigir as opções do dropdown */
-select option {
-    background: #1a1f2e;
-    color: white;
 }
