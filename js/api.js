@@ -1,4 +1,4 @@
-// api.js – Comunicação exclusiva com Supabase (com logs de depuração)
+// api.js – Supabase (com serialização de arrays)
 const SUPABASE_URL = 'https://uojdbrjxeapzfrulcipr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ZGrmIWRubt_0MgPi_a4mgQ_RNYdNflM';
 
@@ -33,7 +33,16 @@ async function apiListarEventos() {
         .select('*')
         .order('id', { ascending: false });
     if (error) throw error;
-    return data.map(e => ({ ...e, visitantes: [], totalVisitantes: 0 }));
+    return data.map(e => {
+        // Converte campos snake_case para camelCase e desserializa logos
+        const evento = toCamelCase(e);
+        if (typeof evento.patrocinadoresLogos === 'string') {
+            try { evento.patrocinadoresLogos = JSON.parse(evento.patrocinadoresLogos); } catch (_) { evento.patrocinadoresLogos = []; }
+        }
+        evento.visitantes = [];
+        evento.totalVisitantes = 0;
+        return evento;
+    });
 }
 
 async function apiCriarEvento(evento) {
@@ -49,7 +58,11 @@ async function apiCriarEvento(evento) {
 
     console.log('📥 Resposta do Supabase:', { data, error });
     if (error) throw error;
-    return toCamelCase(data);
+    const result = toCamelCase(data);
+    if (typeof result.patrocinadoresLogos === 'string') {
+        try { result.patrocinadoresLogos = JSON.parse(result.patrocinadoresLogos); } catch (_) { result.patrocinadoresLogos = []; }
+    }
+    return result;
 }
 
 async function apiAtualizarEvento(id, evento) {
@@ -91,9 +104,14 @@ async function apiListarVisitantes(eventoId) {
 function toSnakeCase(obj) {
     const novo = {};
     for (const chave in obj) {
-        if (obj[chave] === undefined) continue;          // pula undefined
-        const snake = chave.replace(/[A-Z]/g, letra => '_' + letra.toLowerCase());
-        novo[snake] = obj[chave];
+        if (obj[chave] === undefined) continue;
+        let snake = chave.replace(/[A-Z]/g, letra => '_' + letra.toLowerCase());
+        let valor = obj[chave];
+        // Se for array, serializa como JSON string (para coluna text)
+        if (Array.isArray(valor)) {
+            valor = JSON.stringify(valor);
+        }
+        novo[snake] = valor;
     }
     return novo;
 }
