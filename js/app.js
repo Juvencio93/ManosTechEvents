@@ -11,7 +11,13 @@ function showPage(nome) {
             a.classList.add('active');
         }
     });
-    
+    if (nome === 'inicio') {
+    // Após carregar o HTML da página inicial
+    const cardFinanceiro = document.getElementById('cardFinanceiro');
+    if (cardFinanceiro) {
+        cardFinanceiro.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
+    }
+}
     const eventoSelector = document.getElementById('eventoSelectorDashboard');
     if (eventoSelector) eventoSelector.style.display = (nome === 'dashboard') ? 'flex' : 'none';
     
