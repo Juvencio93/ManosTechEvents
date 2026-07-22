@@ -1,4 +1,15 @@
-// Funcionários
+// Funcionários (com API)
+
+async function carregarFuncionarios() {
+    try {
+        FN = await apiListarFuncionarios();
+    } catch (e) {
+        console.error('Erro ao carregar funcionários:', e);
+        FN = [];
+    }
+    renderizarFuncionarios();
+}
+
 function abrirModalFuncionario() {
     if (!usuarioLogado?.permissoes?.g) { toast('🔒 Sem permissão!'); return; }
     funcionarioEmEdicao = null;
@@ -51,7 +62,7 @@ function atualizarPermPadrao() {
     });
 }
 
-function salvarFuncionario() {
+async function salvarFuncionario() {
     const nome = document.getElementById('funcNome').value.trim();
     const email = document.getElementById('funcEmail').value.trim();
     if (!nome || !email) { alert('⚠️ Preencha nome e e-mail!'); return; }
@@ -79,25 +90,34 @@ function salvarFuncionario() {
         permissoes
     };
 
-    if (funcionarioEmEdicao !== null) {
-        FN[funcionarioEmEdicao] = dados;
-    } else {
-        FN.push(dados);
+    try {
+        if (funcionarioEmEdicao !== null) {
+            const id = FN[funcionarioEmEdicao].id;
+            await apiAtualizarFuncionario(id, dados);
+            toast('✅ Funcionário atualizado!');
+        } else {
+            await apiCriarFuncionario(dados);
+            toast('✅ Funcionário criado!');
+        }
+        await carregarFuncionarios(); // recarrega do Supabase
+        fecharModal('funcionarioModal');
+    } catch (e) {
+        toast('❌ Erro ao salvar funcionário: ' + e.message);
     }
-    fecharModal('funcionarioModal');
-    renderizarFuncionarios();
-   
-    toast('✅ Funcionário salvo!');
     funcionarioEmEdicao = null;
 }
 
-function excluirFuncionario(index) {
+async function excluirFuncionario(index) {
     if (!usuarioLogado?.permissoes?.g) { toast('🔒 Sem permissão!'); return; }
-    confirmarAcao('Deseja realmente excluir este funcionário?', () => {
-        FN.splice(index, 1);
-        renderizarFuncionarios();
-       
-        toast('🗑️ Funcionário excluído!');
+    confirmarAcao('Deseja realmente excluir este funcionário?', async () => {
+        try {
+            const id = FN[index].id;
+            await apiExcluirFuncionario(id);
+            await carregarFuncionarios();
+            toast('🗑️ Funcionário excluído!');
+        } catch (e) {
+            toast('❌ Erro ao excluir funcionário: ' + e.message);
+        }
     });
 }
 
@@ -106,9 +126,9 @@ function renderizarFuncionarios() {
     if (!tbody) return;
     tbody.innerHTML = FN.map((f, i) => {
         const perms = [];
-        if (f.permissoes.v) perms.push('👁');
-        if (f.permissoes.e) perms.push('✏️');
-        if (f.permissoes.f) perms.push('💰');
+        if (f.permissoes?.v) perms.push('👁');
+        if (f.permissoes?.e) perms.push('✏️');
+        if (f.permissoes?.f) perms.push('💰');
         return `<tr>
             <td><strong>${escapeHtml(f.nome)}</strong></td>
             <td>${escapeHtml(f.email)}</td>
@@ -122,3 +142,11 @@ function renderizarFuncionarios() {
         </tr>`;
     }).join('');
 }
+
+// Carrega automaticamente ao acessar a página de funcionários
+document.addEventListener('DOMContentLoaded', () => {
+    // Aguarda o showPage carregar a página de funcionários para renderizar
+    // A função showPage chama renderizarFuncionarios quando nome === 'funcionarios'
+    // Mas precisamos garantir que FN esteja carregado antes de renderizar.
+    // Vamos carregar no init.js após a restauração da sessão.
+});
