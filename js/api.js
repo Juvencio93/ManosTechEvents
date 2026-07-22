@@ -33,10 +33,11 @@ async function apiListarEventos() {
     if (error) throw error;
     return data.map(e => {
         const evento = toCamelCase(e);
+        console.log('🔍 Evento carregado:', evento.nome, 'logoUrl:', evento.logoUrl); // ADICIONE ESTA LINHA
         if (typeof evento.patrocinadoresLogos === 'string') {
             try { evento.patrocinadoresLogos = JSON.parse(evento.patrocinadoresLogos); } catch (_) { evento.patrocinadoresLogos = []; }
         }
-        evento.visitantes = []; // preenchido sob demanda
+        evento.visitantes = [];
         return evento;
     });
 }
