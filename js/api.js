@@ -1,4 +1,4 @@
-// api.js – Supabase (com serialização de arrays)
+// api.js – Comunicação exclusiva com Supabase (com serialização de arrays)
 const SUPABASE_URL = 'https://uojdbrjxeapzfrulcipr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ZGrmIWRubt_0MgPi_a4mgQ_RNYdNflM';
 
@@ -34,8 +34,8 @@ async function apiListarEventos() {
         .order('id', { ascending: false });
     if (error) throw error;
     return data.map(e => {
-        // Converte campos snake_case para camelCase e desserializa logos
         const evento = toCamelCase(e);
+        // Desserializa patrocinadores_logos se for string JSON
         if (typeof evento.patrocinadoresLogos === 'string') {
             try { evento.patrocinadoresLogos = JSON.parse(evento.patrocinadoresLogos); } catch (_) { evento.patrocinadoresLogos = []; }
         }
@@ -107,7 +107,7 @@ function toSnakeCase(obj) {
         if (obj[chave] === undefined) continue;
         let snake = chave.replace(/[A-Z]/g, letra => '_' + letra.toLowerCase());
         let valor = obj[chave];
-        // Se for array, serializa como JSON string (para coluna text)
+        // Se for array, serializa como JSON string (para colunas text no Supabase)
         if (Array.isArray(valor)) {
             valor = JSON.stringify(valor);
         }
