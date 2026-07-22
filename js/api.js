@@ -80,9 +80,11 @@ async function apiExcluirEvento(id) {
 
 // ---------- Visitantes ----------
 async function apiRegistrarVisitante(token, dados) {
-    const { data: evento } = await supabaseClient
-        .from('eventos')
-        .select('id')
+    // Depois de inserir o visitante com sucesso (antes do catch)
+const { error: updateError } = await supabaseClient
+    .from('eventos')
+    .update({ totalVisitantes: supabaseClient.raw('total_visitantes + 1') })
+    .eq('id', evento.id);
         .eq('token', token)
         .single();
     if (!evento) throw new Error('Evento não encontrado');
