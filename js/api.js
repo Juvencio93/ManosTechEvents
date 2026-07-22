@@ -12,13 +12,33 @@ async function apiLogin(email, password) {
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
     sessao = data.user;
+
     const { data: perfil, error: perfilError } = await supabaseClient
         .from('perfis')
         .select('*')
         .eq('id', data.user.id)
         .single();
+
     if (perfilError) throw new Error('Perfil não encontrado');
-    return { nome: perfil.nome, email: data.user.email, nivel: perfil.nivel, permissoes: perfil.permissoes };
+
+    // Se for o admin e o nome na configuração for diferente do perfil, atualiza o perfil
+    if (perfil.email === 'admin@manostech.com.br' || perfil.nivel === 'Administrador') {
+        if (CFG.adminNome && perfil.nome !== CFG.adminNome) {
+            // Atualiza o nome no perfil para refletir a configuração
+            await supabaseClient
+                .from('perfis')
+                .update({ nome: CFG.adminNome })
+                .eq('id', data.user.id);
+            perfil.nome = CFG.adminNome;
+        }
+    }
+
+    return {
+        nome: perfil.nome,
+        email: data.user.email,
+        nivel: perfil.nivel,
+        permissoes: perfil.permissoes
+    };
 }
 
 async function apiLogout() {
