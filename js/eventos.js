@@ -266,5 +266,5 @@ function renderizarEventos() {
             <td><span class="badge ${statusBadgeClass(status)}">${status}</span></td>
             <td>${acoes}</td>
         </tr>`;
-    }).join('');
+    ).join('');
 }
