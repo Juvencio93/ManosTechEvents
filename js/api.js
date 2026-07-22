@@ -177,3 +177,15 @@ function toCamelCase(obj) {
     }
     return novo;
 }
+async function mikrotikLogin(token) {
+    const { error } = await supabaseClient.functions.invoke('mikrotik-login', {
+        body: { token }
+    });
+    if (error) throw error;
+}
+
+async function mikrotikAtivos() {
+    const { data, error } = await supabaseClient.functions.invoke('mikrotik-ativos');
+    if (error) throw error;
+    return data.total;
+}
