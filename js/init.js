@@ -1,4 +1,4 @@
-// init.js – Inicialização do sistema (executado após todos os módulos)
+// init.js – Inicialização do sistema
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Carrega configurações do Supabase
     try {
@@ -23,6 +23,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (user) {
                 usuarioLogado = user;
                 EV = await apiListarEventos();
+                // Carrega funcionários após login
+                if (typeof carregarFuncionarios === 'function') {
+                    await carregarFuncionarios();
+                }
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('loginClienteScreen').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'block';
