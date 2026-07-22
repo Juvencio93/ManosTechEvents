@@ -1,4 +1,4 @@
-// config.js – Estado global (carregado do Supabase)
+// config.js – Estado global com restauração de sessão
 let CFG = {
     empresaNome: 'Manos Tech',
     email: 'contato@manostech.com.br',
@@ -11,7 +11,6 @@ let CFG = {
 let EV = [];
 let FN = [];
 
-// Funções vazias apenas para manter compatibilidade
 function carregarDados() {}
 function salvarDados() {}
 
@@ -25,8 +24,9 @@ let patrocinadoresTemp = [];
 let eventoClienteAtual = null;
 let callbackConfirmacao = null;
 
-// Inicialização
+// Inicialização: carrega configuração e restaura sessão
 window.addEventListener('load', async () => {
+    // 1. Carrega configurações do Supabase
     try {
         if (typeof apiCarregarConfig === 'function') {
             const cfg = await apiCarregarConfig();
@@ -36,10 +36,22 @@ window.addEventListener('load', async () => {
                     atualizarInterfaceUsuario();
                 }
             }
-        } else {
-            console.warn('apiCarregarConfig não disponível. Usando padrões.');
         }
     } catch (e) {
-        console.warn('Usando configurações padrão.', e);
+        console.warn('Usando configurações padrão.');
+    }
+
+    // 2. Tenta restaurar a sessão do Supabase
+    try {
+        if (typeof apiRestaurarSessao === 'function') {
+            const user = await apiRestaurarSessao();
+            if (user) {
+                usuarioLogado = user;
+                EV = await apiListarEventos();
+                entrarSistema(); // já exibe o dashboard diretamente
+            }
+        }
+    } catch (e) {
+        console.warn('Nenhuma sessão ativa. Exibindo login.');
     }
 });
