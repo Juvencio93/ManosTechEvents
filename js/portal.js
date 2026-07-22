@@ -404,6 +404,8 @@ function formatWhatsApp(input) {
 async function simularConexao() {
     const erroWhatsapp = document.getElementById('erroWhatsapp');
     if (erroWhatsapp) erroWhatsapp.style.display = 'none';
+    if (eventoSelecionadoId === evento.id) selecionarEvento();
+if (eventoClienteAtual?.id === evento.id) await abrirAreaClienteEvento(evento);
 
     const nome = document.getElementById('portalNome')?.value.trim();
     const email = document.getElementById('portalEmail')?.value.trim();
