@@ -250,13 +250,12 @@ function renderizarEventos() {
     if (!tbody) return;
     tbody.innerHTML = EV.map(e => {
         const status = calcularStatusEvento(e);
-        console.log('📊 Status para', e.nome, '| datas:', e.dataInicio, e.dataFim, '| status:', status); // ADICIONE AQUI
-
         const valor = !p.f ? 'R$ ••••' : formatarMoeda(e.valorCobrado || 0);
         let acoes = `<button class="btn btn-xs btn-primary" onclick="verEvento(${e.id})">📊</button>`;
-        // ... resto do código
-    }).join('');
-}`<tr>
+        if (p.e) acoes += `<button class="btn btn-xs btn-ghost" onclick="editarEvento(${e.id})">✏️</button>`;
+        acoes += `<button class="btn btn-xs btn-primary" onclick="abrirPortalCat(${e.id})">🌐</button>`;
+        if (p.x) acoes += `<button class="btn btn-xs btn-danger" onclick="excluirEvento(${e.id})">🗑️</button>`;
+        return `<tr>
             <td><div style="width:34px;height:34px;border-radius:6px;overflow:hidden;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;">${e.logoUrl ? `<img src="${e.logoUrl}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'">` : '🎪'}</div></td>
             <td><strong>${escapeHtml(e.nome)}</strong></td>
             <td>${escapeHtml(e.cliente)}</td>
