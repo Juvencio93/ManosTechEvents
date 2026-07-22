@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <link rel="stylesheet" href="assets/css/admin.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SGE | Manos Tech</title>
-   
+    <link rel="stylesheet" href="assets/css/admin.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
@@ -102,32 +102,32 @@
         <button class="btn btn-ghost btn-sm" style="margin-top:16px;" onclick="fecharModal('qrModal')">Fechar</button>
     </div></div>
 
-   <!-- MODAL PORTAL -->
-<div class="modal" id="portalModal"><div class="modal-content" style="text-align:center;max-width:460px;">
-    <div class="portal-logo-grande" id="portalLogoGrande">🎪</div>
-    <div class="carrossel-container" id="carrosselContainer"><div class="carrossel-faixa" id="carrosselFaixa"></div></div>
-    <h3>Conecte-se ao Wi-Fi</h3>
-    <div class="input-group"><label>Nome</label><input type="text" id="portalNome"></div>
-    <div class="input-group"><label>E-mail</label><input type="email" id="portalEmail"></div>
-    <div class="input-group">
-        <label>WhatsApp (com código do país)</label>
-        <div class="phone-row">
-            <div class="custom-select-wrapper">
-                <div class="custom-select" id="customSelectModal">🇧🇷 +55</div>
-                <div class="custom-options" id="customOptionsModal"></div>
+    <!-- MODAL PORTAL -->
+    <div class="modal" id="portalModal"><div class="modal-content" style="text-align:center;max-width:460px;">
+        <div class="portal-logo-grande" id="portalLogoGrande">🎪</div>
+        <div class="carrossel-container" id="carrosselContainer"><div class="carrossel-faixa" id="carrosselFaixa"></div></div>
+        <h3>Conecte-se ao Wi-Fi</h3>
+        <div class="input-group"><label>Nome</label><input type="text" id="portalNome"></div>
+        <div class="input-group"><label>E-mail</label><input type="email" id="portalEmail"></div>
+        <div class="input-group">
+            <label>WhatsApp (com código do país)</label>
+            <div class="phone-row">
+                <div class="custom-select-wrapper">
+                    <div class="custom-select" id="customSelectModal">🇧🇷 +55</div>
+                    <div class="custom-options" id="customOptionsModal"></div>
+                </div>
+                <input type="text" id="portalWhatsApp" placeholder="(DDD) 9 9999-9999" maxlength="20">
             </div>
-            <input type="text" id="portalWhatsApp" placeholder="(DDD) 9 9999-9999" maxlength="20">
+            <div class="error-msg" id="erroWhatsapp">Número inválido para o país selecionado.</div>
         </div>
-        <div class="error-msg" id="erroWhatsapp">Número inválido para o país selecionado.</div>
-    </div>
-    <div class="lgpd-box">
-        <label><input type="checkbox" id="portalLGPD"> <span>Autorizo a coleta e o uso dos meus dados pessoais, de acordo com a LGPD, para acesso à rede Wi-Fi, envio de comunicações sobre eventos futuros, promoções e novidades da Manos Tech e de seus parceiros.</span></label>
-        <div class="lgpd-resumo">📌 Seus dados poderão ser utilizados para marketing e divulgação de eventos. Você pode solicitar a remoção a qualquer momento.</div>
-        <div class="lgpd-error" id="lgpdError">⚠️ É necessário aceitar a política de privacidade.</div>
-    </div>
-    <button class="btn btn-primary" onclick="simularConexao()">🔓 Acessar Internet</button>
-    <button class="btn btn-ghost btn-sm" style="margin-top:12px;width:100%;" onclick="fecharModal('portalModal')">Fechar</button>
-</div></div>
+        <div class="lgpd-box">
+            <label><input type="checkbox" id="portalLGPD"> <span>Autorizo a coleta e o uso dos meus dados pessoais, de acordo com a LGPD, para acesso à rede Wi-Fi, envio de comunicações sobre eventos futuros, promoções e novidades da Manos Tech e de seus parceiros.</span></label>
+            <div class="lgpd-resumo">📌 Seus dados poderão ser utilizados para marketing e divulgação de eventos. Você pode solicitar a remoção a qualquer momento.</div>
+            <div class="lgpd-error" id="lgpdError">⚠️ É necessário aceitar a política de privacidade.</div>
+        </div>
+        <button class="btn btn-primary" onclick="simularConexao()">🔓 Acessar Internet</button>
+        <button class="btn btn-ghost btn-sm" style="margin-top:12px;width:100%;" onclick="fecharModal('portalModal')">Fechar</button>
+    </div></div>
 
     <!-- DASHBOARD ADMIN (shell) -->
     <div class="dashboard" id="dashboard">
@@ -145,11 +145,11 @@
             <div class="sidebar-footer"><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrador</div><button class="btn-sair" onclick="confirmarSaidaSistema()">🚪 Sair</button></div>
         </div>
         <div class="main-content" id="main-content">
-            <!-- As páginas serão carregadas aqui dinamicamente -->
+            <!-- Conteúdo carregado dinamicamente -->
         </div>
     </div>
 
-    <!-- ÁREA DO CLIENTE (container fixo) -->
+    <!-- ÁREA DO CLIENTE -->
     <div class="dashboard" id="clienteDashboard" style="display:none;">
         <div style="margin-left:0;padding:34px;min-height:100vh;background:var(--bg);">
             <div class="cliente-header-card" style="padding:22px 30px;display:flex;align-items:center;gap:16px;margin-bottom:26px;border-radius:var(--r);">
@@ -166,21 +166,41 @@
             </div>
             <div class="card"><h3>🔥 Mapa de Calor - Acessos por Hora</h3><div class="heatmap" id="clienteHeatmapContainer"></div></div>
             <div class="card"><h3>📋 Visitantes</h3><table><thead><tr><th>Nome</th><th>E-mail</th><th>WhatsApp</th><th>Horário</th></tr></thead><tbody id="clienteVisitantesTable"></tbody></table></div>
+
+            <!-- Script inline que força a atualização da área do cliente quando ela se torna visível -->
+            <script>
+                (function() {
+                    const observer = new MutationObserver(function(mutations) {
+                        mutations.forEach(function(mutation) {
+                            if (mutation.target.id === 'clienteDashboard' && mutation.target.style.display === 'block') {
+                                console.log('👀 Área do cliente exibida. Disparando atualização...');
+                                if (typeof eventoClienteAtual !== 'undefined' && eventoClienteAtual) {
+                                    abrirAreaClienteEvento(eventoClienteAtual);
+                                }
+                            }
+                        });
+                    });
+                    const dashboardEl = document.getElementById('clienteDashboard');
+                    if (dashboardEl) {
+                        observer.observe(dashboardEl, { attributes: true, attributeFilter: ['style'] });
+                    }
+                })();
+            </script>
         </div>
     </div>
-<!-- Biblioteca do Supabase (deve vir antes dos seus scripts) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=2"></script>
-<script src="js/api.js?v=2"></script>
-<script src="js/utils.js?v=2"></script>
-<script src="js/auth.js?v=2"></script>
-<script src="js/eventos.js?v=2"></script>
-<script src="js/dashboard.js?v=2"></script>
-<script src="js/financeiro.js?v=2"></script>
-<script src="js/relatorios.js?v=2"></script>
-<script src="js/funcionarios.js?v=2"></script>
-<script src="js/portal.js?v=2"></script>
-<script src="js/cliente.js?v=2"></script>
-<script src="js/app.js?v=2"></script>
+
+    <!-- Scripts JS modularizados -->
+    <script src="js/config.js?v=2"></script>
+    <script src="js/api.js?v=2"></script>
+    <script src="js/utils.js?v=2"></script>
+    <script src="js/auth.js?v=2"></script>
+    <script src="js/eventos.js?v=2"></script>
+    <script src="js/dashboard.js?v=2"></script>
+    <script src="js/financeiro.js?v=2"></script>
+    <script src="js/relatorios.js?v=2"></script>
+    <script src="js/funcionarios.js?v=2"></script>
+    <script src="js/portal.js?v=2"></script>
+    <script src="js/cliente.js?v=2"></script>
+    <script src="js/app.js?v=2"></script>
 </body>
 </html>
