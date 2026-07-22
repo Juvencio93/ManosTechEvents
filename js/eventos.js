@@ -15,6 +15,11 @@ function abrirModalEvento() {
     eventoEmEdicao = null;
     document.getElementById('eventoModalTitle').textContent = '📅 Novo Evento';
     limparFormularioEvento();
+    // Esconde a seção financeira se o usuário não tiver permissão
+const financeiroFields = document.getElementById('financeiroFields');
+if (financeiroFields) {
+    financeiroFields.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
+}
     abrirModal('eventoModal');
 }
 
@@ -52,6 +57,11 @@ function editarEvento(id) {
 
     renderizarPatrocinadores();
     esconderDicas();
+    // Esconde a seção financeira se o usuário não tiver permissão
+const financeiroFields = document.getElementById('financeiroFields');
+if (financeiroFields) {
+    financeiroFields.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
+}
     abrirModal('eventoModal');
 }
 
