@@ -32,8 +32,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('menuToggle').style.display = 'flex';
                 atualizarInterfaceUsuario();
                 aplicarPermissoes();
-                // Força o carregamento da página inicial com um pequeno delay
-                setTimeout(() => showPage('inicio'), 100);
+
+                // Verifica se main-content existe antes de carregar a página
+                const main = document.getElementById('main-content');
+                if (main) {
+                    showPage('inicio');
+                } else {
+                    console.error('Elemento #main-content não encontrado!');
+                    // Tenta recriar se necessário (mas o HTML deve ter)
+                }
                 sessaoRestaurada = true;
                 console.log('✅ Sessão de admin restaurada.');
             }
@@ -42,5 +49,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.warn('Nenhuma sessão de admin ativa.');
     }
 
-    // ... (restante igual ao anterior)
+    // 3. Se não restaurou admin, tenta restaurar sessão do cliente
+    if (!sessaoRestaurada) {
+        try {
+            const clienteData = localStorage.getItem('clienteSession');
+            if (clienteData) {
+                const { eventoId } = JSON.parse(clienteData);
+                if (EV.length === 0) {
+                    EV = await apiListarEventos();
+                }
+                const evento = EV.find(ev => ev.id === eventoId);
+                if (evento) {
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('loginClienteScreen').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'none';
+                    document.getElementById('clienteDashboard').style.display = 'block';
+                    abrirAreaClienteEvento(evento);
+                    sessaoRestaurada = true;
+                    console.log('✅ Sessão de cliente restaurada.');
+                } else {
+                    localStorage.removeItem('clienteSession');
+                }
+            }
+        } catch (e) {
+            console.warn('Sessão de cliente inválida.');
+        }
+    }
+
+    // 4. Se nenhuma sessão, mostra o login do admin
+    if (!sessaoRestaurada) {
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('loginClienteScreen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('clienteDashboard').style.display = 'none';
+    }
 });
