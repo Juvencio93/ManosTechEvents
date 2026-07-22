@@ -80,6 +80,7 @@ async function fazerLoginCliente() {
 
 function confirmarSaidaCliente() {
     confirmarAcao('Deseja realmente sair?', () => {
+        localStorage.removeItem('clienteSession'); // Limpa a sessão do cliente
         document.getElementById('clienteDashboard').style.display = 'none';
         document.getElementById('loginClienteScreen').style.display = 'flex';
         eventoClienteAtual = null;
