@@ -233,3 +233,8 @@ table th { color: var(--text2); font-weight: 600; font-size: 11px; text-transfor
     .main-content { padding: 16px; }
     .stat-card .stat-value { font-size: 28px; }
 }
+/* Esconde elementos que exigem permissão; o JavaScript os exibe se necessário */
+#cardFinanceiro,
+#financeiroFields {
+    display: none;
+}
