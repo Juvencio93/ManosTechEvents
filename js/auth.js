@@ -1,12 +1,8 @@
-// Autenticação e controle de acesso (Supabase)
+// Autenticação e controle de acesso (com log extra no login do cliente)
 
 async function fazerLogin() {
-    const email = document.getElementById('loginEmail')?.value.trim();
-    const senha = document.getElementById('loginPassword')?.value.trim();
-    if (!email || !senha) {
-        alert('❌ Preencha email e senha.');
-        return;
-    }
+    const email = document.getElementById('loginEmail').value.trim();
+    const senha = document.getElementById('loginPassword').value.trim();
     try {
         const user = await apiLogin(email, senha);
         usuarioLogado = user;
@@ -60,9 +56,10 @@ function fazerLoginCliente() {
     const senha = document.getElementById('clienteSenha').value.trim();
     const evento = EV.find(ev => ev.clienteUsuario === usuario && ev.clienteSenha === senha);
     if (evento) {
+        console.log('✅ Login do cliente OK. Evento:', evento.nome);
         document.getElementById('loginClienteScreen').style.display = 'none';
         document.getElementById('clienteDashboard').style.display = 'block';
-        abrirAreaClienteEvento(evento);
+        abrirAreaClienteEvento(evento);  // <-- chamada obrigatória
     } else {
         alert('❌ Usuário ou senha inválidos!');
     }
