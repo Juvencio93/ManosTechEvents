@@ -1,4 +1,4 @@
-// CRUD de Eventos (Supabase puro, sem localStorage)
+// CRUD de Eventos (Supabase) - versão corrigida com logs
 
 function preencherSelectsEventos() {
     const opcoes = EV.map(e => `<option value="${e.id}">${e.nome} - ${e.cliente} (${calcularStatusEvento(e)})</option>`).join('');
@@ -130,9 +130,11 @@ async function salvarEvento() {
     ];
     campos.forEach(c => {
         const el = document.getElementById(c.id);
-        if (!el.value.trim()) {
-            el.classList.add('input-error');
-            document.getElementById(c.hint).style.display = 'block';
+        if (!el || !el.value.trim()) {
+            if (el) {
+                el.classList.add('input-error');
+                document.getElementById(c.hint).style.display = 'block';
+            }
             temErro = true;
         }
     });
@@ -142,7 +144,7 @@ async function salvarEvento() {
         return;
     }
 
-    // Sanitiza logos para garantir que só strings válidas sejam salvas
+    // Garante que patrocinadoresLogos seja um array de strings válidas
     const logosLimpos = patrocinadoresTemp.filter(url => typeof url === 'string' && url.length > 20 && (url.startsWith('http') || url.startsWith('data:')));
 
     const dados = {
@@ -164,14 +166,19 @@ async function salvarEvento() {
         parcelas: parseInt(document.getElementById('eventoParcelas').value) || 1
     };
 
+    console.log('Dados a serem salvos (camelCase):', JSON.stringify(dados, null, 2));
+
     try {
         if (eventoEmEdicao) {
             await apiAtualizarEvento(eventoEmEdicao, dados);
             toast('✅ Evento atualizado!');
         } else {
             const resp = await apiCriarEvento(dados);
+            console.log('Resposta da API:', resp);
             toast('✅ Evento criado!');
             eventoSelecionadoId = resp.id;
+            // Recarrega a lista de eventos
+            EV = await apiListarEventos();
             const novoEvento = EV.find(e => e.id === resp.id);
             if (novoEvento) {
                 const link = gerarLinkPortal(novoEvento);
@@ -182,7 +189,7 @@ async function salvarEvento() {
         }
 
         fecharModal('eventoModal');
-        EV = await apiListarEventos(); // Recarrega do Supabase
+        EV = await apiListarEventos();
         preencherSelectsEventos();
         renderizarEventos();
         if (eventoSelecionadoId) {
@@ -195,6 +202,7 @@ async function salvarEvento() {
         atualizarResumoFinanceiroGeral();
     } catch (e) {
         toast('❌ Erro ao salvar evento: ' + e.message);
+        console.error(e);
     }
     eventoEmEdicao = null;
     logoTemporario = null;
