@@ -1,20 +1,34 @@
 // Relatórios
+
 function gerarPDF() {
     const id = document.getElementById('relatorioEventoSelect').value;
     if (!id) { alert('⚠️ Selecione um evento!'); return; }
     const evento = EV.find(ev => ev.id === parseInt(id));
-    if (evento) gerarPDFEvento(evento);
+    if (!evento) {
+        alert('Evento não encontrado.');
+        return;
+    }
+    // Para o admin, também busca os visitantes antes de gerar
+    apiListarVisitantes(evento.id)
+        .then(visitantes => {
+            const eventoCompleto = { ...evento, visitantes, totalVisitantes: visitantes.length };
+            gerarPDFEvento(eventoCompleto);
+        })
+        .catch(() => {
+            gerarPDFEvento(evento);
+        });
 }
 
 function gerarRelatorioCliente() {
-    if (eventoClienteAtual) gerarPDFEvento(eventoClienteAtual);
+    // Esta função foi movida para cliente.js (acima)
 }
 
 function gerarPDFEvento(evento) {
     const empresaLogo = CFG.logoUrl ? `<img src="${CFG.logoUrl}" style="max-height:60px;" />` : `<strong>${CFG.empresaNome}</strong>`;
     const eventoLogo = evento.logoUrl ? `<img src="${evento.logoUrl}" style="max-height:60px;" />` : '<span style="font-size:24px;">🎪</span>';
 
-    const visitantesRows = (evento.visitantes || []).map(v =>
+    const visitantes = evento.visitantes || [];
+    const visitantesRows = visitantes.map(v =>
         `<tr><td>${escapeHtml(v.nome)}</td><td>${escapeHtml(v.email)}</td><td>${escapeHtml(v.whatsapp)}</td><td>${v.acesso}</td></tr>`
     ).join('');
 
@@ -33,7 +47,7 @@ function gerarPDFEvento(evento) {
             </div>
             <div>${eventoLogo}</div>
         </div>
-        <h3 style="color: #4da8da;">Visitantes (Total: ${evento.totalVisitantes})</h3>
+        <h3 style="color: #4da8da;">Visitantes (Total: ${visitantes.length})</h3>
         <table style="width:100%; border-collapse: collapse; margin-top: 10px;">
             <thead><tr style="background: #f0f6fa;"><th style="padding: 10px; border: 1px solid #ddd;">Nome</th><th style="padding: 10px; border: 1px solid #ddd;">E-mail</th><th style="padding: 10px; border: 1px solid #ddd;">WhatsApp</th><th style="padding: 10px; border: 1px solid #ddd;">Horário</th></tr></thead>
             <tbody>${visitantesRows || '<tr><td colspan="4" style="text-align:center;padding:20px;">Nenhum visitante registrado.</td></tr>'}</tbody>
