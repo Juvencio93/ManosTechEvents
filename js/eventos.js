@@ -1,4 +1,4 @@
-// CRUD de Eventos (Supabase) - versão corrigida e sem erros de sintaxe
+// CRUD de Eventos (Supabase) – logoUrl incluído no salvamento
 
 function preencherSelectsEventos() {
     const opcoes = EV.map(e => `<option value="${e.id}">${e.nome} - ${e.cliente} (${calcularStatusEvento(e)})</option>`).join('');
@@ -118,8 +118,6 @@ function renderizarPatrocinadores() {
 async function salvarEvento() {
     if (!usuarioLogado?.permissoes?.e) { toast('🔒 Sem permissão!'); return; }
     esconderDicas();
-    // Dentro de salvarEvento, após criar/atualizar:
-EV = await apiListarEventos();
     let temErro = false;
     const campos = [
         { id: 'eventoNome', hint: 'hintNome' },
@@ -159,6 +157,7 @@ EV = await apiListarEventos();
         clienteSenha: document.getElementById('eventoClienteSenha').value.trim(),
         patrocinadores: document.getElementById('eventoPatrocinadores').value.trim(),
         patrocinadoresLogos: logosLimpos,
+        logoUrl: logoTemporario || null,   // <-- CORREÇÃO AQUI
         observacoes: document.getElementById('eventoObservacoes').value.trim(),
         valorCobrado: parseFloat(document.getElementById('eventoValorCobrado').value) || 0,
         custoOperacional: parseFloat(document.getElementById('eventoCustoOperacional').value) || 0,
