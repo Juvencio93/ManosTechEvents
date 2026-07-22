@@ -1,5 +1,3 @@
-// Dashboard – Atualiza também a área do cliente
-
 async function selecionarEvento() {
     const select = document.getElementById('eventoSelect');
     if (!select) return;
@@ -28,19 +26,13 @@ async function selecionarEvento() {
     try {
         visitantes = await apiListarVisitantes(id);
     } catch (e) {
+        console.warn('Usando array local para visitantes');
         visitantes = evento.visitantes || [];
     }
 
     const total = visitantes.length;
     document.getElementById('totalVisitantes').textContent = total;
-    let conectados = 0;
-try {
-    conectados = await mikrotikAtivos();
-} catch (e) {
-    console.warn('Usando estimativa para conectados');
-    conectados = total > 0 ? Math.max(1, Math.floor(total * 0.3)) : 0;
-}
-document.getElementById('liveConnected').textContent = conectados;
+    // Estimativa (sem MikroTik – apenas uma declaração)
     const conectados = total > 0 ? Math.max(1, Math.floor(total * 0.3)) : 0;
     document.getElementById('liveConnected').textContent = conectados;
     document.getElementById('tempoMedio').textContent = (evento.tempoMedio || 0) + 'min';
@@ -82,11 +74,6 @@ document.getElementById('liveConnected').textContent = conectados;
         const android = Math.floor(Math.random() * 30) + 20;
         const desktop = 100 - ios - android;
         pie.style.background = `conic-gradient(var(--azul) 0% ${ios}%, #40a0ff ${ios}% ${ios+android}%, var(--yellow) ${ios+android}% 100%)`;
-    }
-
-    // 🔄 Atualiza a área do cliente se estiver ativa
-    if (typeof atualizarAreaClienteSeAtiva === 'function') {
-        await atualizarAreaClienteSeAtiva();
     }
 }
 
