@@ -68,6 +68,8 @@ async function fazerLoginCliente() {
 
     const evento = EV.find(ev => ev.clienteUsuario === usuario && ev.clienteSenha === senha);
     if (evento) {
+        // Salva o ID do evento e a flag de cliente no localStorage
+        localStorage.setItem('clienteSession', JSON.stringify({ eventoId: evento.id }));
         document.getElementById('loginClienteScreen').style.display = 'none';
         document.getElementById('clienteDashboard').style.display = 'block';
         abrirAreaClienteEvento(evento);
