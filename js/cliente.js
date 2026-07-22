@@ -1,8 +1,9 @@
-// Área do Cliente – com logs e fallback visível
+// Área do Cliente – versão final com atualização forçada
 
 async function abrirAreaClienteEvento(evento) {
-    console.log('🚀 abrirAreaClienteEvento executada para:', evento.nome);
+    console.log('🚀 abrirAreaClienteEvento chamada para:', evento.nome);
     eventoClienteAtual = evento;
+
     document.getElementById('clienteEventoNome').textContent = evento.nome;
     document.getElementById('clienteLogoHeader').innerHTML = evento.logoUrl
         ? `<img src="${evento.logoUrl}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'">`
@@ -10,11 +11,10 @@ async function abrirAreaClienteEvento(evento) {
 
     let visitantes = [];
     try {
-        console.log('🔍 Buscando visitantes para ID:', evento.id);
         visitantes = await apiListarVisitantes(evento.id);
-        console.log('📊 Visitantes retornados:', visitantes);
+        console.log('📊 Visitantes recebidos:', visitantes);
     } catch (e) {
-        console.error('❌ Erro ao buscar visitantes:', e);
+        console.error('❌ Falha ao buscar visitantes:', e);
         alert('Erro ao carregar visitantes. Usando dados locais.');
         visitantes = evento.visitantes || [];
     }
@@ -43,13 +43,7 @@ async function abrirAreaClienteEvento(evento) {
     console.log('✅ Área do cliente atualizada. Total:', total);
 }
 
-async function atualizarAreaClienteSeAtiva() {
-    if (eventoClienteAtual) {
-        console.log('🔄 Atualizando área do cliente a partir do dashboard...');
-        await abrirAreaClienteEvento(eventoClienteAtual);
-    }
-}
-
+// Configuração
 function previewLogoConfig(event) {
     const file = event.target.files[0];
     if (file) {
