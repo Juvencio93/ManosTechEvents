@@ -86,12 +86,19 @@ async function apiRegistrarVisitante(token, dados) {
 }
 
 async function apiListarVisitantes(eventoId) {
+    console.log('🔍 apiListarVisitantes chamada para evento ID:', eventoId);
     const { data, error } = await supabaseClient
         .from('visitantes')
         .select('*')
         .eq('evento_id', eventoId)
         .order('id', { ascending: false });
-    if (error) throw error;
+
+    console.log('📋 Resposta do Supabase (visitantes):', { data, error });
+
+    if (error) {
+        console.error('❌ Erro ao listar visitantes:', error);
+        throw error;
+    }
     return data.map(toCamelCase);
 }
 
