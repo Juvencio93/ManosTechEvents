@@ -1,43 +1,24 @@
-// api.js – Comunicação exclusiva com Supabase (instância única garantida)
+// api.js – Comunicação exclusiva com Supabase (com logs de depuração)
 const SUPABASE_URL = 'https://uojdbrjxeapzfrulcipr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ZGrmIWRubt_0MgPi_a4mgQ_RNYdNflM';
 
-// Força uma única instância global – NUNCA cria uma segunda.
-let supabaseClient;
-if (!window.__SUPABASE_CLIENT__) {
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    window.__SUPABASE_CLIENT__ = supabaseClient;
-    console.log('Supabase cliente criado (instância única).');
-} else {
-    supabaseClient = window.__SUPABASE_CLIENT__;
-    console.log('Reutilizando instância Supabase existente.');
-}
+const supabaseClient = window.__SUPABASE__ || window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+window.__SUPABASE__ = supabaseClient;
 
 let sessao = null;
 
 // ---------- Autenticação ----------
 async function apiLogin(email, password) {
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) {
-        console.error('Falha na autenticação:', error.message);
-        throw new Error(error.message);
-    }
+    if (error) throw new Error(error.message);
     sessao = data.user;
     const { data: perfil, error: perfilError } = await supabaseClient
         .from('perfis')
         .select('*')
         .eq('id', data.user.id)
         .single();
-    if (perfilError) {
-        console.error('Perfil não encontrado:', perfilError.message);
-        throw new Error('Perfil não encontrado');
-    }
-    return {
-        nome: perfil.nome,
-        email: data.user.email,
-        nivel: perfil.nivel,
-        permissoes: perfil.permissoes
-    };
+    if (perfilError) throw new Error('Perfil não encontrado');
+    return { nome: perfil.nome, email: data.user.email, nivel: perfil.nivel, permissoes: perfil.permissoes };
 }
 
 async function apiLogout() {
@@ -57,11 +38,16 @@ async function apiListarEventos() {
 
 async function apiCriarEvento(evento) {
     evento.token = 'tok_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+    const dadosSnake = toSnakeCase(evento);
+    console.log('📤 Enviando ao Supabase (snake_case):', JSON.stringify(dadosSnake, null, 2));
+
     const { data, error } = await supabaseClient
         .from('eventos')
-        .insert([toSnakeCase(evento)])
+        .insert([dadosSnake])
         .select('*')
         .single();
+
+    console.log('📥 Resposta do Supabase:', { data, error });
     if (error) throw error;
     return toCamelCase(data);
 }
@@ -75,27 +61,20 @@ async function apiAtualizarEvento(id, evento) {
 }
 
 async function apiExcluirEvento(id) {
-    const { error } = await supabaseClient
-        .from('eventos')
-        .delete()
-        .eq('id', id);
+    const { error } = await supabaseClient.from('eventos').delete().eq('id', id);
     if (error) throw error;
 }
 
 // ---------- Visitantes ----------
 async function apiRegistrarVisitante(token, dados) {
-    const { data: evento, error: eventoError } = await supabaseClient
+    const { data: evento } = await supabaseClient
         .from('eventos')
         .select('id')
         .eq('token', token)
         .single();
-    if (eventoError) throw new Error('Evento não encontrado');
-
+    if (!evento) throw new Error('Evento não encontrado');
     dados.evento_id = parseInt(evento.id, 10);
-    const { error } = await supabaseClient
-        .from('visitantes')
-        .insert([toSnakeCase(dados)]);
-    if (error) throw error;
+    await supabaseClient.from('visitantes').insert([toSnakeCase(dados)]);
 }
 
 async function apiListarVisitantes(eventoId) {
@@ -112,6 +91,7 @@ async function apiListarVisitantes(eventoId) {
 function toSnakeCase(obj) {
     const novo = {};
     for (const chave in obj) {
+        if (obj[chave] === undefined) continue;          // pula undefined
         const snake = chave.replace(/[A-Z]/g, letra => '_' + letra.toLowerCase());
         novo[snake] = obj[chave];
     }
