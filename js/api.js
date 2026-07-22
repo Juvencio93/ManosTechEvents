@@ -1,20 +1,23 @@
-// api.js – Comunicação exclusiva com Supabase (senha → password corrigido)
+// api.js – Comunicação exclusiva com Supabase (instância única garantida)
 const SUPABASE_URL = 'https://uojdbrjxeapzfrulcipr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ZGrmIWRubt_0MgPi_a4mgQ_RNYdNflM';
 
-// Garante uma única instância global do cliente Supabase
-const supabaseClient = window.__SUPABASE__ || window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-window.__SUPABASE__ = supabaseClient;
+// Força uma única instância global – NUNCA cria uma segunda.
+let supabaseClient;
+if (!window.__SUPABASE_CLIENT__) {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    window.__SUPABASE_CLIENT__ = supabaseClient;
+    console.log('Supabase cliente criado (instância única).');
+} else {
+    supabaseClient = window.__SUPABASE_CLIENT__;
+    console.log('Reutilizando instância Supabase existente.');
+}
 
 let sessao = null;
 
 // ---------- Autenticação ----------
-async function apiLogin(email, senha) {
-    // CORREÇÃO: envia a propriedade 'password' (não 'senha')
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password: senha
-    });
+async function apiLogin(email, password) {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) {
         console.error('Falha na autenticação:', error.message);
         throw new Error(error.message);
