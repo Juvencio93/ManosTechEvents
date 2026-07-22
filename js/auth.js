@@ -54,24 +54,36 @@ function voltarLoginAdmin() {
 async function fazerLoginCliente() {
     const usuario = document.getElementById('clienteUsuario').value.trim();
     const senha = document.getElementById('clienteSenha').value.trim();
-    
-    // Garante que a lista de eventos esteja carregada
+
+    console.log('👤 Tentativa de login cliente:', usuario);
+
+    // Se EV estiver vazio, tenta carregar do Supabase
     if (!EV || EV.length === 0) {
+        console.log('📭 EV vazio. Carregando eventos...');
         try {
-            EV = await apiListarEventos();
+            const eventos = await apiListarEventos();
+            console.log('📋 Eventos recebidos:', eventos);
+            EV = eventos;
         } catch (e) {
+            console.error('❌ Erro ao carregar eventos:', e);
             alert('❌ Erro ao conectar ao servidor. Tente novamente.');
             return;
         }
     }
-    
+
+    console.log('🔎 EV atual (length):', EV.length);
+    console.log('🔎 Procurando por:', usuario, '/', senha);
+
     const evento = EV.find(ev => ev.clienteUsuario === usuario && ev.clienteSenha === senha);
+    console.log('🎯 Evento encontrado:', evento);
+
     if (evento) {
         console.log('✅ Login do cliente OK. Chamando abrirAreaClienteEvento...');
         document.getElementById('loginClienteScreen').style.display = 'none';
         document.getElementById('clienteDashboard').style.display = 'block';
         abrirAreaClienteEvento(evento);
     } else {
+        console.warn('❌ Nenhum evento corresponde às credenciais fornecidas.');
         alert('❌ Usuário ou senha inválidos!');
     }
 }
