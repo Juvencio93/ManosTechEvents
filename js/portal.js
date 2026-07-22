@@ -244,6 +244,7 @@ const countries = [
     { code: '263', label: '🇿🇼 +263', name: '🇿🇼 Zimbabwe+263' },
     { code: '358', label: '🇦🇽 +358', name: '🇦🇽 Åland Islands+358' },
     { code: 'outro', label: '🌎 Outro', name: '🌎 Outro país' }
+
 ];
 
 let selectedCountryModal = countries.find(c => c.code === '55');
@@ -266,7 +267,6 @@ function renderOptionsModal() {
             renderOptionsModal();
             atualizarPlaceholderModal(code);
             document.getElementById('portalWhatsApp').value = '';
-            // Esconde mensagem de erro ao trocar país
             document.getElementById('erroWhatsapp').style.display = 'none';
         });
     });
@@ -307,14 +307,14 @@ function abrirPortalCat(id) {
         return;
     }
 
-    // IMPORTANTE: guarda o ID do evento para o registro de visitante
     eventoSelecionadoId = id;
 
     // Logo do evento
     const logoGrande = document.getElementById('portalLogoGrande');
     if (logoGrande) {
-        if (evento.logoUrl && (evento.logoUrl.startsWith('http') || evento.logoUrl.startsWith('data:'))) {
-            logoGrande.innerHTML = `<img src="${evento.logoUrl}" style="max-width:100%;max-height:100%;object-fit:contain;" onerror="this.style.display='none'">`;
+        const url = evento.logoUrl;
+        if (url && (url.startsWith('http') || url.startsWith('data:'))) {
+            logoGrande.innerHTML = `<img src="${url}" style="max-width:100%;max-height:100%;object-fit:contain;" onerror="this.style.display='none'">`;
         } else {
             logoGrande.innerHTML = '<span style="font-size:48px;">🎪</span>';
         }
@@ -337,19 +337,22 @@ function abrirPortalCat(id) {
         }
     }
 
-    // Resetar o seletor de país
+    // Resetar seletor de país
     selectedCountryModal = countries.find(c => c.code === '55');
-    document.getElementById('customSelectModal').textContent = selectedCountryModal.label;
+    const selectEl = document.getElementById('customSelectModal');
+    if (selectEl) selectEl.textContent = selectedCountryModal.label;
     renderOptionsModal();
 
     // Configurar toggle do dropdown
-    const selectEl = document.getElementById('customSelectModal');
-    selectEl.onclick = function(e) {
-        e.stopPropagation();
-        document.getElementById('customOptionsModal').classList.toggle('active');
-    };
+    if (selectEl) {
+        selectEl.onclick = function(e) {
+            e.stopPropagation();
+            const options = document.getElementById('customOptionsModal');
+            if (options) options.classList.toggle('active');
+        };
+    }
 
-    // Limpar campos e configurar placeholder
+    // Limpar campos
     const whatsappInput = document.getElementById('portalWhatsApp');
     if (whatsappInput) {
         whatsappInput.value = '';
@@ -365,7 +368,6 @@ function abrirPortalCat(id) {
     if (lgpdCheck) lgpdCheck.checked = false;
     const lgpdError = document.getElementById('lgpdError');
     if (lgpdError) lgpdError.style.display = 'none';
-    // Esconde também a mensagem de erro do WhatsApp
     const erroWhatsapp = document.getElementById('erroWhatsapp');
     if (erroWhatsapp) erroWhatsapp.style.display = 'none';
 
@@ -383,13 +385,11 @@ async function simularConexao() {
     const whatsapp = document.getElementById('portalWhatsApp')?.value.trim();
     const ddi = selectedCountryModal ? selectedCountryModal.code : '55';
 
-    // Oculta erros anteriores
     document.getElementById('erroWhatsapp').style.display = 'none';
 
     if (!nome) { alert('⚠️ Preencha seu nome!'); return; }
     if (!email) { alert('⚠️ Preencha seu e-mail!'); return; }
 
-    // Validação do WhatsApp (somente se preenchido)
     if (whatsapp) {
         const digits = whatsapp.replace(/\D/g, '');
         if (ddi === '55') {
@@ -440,7 +440,7 @@ async function simularConexao() {
     }
 }
 
-// Fecha o dropdown ao clicar fora
+// Fechar dropdown ao clicar fora
 document.addEventListener('click', function(event) {
     const options = document.getElementById('customOptionsModal');
     const select = document.getElementById('customSelectModal');
