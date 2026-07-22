@@ -1,34 +1,34 @@
-// api.js – Comunicação exclusiva com Supabase (sem localStorage)
+// api.js – Comunicação exclusiva com Supabase (senha → password corrigido)
 const SUPABASE_URL = 'https://uojdbrjxeapzfrulcipr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ZGrmIWRubt_0MgPi_a4mgQ_RNYdNflM';
 
-let supabaseClient = null;
-try {
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    console.log('Supabase iniciado:', supabaseClient);
-} catch (e) {
-    console.error('Falha ao iniciar Supabase:', e);
-}
+// Garante uma única instância global do cliente Supabase
+const supabaseClient = window.__SUPABASE__ || window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+window.__SUPABASE__ = supabaseClient;
 
 let sessao = null;
 
 // ---------- Autenticação ----------
 async function apiLogin(email, senha) {
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, senha });
-    if (error) throw new Error(error.message);
-
+    // CORREÇÃO: envia a propriedade 'password' (não 'senha')
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password: senha
+    });
+    if (error) {
+        console.error('Falha na autenticação:', error.message);
+        throw new Error(error.message);
+    }
     sessao = data.user;
     const { data: perfil, error: perfilError } = await supabaseClient
         .from('perfis')
         .select('*')
         .eq('id', data.user.id)
         .single();
-
     if (perfilError) {
-        console.warn('Perfil não encontrado. Usando fallback.');
+        console.error('Perfil não encontrado:', perfilError.message);
         throw new Error('Perfil não encontrado');
     }
-    console.log('Perfil:', perfil);
     return {
         nome: perfil.nome,
         email: data.user.email,
@@ -48,9 +48,6 @@ async function apiListarEventos() {
         .from('eventos')
         .select('*')
         .order('id', { ascending: false });
-    console.log('===== EVENTOS =====');
-    console.log('Data:', data);
-    console.log('Error:', error);
     if (error) throw error;
     return data.map(e => ({ ...e, visitantes: [], totalVisitantes: 0 }));
 }
@@ -92,15 +89,9 @@ async function apiRegistrarVisitante(token, dados) {
     if (eventoError) throw new Error('Evento não encontrado');
 
     dados.evento_id = parseInt(evento.id, 10);
-    console.log('DADOS RECEBIDOS:');
-    console.log(dados);
-    const dadosSnake = toSnakeCase(dados);
-    console.log('DADOS ENVIADOS AO SUPABASE:');
-    console.log(JSON.stringify(dadosSnake, null, 2));
     const { error } = await supabaseClient
         .from('visitantes')
-        .insert([dadosSnake]);
-    console.log('RESPOSTA DO SUPABASE:', error);
+        .insert([toSnakeCase(dados)]);
     if (error) throw error;
 }
 
