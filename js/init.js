@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('menuToggle').style.display = 'flex';
                 atualizarInterfaceUsuario();
                 aplicarPermissoes();
+                // GARANTE que a página inicial seja carregada
                 showPage('inicio');
                 sessaoRestaurada = true;
                 console.log('✅ Sessão de admin restaurada.');
