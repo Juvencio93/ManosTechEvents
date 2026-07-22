@@ -4,11 +4,22 @@ async function fazerLogin() {
     const email = document.getElementById('loginEmail').value.trim();
     const senha = document.getElementById('loginPassword').value.trim();
     try {
+        // Tenta login via Supabase (admin)
         const user = await apiLogin(email, senha);
         usuarioLogado = user;
         EV = await apiListarEventos();
         entrarSistema();
     } catch (e) {
+        // Se falhar, tenta funcionário local
+        if (typeof FN !== 'undefined' && Array.isArray(FN)) {
+            const func = FN.find(f => f.email === email && (f.senha || '123456') === senha);
+            if (func) {
+                usuarioLogado = func;
+                EV = await apiListarEventos();
+                entrarSistema();
+                return;
+            }
+        }
         alert('❌ ' + e.message);
     }
 }
@@ -25,13 +36,12 @@ function entrarSistema() {
 async function sairDoSistema() {
     try { await apiLogout(); } catch (e) {}
     sessao = null;
-    usuarioLogado = null;
-    eventoSelecionadoId = null;
     document.getElementById('dashboard').style.display = 'none';
-    document.getElementById('clienteDashboard').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('menuToggle').style.display = 'none';
     closeMenu();
+    usuarioLogado = null;
+    eventoSelecionadoId = null;
 }
 
 function confirmarSaidaSistema() {
@@ -68,7 +78,6 @@ async function fazerLoginCliente() {
 
     const evento = EV.find(ev => ev.clienteUsuario === usuario && ev.clienteSenha === senha);
     if (evento) {
-        // Salva o ID do evento e a flag de cliente no localStorage
         localStorage.setItem('clienteSession', JSON.stringify({ eventoId: evento.id }));
         document.getElementById('loginClienteScreen').style.display = 'none';
         document.getElementById('clienteDashboard').style.display = 'block';
@@ -80,7 +89,7 @@ async function fazerLoginCliente() {
 
 function confirmarSaidaCliente() {
     confirmarAcao('Deseja realmente sair?', () => {
-        localStorage.removeItem('clienteSession'); // Limpa a sessão do cliente
+        localStorage.removeItem('clienteSession');
         document.getElementById('clienteDashboard').style.display = 'none';
         document.getElementById('loginClienteScreen').style.display = 'flex';
         eventoClienteAtual = null;
@@ -98,7 +107,6 @@ function atualizarInterfaceUsuario() {
     const sidebarRole = document.getElementById('sidebarUserRole');
     if (sidebarRole) sidebarRole.textContent = usuarioLogado ? usuarioLogado.nivel : 'Administrador';
 
-    // variável renomeada para 'logotipo' a fim de evitar conflitos
     const logotipo = CFG.logoUrl ? `<img src="${CFG.logoUrl}" style="max-width:100%;max-height:100%;object-fit:contain;">` : '🏢';
     document.getElementById('sidebarLogoImg').innerHTML = logotipo;
     document.getElementById('loginLogoPreview').innerHTML = logotipo;
