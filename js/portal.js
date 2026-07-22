@@ -377,3 +377,10 @@ async function simularConexao() {
         toast('❌ Erro ao registrar: ' + e.message);
     }
 }
+document.addEventListener('click', function(event) {
+    const options = document.getElementById('customOptionsModal');
+    const select = document.getElementById('customSelectModal');
+    if (options && select && !select.contains(event.target) && !options.contains(event.target)) {
+        options.classList.remove('active');
+    }
+});
