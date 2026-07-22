@@ -1,4 +1,4 @@
-// Autenticação e controle de acesso
+// Autenticação e controle de acesso (Supabase)
 
 async function fazerLogin() {
     const email = document.getElementById('loginEmail')?.value.trim();
