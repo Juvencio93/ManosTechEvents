@@ -49,7 +49,6 @@ function editarEvento(id) {
     logoTemporario = evento.logoUrl;
     document.getElementById('logoPreview').innerHTML = evento.logoUrl ? `<img src="${evento.logoUrl}">` : '<span>📷 Upload</span>';
 
-    // Sanitiza patrocinadoresLogos
     const logos = evento.patrocinadoresLogos || [];
     patrocinadoresTemp = Array.isArray(logos)
         ? logos
@@ -158,7 +157,6 @@ async function salvarEvento() {
         return;
     }
 
-    // Garante que patrocinadoresLogos seja um array de strings válidas
     const logosLimpos = patrocinadoresTemp.filter(url => typeof url === 'string' && url.length > 20 && (url.startsWith('http') || url.startsWith('data:')));
 
     const dados = {
@@ -192,7 +190,6 @@ async function salvarEvento() {
             console.log('Resposta da API:', resp);
             toast('✅ Evento criado!');
             eventoSelecionadoId = resp.id;
-            // Recarrega a lista de eventos
             EV = await apiListarEventos();
             const novoEvento = EV.find(e => e.id === resp.id);
             if (novoEvento) {
