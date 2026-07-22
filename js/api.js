@@ -1,4 +1,4 @@
-// api.js – Supabase (totalVisitantes real, retorna total após registro)
+// api.js – Comunicação exclusiva com Supabase (com serialização de arrays e atualização de totalVisitantes)
 const SUPABASE_URL = 'https://uojdbrjxeapzfrulcipr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ZGrmIWRubt_0MgPi_a4mgQ_RNYdNflM';
 
@@ -7,6 +7,7 @@ window.__SUPABASE__ = supabaseClient;
 
 let sessao = null;
 
+// ---------- Autenticação ----------
 async function apiLogin(email, password) {
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
@@ -25,6 +26,50 @@ async function apiLogout() {
     sessao = null;
 }
 
+// ---------- Alterar senha ----------
+async function apiAlterarSenha(novaSenha) {
+    const { error } = await supabaseClient.auth.updateUser({ password: novaSenha });
+    if (error) throw error;
+}
+
+// ---------- Configurações do sistema ----------
+async function apiCarregarConfig() {
+    const { data, error } = await supabaseClient
+        .from('config')
+        .select('*')
+        .eq('id', 1)
+        .single();
+    if (error) {
+        console.warn('Erro ao carregar configurações:', error);
+        return null;
+    }
+    return {
+        empresaNome: data.empresa_nome,
+        email: data.email,
+        telefoneSuporte: data.telefone_suporte,
+        adminNome: data.admin_nome,
+        adminEmail: data.admin_email,
+        logoUrl: data.logo_url
+    };
+}
+
+async function apiSalvarConfig(cfg) {
+    const dadosSnake = {
+        empresa_nome: cfg.empresaNome,
+        email: cfg.email,
+        telefone_suporte: cfg.telefoneSuporte,
+        admin_nome: cfg.adminNome,
+        admin_email: cfg.adminEmail,
+        logo_url: cfg.logoUrl
+    };
+    const { error } = await supabaseClient
+        .from('config')
+        .update(dadosSnake)
+        .eq('id', 1);
+    if (error) throw error;
+}
+
+// ---------- Eventos ----------
 async function apiListarEventos() {
     const { data, error } = await supabaseClient
         .from('eventos')
@@ -33,7 +78,6 @@ async function apiListarEventos() {
     if (error) throw error;
     return data.map(e => {
         const evento = toCamelCase(e);
-        console.log('🔍 Evento carregado:', evento.nome, 'logoUrl:', evento.logoUrl); // ADICIONE ESTA LINHA
         if (typeof evento.patrocinadoresLogos === 'string') {
             try { evento.patrocinadoresLogos = JSON.parse(evento.patrocinadoresLogos); } catch (_) { evento.patrocinadoresLogos = []; }
         }
@@ -67,6 +111,7 @@ async function apiExcluirEvento(id) {
     if (error) throw error;
 }
 
+// ---------- Visitantes ----------
 async function apiRegistrarVisitante(token, dados) {
     const { data: evento } = await supabaseClient
         .from('eventos')
@@ -79,26 +124,16 @@ async function apiRegistrarVisitante(token, dados) {
         .from('visitantes')
         .insert([toSnakeCase(dados)]);
     if (error) throw error;
-
-    // Atualiza o total e retorna o novo total
-    const total = await atualizarTotalVisitantes(evento.id);
-    return { totalVisitantes: total };
+    await atualizarTotalVisitantes(evento.id);
 }
 
 async function apiListarVisitantes(eventoId) {
-    console.log('🔍 apiListarVisitantes chamada para evento ID:', eventoId);
     const { data, error } = await supabaseClient
         .from('visitantes')
         .select('*')
         .eq('evento_id', eventoId)
         .order('id', { ascending: false });
-
-    console.log('📋 Resposta do Supabase (visitantes):', { data, error });
-
-    if (error) {
-        console.error('❌ Erro ao listar visitantes:', error);
-        throw error;
-    }
+    if (error) throw error;
     return data.map(toCamelCase);
 }
 
@@ -113,51 +148,13 @@ async function atualizarTotalVisitantes(eventoId) {
                 .from('eventos')
                 .update({ totalVisitantes: count })
                 .eq('id', eventoId);
-            return count;
         }
     } catch (e) {
-        console.warn('Falha ao atualizar totalVisitantes:', e);
+        console.warn('Não foi possível atualizar totalVisitantes:', e);
     }
-    return null;
-}
-// ---------- Configurações do sistema ----------
-async function apiCarregarConfig() {
-    const { data, error } = await supabaseClient
-        .from('config')
-        .select('*')
-        .eq('id', 1)
-        .single();
-    if (error) {
-        console.warn('Erro ao carregar configurações:', error);
-        return null;
-    }
-    // Converte snake_case para camelCase
-    return {
-        empresaNome: data.empresa_nome,
-        email: data.email,
-        telefoneSuporte: data.telefone_suporte,
-        adminNome: data.admin_nome,
-        adminEmail: data.admin_email,
-        logoUrl: data.logo_url
-    };
 }
 
-async function apiSalvarConfig(cfg) {
-    const dadosSnake = {
-        empresa_nome: cfg.empresaNome,
-        email: cfg.email,
-        telefone_suporte: cfg.telefoneSuporte,
-        admin_nome: cfg.adminNome,
-        admin_email: cfg.adminEmail,
-        logo_url: cfg.logoUrl
-    };
-    const { error } = await supabaseClient
-        .from('config')
-        .update(dadosSnake)
-        .eq('id', 1);
-    if (error) throw error;
-}
-
+// ---------- Helpers ----------
 function toSnakeCase(obj) {
     const novo = {};
     for (const chave in obj) {
@@ -179,8 +176,4 @@ function toCamelCase(obj) {
         novo[camel] = obj[chave];
     }
     return novo;
-}
-async function apiAlterarSenha(novaSenha) {
-    const { error } = await supabaseClient.auth.updateUser({ password: novaSenha });
-    if (error) throw error;
 }
