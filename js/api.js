@@ -120,6 +120,43 @@ async function atualizarTotalVisitantes(eventoId) {
     }
     return null;
 }
+// ---------- Configurações do sistema ----------
+async function apiCarregarConfig() {
+    const { data, error } = await supabaseClient
+        .from('config')
+        .select('*')
+        .eq('id', 1)
+        .single();
+    if (error) {
+        console.warn('Erro ao carregar configurações:', error);
+        return null;
+    }
+    // Converte snake_case para camelCase
+    return {
+        empresaNome: data.empresa_nome,
+        email: data.email,
+        telefoneSuporte: data.telefone_suporte,
+        adminNome: data.admin_nome,
+        adminEmail: data.admin_email,
+        logoUrl: data.logo_url
+    };
+}
+
+async function apiSalvarConfig(cfg) {
+    const dadosSnake = {
+        empresa_nome: cfg.empresaNome,
+        email: cfg.email,
+        telefone_suporte: cfg.telefoneSuporte,
+        admin_nome: cfg.adminNome,
+        admin_email: cfg.adminEmail,
+        logo_url: cfg.logoUrl
+    };
+    const { error } = await supabaseClient
+        .from('config')
+        .update(dadosSnake)
+        .eq('id', 1);
+    if (error) throw error;
+}
 
 function toSnakeCase(obj) {
     const novo = {};
