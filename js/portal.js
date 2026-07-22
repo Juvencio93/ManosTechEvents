@@ -316,15 +316,17 @@ function abrirPortalCat(id) {
 
     eventoSelecionadoId = id;
 
-    // Logo do evento
+        // Logo do evento
     const logoGrande = document.getElementById('portalLogoGrande');
-    console.log('Logo do evento:', evento.logoUrl);
+    const urlLogo = evento.logoUrl;
+    console.log('🔍 Logo recebida no portal:', urlLogo, '| Tipo:', typeof urlLogo);
     if (logoGrande) {
-        const url = evento.logoUrl;
-        if (url && (url.startsWith('http') || url.startsWith('data:'))) {
-            logoGrande.innerHTML = `<img src="${url}" style="max-width:100%;max-height:100%;object-fit:contain;" onerror="this.style.display='none'">`;
+        if (urlLogo && typeof urlLogo === 'string' && urlLogo.trim().length > 10 && (urlLogo.startsWith('http') || urlLogo.startsWith('data:'))) {
+            logoGrande.innerHTML = `<img src="${urlLogo}" style="max-width:100%;max-height:100%;object-fit:contain;" onerror="this.style.display='none'">`;
+            console.log('✅ Logo exibida');
         } else {
             logoGrande.innerHTML = '<span style="font-size:48px;">🎪</span>';
+            console.log('⚠️ Logo não encontrada ou inválida, exibindo fallback');
         }
     }
 
