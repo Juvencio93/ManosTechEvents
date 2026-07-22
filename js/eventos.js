@@ -16,7 +16,6 @@ function abrirModalEvento() {
     document.getElementById('eventoModalTitle').textContent = '📅 Novo Evento';
     limparFormularioEvento();
     
-    // Ocultar campos financeiros se sem permissão
     const financeiroFields = document.getElementById('financeiroFields');
     if (financeiroFields) {
         financeiroFields.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
@@ -59,7 +58,6 @@ function editarEvento(id) {
     renderizarPatrocinadores();
     esconderDicas();
     
-    // Ocultar campos financeiros se sem permissão
     const financeiroFields = document.getElementById('financeiroFields');
     if (financeiroFields) {
         financeiroFields.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
@@ -179,15 +177,12 @@ async function salvarEvento() {
         parcelas: parseInt(document.getElementById('eventoParcelas').value) || 1
     };
 
-    console.log('Dados a serem salvos (camelCase):', JSON.stringify(dados, null, 2));
-
     try {
         if (eventoEmEdicao) {
             await apiAtualizarEvento(eventoEmEdicao, dados);
             toast('✅ Evento atualizado!');
         } else {
             const resp = await apiCriarEvento(dados);
-            console.log('Resposta da API:', resp);
             toast('✅ Evento criado!');
             eventoSelecionadoId = resp.id;
             EV = await apiListarEventos();
@@ -214,7 +209,6 @@ async function salvarEvento() {
         atualizarResumoFinanceiroGeral();
     } catch (e) {
         toast('❌ Erro ao salvar evento: ' + e.message);
-        console.error(e);
     }
     eventoEmEdicao = null;
     logoTemporario = null;
