@@ -64,30 +64,12 @@
     </div>
 
     <!-- MODAL EVENTO -->
-    <div class="modal" id="eventoModal"><div class="modal-content">
-        <h2 id="eventoModalTitle">📅 Novo Evento</h2>
-        <h4>📋 Dados</h4>
-        <div class="row"><div class="col-2"><div class="input-group"><label>Nome *</label><input type="text" id="eventoNome"><span class="hint-msg" id="hintNome">Campo obrigatório</span></div></div><div class="col"><div class="input-group"><label>Cliente *</label><input type="text" id="eventoCliente"><span class="hint-msg" id="hintCliente">Campo obrigatório</span></div></div></div>
-        <div class="row"><div class="col"><div class="input-group"><label>Data Inicial *</label><input type="date" id="eventoDataInicio"><span class="hint-msg" id="hintDataInicio">Campo obrigatório</span></div></div><div class="col"><div class="input-group"><label>Data Final *</label><input type="date" id="eventoDataFim"><span class="hint-msg" id="hintDataFim">Campo obrigatório</span></div></div></div>
-        <div class="row"><div class="col-2"><div class="input-group"><label>Local *</label><input type="text" id="eventoLocalInput"><span class="hint-msg" id="hintLocal">Campo obrigatório</span></div></div></div>
-        <h4 style="color:#6c5ce7;">👤 Acesso Cliente</h4>
-        <div class="row"><div class="col"><div class="input-group"><label>Usuário *</label><input type="text" id="eventoClienteUsuario"><span class="hint-msg" id="hintClienteUsuario">Campo obrigatório</span></div></div><div class="col"><div class="input-group"><label>Senha *</label><input type="password" id="eventoClienteSenha"><span class="hint-msg" id="hintClienteSenha">Campo obrigatório</span></div></div></div>
-        <h4>🎨 Identidade</h4>
-        <div class="row"><div class="col"><div class="input-group"><label>Logo</label><div class="logo-preview" id="logoPreview" onclick="document.getElementById('logoUpload').click()"><span>📷 Upload</span></div><input type="file" id="logoUpload" accept="image/*" style="display:none;" onchange="previewLogoEvento(event)"></div></div><div class="col"><div class="input-group"><label>Patrocinadores</label><textarea id="eventoPatrocinadores" rows="2"></textarea></div></div></div>
-        <div class="row"><div class="col-2"><div class="input-group"><label>Logos Patrocinadores</label><div class="patrocinadores-upload" id="patrocinadoresContainer"><div class="patrocinador-add" onclick="document.getElementById('patrocinadorUpload').click()">+</div></div><input type="file" id="patrocinadorUpload" accept="image/*" style="display:none;" onchange="adicionarPatrocinador(event)" multiple></div></div></div>
-        <div class="row"><div class="col-2"><div class="input-group"><label>Observações</label><textarea id="eventoObservacoes" rows="2"></textarea></div></div></div>
-        <h4 style="color:var(--yellow);" id="secaoFinanceira">💰 Financeiro</h4>
-        <div id="financeiroFields">
+    <div id="financeiroFields">
     <h4 style="color:var(--yellow);">💰 Financeiro</h4>
     <div class="row"><div class="col"><div class="input-group"><label>Valor Total</label><input type="number" id="eventoValorCobrado" step="0.01" value="0"></div></div><div class="col"><div class="input-group"><label>Custo</label><input type="number" id="eventoCustoOperacional" step="0.01" value="0"></div></div></div>
     <div class="row"><div class="col"><div class="input-group"><label>Valor Pago (entrada)</label><input type="number" id="eventoValorPago" step="0.01" value="0"></div></div><div class="col"><div class="input-group"><label>Vencimento</label><input type="date" id="eventoVencimento"></div></div></div>
     <div class="row"><div class="col"><div class="input-group"><label>Forma Pagto</label><select id="eventoFormaPagamento"><option value="">Selecione...</option><option value="pix">PIX</option><option value="boleto">Boleto</option><option value="cartao">Cartão</option><option value="transferencia">Transferência</option></select></div></div><div class="col"><div class="input-group"><label>Parcelas (do saldo)</label><input type="number" id="eventoParcelas" value="1" min="1" max="12"></div></div></div>
 </div>
-        <div class="row"><div class="col"><div class="input-group"><label>Valor Total</label><input type="number" id="eventoValorCobrado" step="0.01" value="0"></div></div><div class="col"><div class="input-group"><label>Custo</label><input type="number" id="eventoCustoOperacional" step="0.01" value="0"></div></div></div>
-        <div class="row"><div class="col"><div class="input-group"><label>Valor Pago (entrada)</label><input type="number" id="eventoValorPago" step="0.01" value="0"></div></div><div class="col"><div class="input-group"><label>Vencimento</label><input type="date" id="eventoVencimento"></div></div></div>
-        <div class="row"><div class="col"><div class="input-group"><label>Forma Pagto</label><select id="eventoFormaPagamento"><option value="">Selecione...</option><option value="pix">PIX</option><option value="boleto">Boleto</option><option value="cartao">Cartão</option><option value="transferencia">Transferência</option></select></div></div><div class="col"><div class="input-group"><label>Parcelas (do saldo)</label><input type="number" id="eventoParcelas" value="1" min="1" max="12"></div></div></div>
-        <div style="display:flex;gap:12px;margin-top:20px;"><button class="btn btn-primary" onclick="salvarEvento()">💾 Salvar</button><button class="btn btn-ghost" onclick="fecharModal('eventoModal')">Cancelar</button></div>
-    </div></div>
 
     <!-- MODAL FUNCIONÁRIO -->
     <div class="modal" id="funcionarioModal"><div class="modal-content" style="max-width:550px;">
