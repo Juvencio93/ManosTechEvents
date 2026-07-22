@@ -103,21 +103,31 @@
     </div></div>
 
     <!-- MODAL PORTAL -->
-    <div class="modal" id="portalModal"><div class="modal-content" style="text-align:center;max-width:460px;">
-        <div class="portal-logo-grande" id="portalLogoGrande">🎪</div>
-        <div class="carrossel-container" id="carrosselContainer"><div class="carrossel-faixa" id="carrosselFaixa"></div></div>
-        <h3>Conecte-se ao Wi-Fi</h3>
-        <div class="input-group"><label>Nome</label><input type="text" id="portalNome"></div>
-        <div class="input-group"><label>E-mail</label><input type="email" id="portalEmail"></div>
-        <div class="input-group"><label>WhatsApp</label><input type="text" id="portalWhatsApp" oninput="formatWhatsApp(this)" placeholder="(11) 9 9999-9999" maxlength="16"></div>
-        <div class="lgpd-box">
-            <label><input type="checkbox" id="portalLGPD"> Autorizo a coleta dos meus dados conforme LGPD.</label>
-            <div class="lgpd-resumo">📌 Dados usados exclusivamente para acesso à rede Wi-Fi durante o evento.</div>
-            <div class="lgpd-error" id="lgpdError">⚠️ É necessário aceitar a política de privacidade.</div>
+    <!-- MODAL PORTAL -->
+<div class="modal" id="portalModal"><div class="modal-content" style="text-align:center;max-width:460px;">
+    <div class="portal-logo-grande" id="portalLogoGrande">🎪</div>
+    <div class="carrossel-container" id="carrosselContainer"><div class="carrossel-faixa" id="carrosselFaixa"></div></div>
+    <h3>Conecte-se ao Wi-Fi</h3>
+    <div class="input-group"><label>Nome</label><input type="text" id="portalNome"></div>
+    <div class="input-group"><label>E-mail</label><input type="email" id="portalEmail"></div>
+    <div class="input-group">
+        <label>WhatsApp (com código do país)</label>
+        <div class="phone-row">
+            <div class="custom-select-wrapper">
+                <div class="custom-select" id="customSelectModal">🇧🇷 +55</div>
+                <div class="custom-options" id="customOptionsModal"></div>
+            </div>
+            <input type="text" id="portalWhatsApp" placeholder="(DDD) 9 9999-9999" maxlength="20">
         </div>
-        <button class="btn btn-primary" onclick="simularConexao()">🔓 Acessar Internet</button>
-        <button class="btn btn-ghost btn-sm" style="margin-top:12px;width:100%;" onclick="fecharModal('portalModal')">Fechar</button>
-    </div></div>
+    </div>
+    <div class="lgpd-box">
+        <label><input type="checkbox" id="portalLGPD"> Autorizo a coleta dos meus dados conforme LGPD.</label>
+        <div class="lgpd-resumo">📌 Dados usados exclusivamente para acesso à rede Wi-Fi durante o evento.</div>
+        <div class="lgpd-error" id="lgpdError">⚠️ É necessário aceitar a política de privacidade.</div>
+    </div>
+    <button class="btn btn-primary" onclick="simularConexao()">🔓 Acessar Internet</button>
+    <button class="btn btn-ghost btn-sm" style="margin-top:12px;width:100%;" onclick="fecharModal('portalModal')">Fechar</button>
+</div></div>
 
     <!-- DASHBOARD ADMIN (shell) -->
     <div class="dashboard" id="dashboard">
