@@ -5,14 +5,13 @@ let CFG = {
     telefoneSuporte: '(11) 99999-9999',
     adminNome: 'Carlos Silva',
     adminEmail: 'admin@manostech.com.br',
-    adminSenha: '123456', // será removido posteriormente
     logoUrl: ''
 };
 
 let EV = [];
 let FN = [];
 
-// Funções mantidas para compatibilidade – não fazem mais nada.
+// Funções vazias apenas para manter compatibilidade
 function carregarDados() {}
 function salvarDados() {}
 
@@ -26,18 +25,21 @@ let patrocinadoresTemp = [];
 let eventoClienteAtual = null;
 let callbackConfirmacao = null;
 
-// Inicialização: carrega configuração do Supabase
-(async function initConfig() {
+// Inicialização
+window.addEventListener('load', async () => {
     try {
-        const cfg = await apiCarregarConfig();
-        if (cfg) {
-            CFG = cfg;
-            // Atualiza a interface se já estiver disponível
-            if (typeof atualizarInterfaceUsuario === 'function') {
-                atualizarInterfaceUsuario();
+        if (typeof apiCarregarConfig === 'function') {
+            const cfg = await apiCarregarConfig();
+            if (cfg) {
+                CFG = cfg;
+                if (typeof atualizarInterfaceUsuario === 'function') {
+                    atualizarInterfaceUsuario();
+                }
             }
+        } else {
+            console.warn('apiCarregarConfig não disponível. Usando padrões.');
         }
     } catch (e) {
-        console.warn('Usando configurações padrão.');
+        console.warn('Usando configurações padrão.', e);
     }
-})();
+});
