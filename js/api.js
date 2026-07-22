@@ -174,6 +174,61 @@ async function atualizarTotalVisitantes(eventoId) {
         console.warn('Não foi possível atualizar totalVisitantes:', e);
     }
 }
+// ---------- Funcionários ----------
+async function apiListarFuncionarios() {
+    const { data, error } = await supabaseClient
+        .from('funcionarios')
+        .select('*')
+        .order('id');
+    if (error) throw error;
+    // Converte para camelCase e desserializa permissoes se for string
+    return data.map(f => {
+        const func = toCamelCase(f);
+        if (typeof func.permissoes === 'string') {
+            try { func.permissoes = JSON.parse(func.permissoes); } catch (e) { func.permissoes = {}; }
+        }
+        return func;
+    });
+}
+
+async function apiCriarFuncionario(func) {
+    // Garante que permissoes seja string JSON
+    const dados = { ...func };
+    if (typeof dados.permissoes === 'object') {
+        dados.permissoes = JSON.stringify(dados.permissoes);
+    }
+    const { data, error } = await supabaseClient
+        .from('funcionarios')
+        .insert([toSnakeCase(dados)])
+        .select()
+        .single();
+    if (error) throw error;
+    const novo = toCamelCase(data);
+    if (typeof novo.permissoes === 'string') {
+        novo.permissoes = JSON.parse(novo.permissoes);
+    }
+    return novo;
+}
+
+async function apiAtualizarFuncionario(id, func) {
+    const dados = { ...func };
+    if (typeof dados.permissoes === 'object') {
+        dados.permissoes = JSON.stringify(dados.permissoes);
+    }
+    const { error } = await supabaseClient
+        .from('funcionarios')
+        .update(toSnakeCase(dados))
+        .eq('id', id);
+    if (error) throw error;
+}
+
+async function apiExcluirFuncionario(id) {
+    const { error } = await supabaseClient
+        .from('funcionarios')
+        .delete()
+        .eq('id', id);
+    if (error) throw error;
+}
 
 // ---------- Helpers ----------
 function toSnakeCase(obj) {
