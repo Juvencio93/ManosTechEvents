@@ -253,21 +253,27 @@ function renderOptionsModal() {
     const container = document.getElementById('customOptionsModal');
     if (!container) return;
     container.innerHTML = countries.map(c =>
-        `<div class="custom-option${c.code === selectedCountryModal.code ? ' selected' : ''}" data-code="${c.code}" data-label="${c.label}" data-name="${c.name}">${c.name}</div>`
+        `<div class="custom-option${c.code === selectedCountryModal.code ? ' selected' : ''}" data-code="${c.code}" data-label="${c.label}" data-name="${c.name}" style="padding: 10px 12px; cursor: pointer; color: white; font-size: 14px; white-space: nowrap;">${c.name}</div>`
     ).join('');
 
     document.querySelectorAll('#customOptionsModal .custom-option').forEach(opt => {
+        opt.addEventListener('mouseenter', () => opt.style.background = 'rgba(77,168,218,0.2)');
+        opt.addEventListener('mouseleave', () => opt.style.background = opt.classList.contains('selected') ? 'rgba(77,168,218,0.2)' : '');
         opt.addEventListener('click', function(e) {
             e.stopPropagation();
             const code = this.dataset.code;
             const label = this.dataset.label;
             selectedCountryModal = countries.find(c => c.code === code);
-            document.getElementById('customSelectModal').textContent = label;
-            container.classList.remove('active');
+            const selectEl = document.getElementById('customSelectModal');
+            if (selectEl) selectEl.textContent = label;
+            const optionsEl = document.getElementById('customOptionsModal');
+            if (optionsEl) optionsEl.style.display = 'none';
             renderOptionsModal();
             atualizarPlaceholderModal(code);
-            document.getElementById('portalWhatsApp').value = '';
-            document.getElementById('erroWhatsapp').style.display = 'none';
+            const whatsappInput = document.getElementById('portalWhatsApp');
+            if (whatsappInput) whatsappInput.value = '';
+            const erroWhatsapp = document.getElementById('erroWhatsapp');
+            if (erroWhatsapp) erroWhatsapp.style.display = 'none';
         });
     });
 }
@@ -311,6 +317,7 @@ function abrirPortalCat(id) {
 
     // Logo do evento
     const logoGrande = document.getElementById('portalLogoGrande');
+    console.log('Logo do evento:', evento.logoUrl);
     if (logoGrande) {
         const url = evento.logoUrl;
         if (url && (url.startsWith('http') || url.startsWith('data:'))) {
@@ -343,12 +350,16 @@ function abrirPortalCat(id) {
     if (selectEl) selectEl.textContent = selectedCountryModal.label;
     renderOptionsModal();
 
-    // Configurar toggle do dropdown
+    // Força o dropdown começar escondido
+    const optionsEl = document.getElementById('customOptionsModal');
+    if (optionsEl) optionsEl.style.display = 'none';
+
+    // Toggle do dropdown
     if (selectEl) {
         selectEl.onclick = function(e) {
             e.stopPropagation();
-            const options = document.getElementById('customOptionsModal');
-            if (options) options.classList.toggle('active');
+            const opt = document.getElementById('customOptionsModal');
+            if (opt) opt.style.display = (opt.style.display === 'block') ? 'none' : 'block';
         };
     }
 
@@ -380,12 +391,13 @@ function formatWhatsApp(input) {
 }
 
 async function simularConexao() {
+    const erroWhatsapp = document.getElementById('erroWhatsapp');
+    if (erroWhatsapp) erroWhatsapp.style.display = 'none';
+
     const nome = document.getElementById('portalNome')?.value.trim();
     const email = document.getElementById('portalEmail')?.value.trim();
     const whatsapp = document.getElementById('portalWhatsApp')?.value.trim();
     const ddi = selectedCountryModal ? selectedCountryModal.code : '55';
-
-    document.getElementById('erroWhatsapp').style.display = 'none';
 
     if (!nome) { alert('⚠️ Preencha seu nome!'); return; }
     if (!email) { alert('⚠️ Preencha seu e-mail!'); return; }
@@ -394,21 +406,26 @@ async function simularConexao() {
         const digits = whatsapp.replace(/\D/g, '');
         if (ddi === '55') {
             if (digits.length !== 10 && digits.length !== 11) {
-                document.getElementById('erroWhatsapp').textContent = 'Número inválido para o Brasil. Use 10 ou 11 dígitos (com DDD).';
-                document.getElementById('erroWhatsapp').style.display = 'block';
+                if (erroWhatsapp) {
+                    erroWhatsapp.textContent = 'Número inválido para o Brasil. Use 10 ou 11 dígitos (com DDD).';
+                    erroWhatsapp.style.display = 'block';
+                }
                 return;
             }
         } else {
             if (digits.length < 7 || digits.length > 15) {
-                document.getElementById('erroWhatsapp').textContent = 'Número inválido (mín. 7 dígitos, máx. 15).';
-                document.getElementById('erroWhatsapp').style.display = 'block';
+                if (erroWhatsapp) {
+                    erroWhatsapp.textContent = 'Número inválido (mín. 7 dígitos, máx. 15).';
+                    erroWhatsapp.style.display = 'block';
+                }
                 return;
             }
         }
     }
 
+    const lgpdError = document.getElementById('lgpdError');
     if (!document.getElementById('portalLGPD')?.checked) {
-        document.getElementById('lgpdError').style.display = 'block';
+        if (lgpdError) lgpdError.style.display = 'block';
         return;
     }
 
@@ -445,6 +462,6 @@ document.addEventListener('click', function(event) {
     const options = document.getElementById('customOptionsModal');
     const select = document.getElementById('customSelectModal');
     if (options && select && !select.contains(event.target) && !options.contains(event.target)) {
-        options.classList.remove('active');
+        options.style.display = 'none';
     }
 });
