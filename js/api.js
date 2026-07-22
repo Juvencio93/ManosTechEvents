@@ -97,7 +97,8 @@ async function apiListarVisitantes(eventoId) {
         .eq('evento_id', eventoId)
         .order('id', { ascending: false });
     if (error) throw error;
-    return data.map(toCamelCase);
+    // Dentro de apiListarEventos, troque o return atual por:
+return data.map(e => ({ ...toCamelCase(e), visitantes: [] }));
 }
 
 // ---------- Helpers ----------
