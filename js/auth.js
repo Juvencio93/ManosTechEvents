@@ -16,10 +16,9 @@ async function fazerLogin() {
     const email = document.getElementById('loginEmail').value.trim();
     const senha = document.getElementById('loginPassword').value.trim();
 
-    // Garante que FN esteja disponível antes de qualquer coisa
     await garantirFuncionariosCarregados();
 
-    // Tenta primeiro o funcionário local (para não gerar erro 400 desnecessário)
+    // Tenta primeiro o funcionário local
     const func = FN.find(f => f.email === email && f.senha === senha);
     if (func) {
         usuarioLogado = func;
@@ -28,14 +27,12 @@ async function fazerLogin() {
         return;
     }
 
-    // Se não encontrou, tenta o admin via Supabase
+    // Tenta admin via Supabase
     try {
         const user = await apiLogin(email, senha);
         usuarioLogado = user;
         EV = await apiListarEventos();
-        if (typeof carregarFuncionarios === 'function') {
-            await carregarFuncionarios();
-        }
+        await garantirFuncionariosCarregados();
         entrarSistema();
     } catch (e) {
         alert('❌ ' + e.message);
@@ -67,33 +64,21 @@ function confirmarSaidaSistema() {
 }
 
 function abrirAreaCliente() {
-    const loginScreen = document.getElementById('loginScreen');
-    const clienteScreen = document.getElementById('loginClienteScreen');
-    if (loginScreen) loginScreen.style.display = 'none';
-    if (clienteScreen) clienteScreen.style.display = 'flex';
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('loginClienteScreen').style.display = 'flex';
 }
 
 function voltarLoginAdmin() {
-    const clienteScreen = document.getElementById('loginClienteScreen');
-    const loginScreen = document.getElementById('loginScreen');
-    if (clienteScreen) clienteScreen.style.display = 'none';
-    if (loginScreen) loginScreen.style.display = 'flex';
+    document.getElementById('loginClienteScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
 }
 
 async function fazerLoginCliente() {
     const usuario = document.getElementById('clienteUsuario').value.trim();
     const senha = document.getElementById('clienteSenha').value.trim();
-
     if (!EV || EV.length === 0) {
-        try {
-            const eventos = await apiListarEventos();
-            EV = eventos;
-        } catch (e) {
-            alert('❌ Erro ao conectar ao servidor. Tente novamente.');
-            return;
-        }
+        try { EV = await apiListarEventos(); } catch (e) { alert('❌ Erro ao conectar.'); return; }
     }
-
     const evento = EV.find(ev => ev.clienteUsuario === usuario && ev.clienteSenha === senha);
     if (evento) {
         localStorage.setItem('clienteSession', JSON.stringify({ eventoId: evento.id }));
@@ -119,12 +104,10 @@ function atualizarInterfaceUsuario() {
     if (sidebarEmpresa) sidebarEmpresa.textContent = CFG.empresaNome;
     const loginEmpresa = document.getElementById('loginEmpresaNome');
     if (loginEmpresa) loginEmpresa.textContent = CFG.empresaNome;
-
     const sidebarUser = document.getElementById('sidebarUserName');
     if (sidebarUser) sidebarUser.textContent = usuarioLogado ? usuarioLogado.nome.split(' ')[0] : 'Admin';
     const sidebarRole = document.getElementById('sidebarUserRole');
     if (sidebarRole) sidebarRole.textContent = usuarioLogado ? usuarioLogado.nivel : 'Administrador';
-
     const logotipo = CFG.logoUrl ? `<img src="${CFG.logoUrl}" style="max-width:100%;max-height:100%;object-fit:contain;">` : '🏢';
     document.getElementById('sidebarLogoImg').innerHTML = logotipo;
     document.getElementById('loginLogoPreview').innerHTML = logotipo;
