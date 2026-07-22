@@ -460,6 +460,12 @@ if (eventoClienteAtual?.id === evento.id) await abrirAreaClienteEvento(evento);
 
     try {
         const resultado = await apiRegistrarVisitante(evento.token, visitante);
+        // Após registrar o visitante, ativa o MikroTik
+try {
+    await mikrotikLogin(evento.token);
+} catch (e) {
+    console.warn('Falha ao ativar MikroTik:', e);
+}
         // Atualiza o totalVisitantes no array EV
         if (resultado && resultado.totalVisitantes !== null) {
             const ev = EV.find(e => e.id === eventoSelecionadoId);
