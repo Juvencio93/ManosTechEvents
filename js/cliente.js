@@ -62,7 +62,6 @@ async function salvarConfiguracao() {
     CFG.telefoneSuporte = document.getElementById('configTelefoneSuporte').value.trim();
     CFG.adminNome = document.getElementById('configAdminNome').value.trim();
     CFG.adminEmail = document.getElementById('configAdminEmail').value.trim();
-
     const novaSenha = document.getElementById('configAdminSenha').value.trim();
 
     if (configLogoTemp !== null && configLogoTemp !== undefined) {
@@ -72,20 +71,30 @@ async function salvarConfiguracao() {
     try {
         await apiSalvarConfig(CFG);
 
-        // Atualiza o nome do usuário logado (se for admin)
+        // Atualiza o nome do admin logado (se for admin)
         if (usuarioLogado && usuarioLogado.nivel === 'Administrador') {
             usuarioLogado.nome = CFG.adminNome;
+            // Força a atualização do rodapé imediatamente
+            const userEl = document.getElementById('sidebarUserName');
+            if (userEl) userEl.textContent = CFG.adminNome.split(' ')[0];
         }
 
-        // Altera a senha se o campo foi preenchido
         if (novaSenha) {
             if (novaSenha.length < 4) {
                 toast('⚠️ Senha deve ter no mínimo 4 caracteres');
                 return;
             }
-            await apiAlterarSenha(novaSenha);
-            document.getElementById('configAdminSenha').value = '';
-            toast('✅ Senha alterada com sucesso!');
+            try {
+                await apiAlterarSenha(novaSenha);
+                document.getElementById('configAdminSenha').value = '';
+                toast('🔒 Senha alterada. Você será desconectado para usar a nova senha.');
+                // Força logout após breve pausa para a mensagem aparecer
+                setTimeout(() => sairDoSistema(), 2000);
+                return;
+            } catch (e) {
+                toast('❌ Erro ao alterar senha: ' + e.message);
+                return;
+            }
         }
 
         atualizarInterfaceUsuario();
