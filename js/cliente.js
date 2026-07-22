@@ -83,11 +83,11 @@ async function salvarConfiguracao() {
         }
 
         // Atualiza o nome do usuário logado (para exibição imediata)
-        if (usuarioLogado && usuarioLogado.nivel === 'Administrador') {
-            usuarioLogado.nome = CFG.adminNome;
-            const userEl = document.getElementById('sidebarUserName');
-            if (userEl) userEl.textContent = CFG.adminNome.split(' ')[0];
-        }
+     if (usuarioLogado && usuarioLogado.nivel === 'Administrador') {
+    usuarioLogado.nome = CFG.adminNome;
+    const userEl = document.getElementById('sidebarUserName');
+    if (userEl) userEl.textContent = CFG.adminNome.split(' ')[0];
+}
 
         // Altera senha se preenchida
         if (novaSenha) {
