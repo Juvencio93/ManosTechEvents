@@ -13,8 +13,52 @@ function preencherSelectsEventos() {
 function abrirModalEvento() {
     if (!usuarioLogado?.permissoes?.e) { toast('🔒 Sem permissão!'); return; }
     eventoEmEdicao = null;
-    document.getElementById('eventoModalTitle').textContent = '📅 Novo Evento';
+    const titulo = document.getElementById('eventoModalTitle');
+    if (titulo) titulo.textContent = '📅 Novo Evento';
     limparFormularioEvento();
+    
+    const financeiroFields = document.getElementById('financeiroFields');
+    if (financeiroFields) {
+        financeiroFields.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
+    }
+    
+    abrirModal('eventoModal');
+}
+
+function editarEvento(id) {
+    if (!usuarioLogado?.permissoes?.e) { toast('🔒 Sem permissão!'); return; }
+    eventoEmEdicao = id;
+    const titulo = document.getElementById('eventoModalTitle');
+    if (titulo) titulo.textContent = '✏️ Editar Evento';
+    const evento = EV.find(e => e.id === id);
+    if (!evento) return;
+    document.getElementById('eventoNome').value = evento.nome;
+    document.getElementById('eventoCliente').value = evento.cliente;
+    document.getElementById('eventoDataInicio').value = evento.dataInicio;
+    document.getElementById('eventoDataFim').value = evento.dataFim;
+    document.getElementById('eventoLocalInput').value = evento.local;
+    document.getElementById('eventoClienteUsuario').value = evento.clienteUsuario || '';
+    document.getElementById('eventoClienteSenha').value = evento.clienteSenha || '';
+    document.getElementById('eventoPatrocinadores').value = evento.patrocinadores || '';
+    document.getElementById('eventoObservacoes').value = evento.observacoes || '';
+    document.getElementById('eventoValorCobrado').value = evento.valorCobrado || 0;
+    document.getElementById('eventoCustoOperacional').value = evento.custoOperacional || 0;
+    document.getElementById('eventoValorPago').value = evento.valorPago || 0;
+    document.getElementById('eventoVencimento').value = evento.vencimento || '';
+    document.getElementById('eventoFormaPagamento').value = evento.formaPagamento || '';
+    document.getElementById('eventoParcelas').value = evento.parcelas || 1;
+    logoTemporario = evento.logoUrl;
+    document.getElementById('logoPreview').innerHTML = evento.logoUrl ? `<img src="${evento.logoUrl}">` : '<span>📷 Upload</span>';
+
+    const logos = evento.patrocinadoresLogos || [];
+    patrocinadoresTemp = Array.isArray(logos)
+        ? logos
+            .map(item => (typeof item === 'string' && item.length > 10 && (item.startsWith('http') || item.startsWith('data:'))) ? item : null)
+            .filter(url => url !== null)
+        : [];
+
+    renderizarPatrocinadores();
+    esconderDicas();
     
     const financeiroFields = document.getElementById('financeiroFields');
     if (financeiroFields) {
