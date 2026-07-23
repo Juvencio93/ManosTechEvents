@@ -380,7 +380,6 @@
             eventoAtual = data;
             document.getElementById('nomeEvento').textContent = data.nome;
 
-            // Logo
             const logoEl = document.getElementById('logoEvento');
             if (data.logo_url) {
                 logoEl.innerHTML = `<img src="${data.logo_url}" alt="Logo">`;
@@ -388,7 +387,6 @@
                 logoEl.innerHTML = '🎪';
             }
 
-            // Patrocinadores
             const faixa = document.getElementById('carrosselFaixa');
             let logos = data.patrocinadores_logos;
             if (typeof logos === 'string') {
@@ -476,19 +474,16 @@
 
             try {
                 const agora = new Date();
-const acessoISO = agora.toISOString();  // "2026-07-22T22:11:41.000Z"
-const horaLocal = agora.getHours();     // 22 (se estiver em Brasília)
-
-const { error } = await supabaseClient.from('visitantes').insert([{
-    evento_id: eventoAtual.id,
-    nome: escapeHtml(nome),
-    email: email,
-    whatsapp: whatsapp ? '+' + ddi + ' ' + whatsapp : '(não informado)',
-    acesso: acessoISO,
-    hora: horaLocal,
-    dispositivo: /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
-    ip: '0.0.0.0'
-}]);
+                const { error } = await supabaseClient.from('visitantes').insert([{
+                    evento_id: eventoAtual.id,
+                    nome: escapeHtml(nome),
+                    email: email,
+                    whatsapp: whatsapp ? '+' + ddi + ' ' + whatsapp : '(não informado)',
+                    acesso: agora.toISOString(),
+                    hora: agora.getHours(),
+                    dispositivo: /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
+                    ip: '0.0.0.0'
+                }]);
                 if (error) throw error;
                 document.getElementById('sucessoMsg').style.display = 'block';
                 setTimeout(() => { window.location.href = 'https://www.google.com'; }, 2000);
