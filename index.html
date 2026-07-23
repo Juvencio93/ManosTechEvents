@@ -429,34 +429,37 @@
     </div>
 
     <!-- ====================================================================== -->
-    <!-- SCRIPTS ORIGINAIS                                                      -->
-    <!-- ====================================================================== -->
-<!-- Carregar os novos módulos primeiro -->
-<script src="js/api.js"></script>   <!-- novo, único -->
-<script src="js/auth.js"></script>  <!-- este auth.js corrigido -->
-<script src="js/portal.js"></script> <!-- seu portal.js -->
-<!-- outros scripts -->
-    
-<!-- Depois seus scripts antigos (que agora serão refatorados) -->
-    
-    <script src="js/api.js?v=2"></script>
-    <script src="js/config.js?v=2"></script>
-    <script src="js/utils.js?v=2"></script>
-    <script src="js/auth.js?v=2"></script>
-    <script src="js/cliente.js?v=2"></script>
-    <script src="js/eventos.js?v=2"></script>
-    <script src="js/dashboard.js?v=2"></script>
-    <script src="js/financeiro.js?v=2"></script>
-    <script src="js/relatorios.js?v=2"></script>
-    <script src="js/funcionarios.js?v=2"></script>
-    <script src="js/portal.js?v=2"></script>
-    <script src="js/app.js?v=2"></script>
-    <script src="js/init.js?v=2"></script>
+<!-- SCRIPTS – Carregamento ÚNICO e na ORDEM CORRETA                       -->
+<!-- ====================================================================== -->
 
-    <!-- ====================================================================== -->
-    <!-- SOBRESCRITAS E MELHORIAS                                              -->
-    <!-- ====================================================================== -->
-    <script>
+<!-- 1. Bibliotecas externas (já estão no <head>, mas mantemos aqui por segurança) -->
+<!-- Elas já estão no head, não precisa repetir -->
+
+<!-- 2. API principal (única) -->
+<script src="js/api.js"></script>
+
+<!-- 3. Autenticação (usa API) -->
+<script src="js/auth.js"></script>
+
+<!-- 4. Utilitários e demais módulos -->
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/cliente.js"></script>
+<script src="js/eventos.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/financeiro.js"></script>
+<script src="js/relatorios.js"></script>
+<script src="js/funcionarios.js"></script>
+<script src="js/portal.js"></script>
+<script src="js/app.js"></script>
+<script src="js/init.js"></script>
+
+<!-- ====================================================================== -->
+<!-- SOBRESCRITAS E MELHORIAS (código que estava no final)                -->
+<!-- ====================================================================== -->
+<script>
+    // ... (todo o código que estava no último <script>, sem alterações) ...
+</script>
         // --- 1. Sobrescrever abrirAreaCliente para evitar erro de elementos nulos ---
         window.abrirAreaCliente = function() {
             const loginScreen = document.getElementById('loginScreen');
