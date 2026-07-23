@@ -170,7 +170,7 @@
         .cliente-header-card .actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-left: auto; }
     </style>
 
-    <!-- Bibliotecas externas (CDN) -->
+    <!-- Bibliotecas externas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -429,34 +429,24 @@
     </div>
 
     <!-- ====================================================================== -->
-    <!-- SCRIPTS – CARREGAMENTO ÚNICO E NA ORDEM CORRETA                      -->
+    <!-- SCRIPTS ORIGINAIS                                                      -->
     <!-- ====================================================================== -->
-
-    <!-- 1. API principal (única) -->
-    <script src="js/api.js"></script>
-
-    <!-- 2. Autenticação (usa API) -->
-    <script src="js/auth.js"></script>
-
-    <!-- 3. Configurações globais e utilitários -->
-    <script src="js/config.js"></script>
-    <script src="js/utils.js"></script>
-
-    <!-- 4. Módulos funcionais -->
-    <script src="js/cliente.js"></script>
-    <script src="js/eventos.js"></script>
-    <script src="js/dashboard.js"></script>
-    <script src="js/financeiro.js"></script>
-    <script src="js/relatorios.js"></script>
-    <script src="js/funcionarios.js"></script>
-    <script src="js/portal.js"></script>
-
-    <!-- 5. Aplicação e inicialização -->
-    <script src="js/app.js"></script>
-    <script src="js/init.js"></script>
+    <script src="js/api.js?v=2"></script>
+    <script src="js/config.js?v=2"></script>
+    <script src="js/utils.js?v=2"></script>
+    <script src="js/auth.js?v=2"></script>
+    <script src="js/cliente.js?v=2"></script>
+    <script src="js/eventos.js?v=2"></script>
+    <script src="js/dashboard.js?v=2"></script>
+    <script src="js/financeiro.js?v=2"></script>
+    <script src="js/relatorios.js?v=2"></script>
+    <script src="js/funcionarios.js?v=2"></script>
+    <script src="js/portal.js?v=2"></script>
+    <script src="js/app.js?v=2"></script>
+    <script src="js/init.js?v=2"></script>
 
     <!-- ====================================================================== -->
-    <!-- SOBRESCRITAS E MELHORIAS (compatibilidade e novas funções)            -->
+    <!-- SOBRESCRITAS E MELHORIAS                                              -->
     <!-- ====================================================================== -->
     <script>
         // --- 1. Sobrescrever abrirAreaCliente para evitar erro de elementos nulos ---
@@ -649,95 +639,97 @@
         };
 
         // --- 5. Funções para relatórios (PDF e Excel) ---
-        window.gerarRelatorioClientePDF = async function() {
-            if (!eventoClienteAtual) {
-                alert('Nenhum evento carregado.');
-                return;
-            }
+       window.gerarRelatorioClientePDF = async function() {
+    if (!eventoClienteAtual) {
+        alert('Nenhum evento carregado.');
+        return;
+    }
 
-            // Buscar visitantes
-            let visitantes = [];
-            try {
-                visitantes = await apiListarVisitantes(eventoClienteAtual.id);
-            } catch (e) {
-                visitantes = [];
-            }
+    // Buscar visitantes
+    let visitantes = [];
+    try {
+        visitantes = await apiListarVisitantes(eventoClienteAtual.id);
+    } catch (e) {
+        visitantes = [];
+    }
 
-            // Criar HTML temporário para o PDF
-            const nomeEvento = eventoClienteAtual.nome || 'Evento';
-            const dataInicio = formatarData(eventoClienteAtual.dataInicio) || '';
-            const dataFim = formatarData(eventoClienteAtual.dataFim) || '';
-            const local = eventoClienteAtual.local || '';
-            const total = visitantes.length;
+    // Criar HTML temporário para o PDF
+    const nomeEvento = eventoClienteAtual.nome || 'Evento';
+    const dataInicio = formatarData(eventoClienteAtual.dataInicio) || '';
+    const dataFim = formatarData(eventoClienteAtual.dataFim) || '';
+    const local = eventoClienteAtual.local || '';
+    const total = visitantes.length;
 
-            let linhasTabela = visitantes.map(v =>
-                `<tr>
-                    <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(v.nome)}</td>
-                    <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(v.email)}</td>
-                    <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(v.whatsapp)}</td>
-                    <td style="border:1px solid #ddd;padding:6px;">${v.acesso || ''}</td>
-                    <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(v.dispositivo || 'Desktop')}</td>
-                </tr>`
-            ).join('');
+    let linhasTabela = visitantes.map(v =>
+        `<tr>
+            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(v.nome)}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(v.email)}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(v.whatsapp)}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${v.acesso || ''}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(v.dispositivo || 'Desktop')}</td>
+        </tr>`
+    ).join('');
 
-            const htmlConteudo = `
-                <div style="font-family:Arial, sans-serif; max-width:800px; margin:auto; padding:20px;">
-                    <h1 style="color:#4da8da; text-align:center;">📄 Relatório de Visitantes</h1>
-                    <h2 style="text-align:center;">${nomeEvento}</h2>
-                    <p style="text-align:center; color:#666;">
-                        Período: ${dataInicio} a ${dataFim} &bull; Local: ${local}
-                    </p>
-                    <p style="text-align:center; font-size:18px; font-weight:bold;">
-                        Total de Visitantes: ${total}
-                    </p>
-                    <hr>
-                    <table style="width:100%; border-collapse:collapse; margin-top:20px;">
-                        <thead>
-                            <tr style="background:#4da8da; color:white;">
-                                <th style="border:1px solid #ddd; padding:8px; text-align:left;">Nome</th>
-                                <th style="border:1px solid #ddd; padding:8px; text-align:left;">E-mail</th>
-                                <th style="border:1px solid #ddd; padding:8px; text-align:left;">WhatsApp</th>
-                                <th style="border:1px solid #ddd; padding:8px; text-align:left;">Horário</th>
-                                <th style="border:1px solid #ddd; padding:8px; text-align:left;">Dispositivo</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${linhasTabela || '<tr><td colspan="5" style="text-align:center;">Nenhum visitante registrado.</td></tr>'}
-                        </tbody>
-                    </table>
-                    <p style="text-align:center; color:#999; font-size:12px; margin-top:30px;">
-                        Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
-                    </p>
-                </div>
-            `;
+    const htmlConteudo = `
+        <div style="font-family:Arial, sans-serif; max-width:800px; margin:auto; padding:20px;">
+            <h1 style="color:#4da8da; text-align:center;">📄 Relatório de Visitantes</h1>
+            <h2 style="text-align:center;">${nomeEvento}</h2>
+            <p style="text-align:center; color:#666;">
+                Período: ${dataInicio} a ${dataFim} &bull; Local: ${local}
+            </p>
+            <p style="text-align:center; font-size:18px; font-weight:bold;">
+                Total de Visitantes: ${total}
+            </p>
+            <hr>
+            <table style="width:100%; border-collapse:collapse; margin-top:20px;">
+                <thead>
+                    <tr style="background:#4da8da; color:white;">
+                        <th style="border:1px solid #ddd; padding:8px; text-align:left;">Nome</th>
+                        <th style="border:1px solid #ddd; padding:8px; text-align:left;">E-mail</th>
+                        <th style="border:1px solid #ddd; padding:8px; text-align:left;">WhatsApp</th>
+                        <th style="border:1px solid #ddd; padding:8px; text-align:left;">Horário</th>
+                        <th style="border:1px solid #ddd; padding:8px; text-align:left;">Dispositivo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${linhasTabela || '<tr><td colspan="5" style="text-align:center;">Nenhum visitante registrado.</td></tr>'}
+                </tbody>
+            </table>
+            <p style="text-align:center; color:#999; font-size:12px; margin-top:30px;">
+                Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
+            </p>
+        </div>
+    `;
 
-            // Criar um elemento temporário para renderizar o PDF
-            const container = document.createElement('div');
-            container.innerHTML = htmlConteudo;
-            container.style.position = 'fixed';
-            container.style.left = '-9999px';
-            container.style.top = '0';
-            container.style.width = '800px';
-            container.style.background = 'white';
-            container.style.padding = '20px';
-            document.body.appendChild(container);
+    // Criar um elemento temporário para renderizar o PDF
+    const container = document.createElement('div');
+    container.innerHTML = htmlConteudo;
+    container.style.position = 'fixed';
+    container.style.left = '-9999px';
+    container.style.top = '0';
+    container.style.width = '800px';
+    container.style.background = 'white';
+    container.style.padding = '20px';
+    document.body.appendChild(container);
 
-            try {
-                const opt = {
-                    margin: 10,
-                    filename: `visitantes_${nomeEvento}_${new Date().toISOString().slice(0,10)}.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                };
-                await html2pdf().set(opt).from(container).save();
-            } catch (error) {
-                console.error('Erro ao gerar PDF:', error);
-                alert('Erro ao gerar PDF: ' + error.message);
-            } finally {
-                document.body.removeChild(container);
-            }
+    try {
+        // Usar html2pdf para gerar o PDF
+        const opt = {
+            margin: 10,
+            filename: `visitantes_${nomeEvento}_${new Date().toISOString().slice(0,10)}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
+        await html2pdf().set(opt).from(container).save();
+    } catch (error) {
+        console.error('Erro ao gerar PDF:', error);
+        alert('Erro ao gerar PDF: ' + error.message);
+    } finally {
+        // Remover elemento temporário
+        document.body.removeChild(container);
+    }
+};
 
         window.gerarRelatorioClienteExcel = async function() {
             if (!eventoClienteAtual) { alert('Nenhum evento carregado.'); return; }
