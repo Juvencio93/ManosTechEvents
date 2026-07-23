@@ -373,258 +373,285 @@
     <!-- SCRIPT PRINCIPAL – TODAS AS FUNÇÕES CORRIGIDAS            -->
     <!-- ========================================================= -->
     <script>
-        // =============================
-        // SUPABASE
-        // =============================
-        const SUPABASE_URL = 'https://uojdbrjxeapzfrulcipr.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_ZGrmIWRubt_0MgPi_a4mgQ_RNYdNflM';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // =============================
+    // SUPABASE
+    // =============================
+    const SUPABASE_URL = 'https://uojdbrjxeapzfrulcipr.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_ZGrmIWRubt_0MgPi_a4mgQ_RNYdNflM';
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let eventoClienteAtual = null;
+    let eventoClienteAtual = null;
 
-        // =============================
-        // FUNÇÕES AUXILIARES
-        // =============================
-        function formatarData(data) {
-            if (!data) return '';
-            const d = new Date(data);
-            return d.toLocaleDateString('pt-BR');
+    // =============================
+    // FUNÇÕES AUXILIARES
+    // =============================
+    function formatarData(data) {
+        if (!data) return '';
+        const d = new Date(data);
+        return d.toLocaleDateString('pt-BR');
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return String(text).replace(/[&<>"']/g, m => map[m]);
+    }
+
+    function calcularStatusEvento(evento) {
+        if (!evento) return 'Desconhecido';
+        const hoje = new Date();
+        const inicio = new Date(evento.dataInicio);
+        const fim = new Date(evento.dataFim);
+        if (hoje < inicio) return '📅 Agendado';
+        if (hoje > fim) return '✅ Encerrado';
+        return '🟢 Ativo';
+    }
+
+    function statusBadgeClass(status) {
+        if (status.includes('Agendado')) return 'badge-info';
+        if (status.includes('Encerrado')) return 'badge-secondary';
+        return 'badge-success';
+    }
+
+    // =============================
+    // ANIMAÇÃO DE CONTAGEM
+    // =============================
+    function animarContagem(elemento, valorFinal, duracao = 1000) {
+        if (!elemento) return;
+        const start = performance.now();
+        function update(timestamp) {
+            const progress = Math.min((timestamp - start) / duracao, 1);
+            const valorAtual = Math.floor(progress * valorFinal);
+            elemento.textContent = valorAtual;
+            if (progress < 1) requestAnimationFrame(update);
+            else elemento.textContent = valorFinal;
         }
+        requestAnimationFrame(update);
+    }
 
-        function escapeHtml(text) {
-            if (!text) return '';
-            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-            return String(text).replace(/[&<>"']/g, m => map[m]);
-        }
+    // =============================
+    // TOGGLE MENU CLIENTE
+    // =============================
+    function toggleClienteMenu() {
+        const sb = document.getElementById('clienteSidebar');
+        if (sb) sb.classList.toggle('open');
+    }
 
-        function calcularStatusEvento(evento) {
-            if (!evento) return 'Desconhecido';
-            const hoje = new Date();
-            const inicio = new Date(evento.dataInicio);
-            const fim = new Date(evento.dataFim);
-            if (hoje < inicio) return '📅 Agendado';
-            if (hoje > fim) return '✅ Encerrado';
-            return '🔴 Ativo';
-        }
+    // =============================
+    // NAVEGAÇÃO CLIENTE
+    // =============================
+    function showClientePage(page) {
+        document.querySelectorAll('#clienteMainContent .page').forEach(p => p.classList.remove('active'));
+        const target = document.getElementById('clientePage-' + page);
+        if (target) target.classList.add('active');
 
-        function statusBadgeClass(status) {
-            if (status.includes('Agendado')) return 'badge-info';
-            if (status.includes('Encerrado')) return 'badge-secondary';
-            return 'badge-success';
-        }
+        document.querySelectorAll('#clienteSidebar nav a').forEach(a => a.classList.remove('active'));
+        const menuItem = document.querySelector(`#clienteSidebar nav a[onclick="showClientePage('${page}')"]`);
+        if (menuItem) menuItem.classList.add('active');
 
-        // =============================
-        // ANIMAÇÃO DE CONTAGEM
-        // =============================
-        function animarContagem(elemento, valorFinal, duracao = 1000) {
-            const start = performance.now();
-            function update(timestamp) {
-                const progress = Math.min((timestamp - start) / duracao, 1);
-                const valorAtual = Math.floor(progress * valorFinal);
-                elemento.textContent = valorAtual;
-                if (progress < 1) requestAnimationFrame(update);
-                else elemento.textContent = valorFinal;
-            }
-            requestAnimationFrame(update);
-        }
+        const sb = document.getElementById('clienteSidebar');
+        if (sb) sb.classList.remove('open');
+    }
 
-        // =============================
-        // TOGGLE MENU CLIENTE
-        // =============================
-        function toggleClienteMenu() {
-            const sb = document.getElementById('clienteSidebar');
-            if (sb) sb.classList.toggle('open');
-        }
-
-        // =============================
-        // NAVEGAÇÃO CLIENTE
-        // =============================
-        function showClientePage(page) {
-            document.querySelectorAll('#clienteMainContent .page').forEach(p => p.classList.remove('active'));
-            const target = document.getElementById('clientePage-' + page);
-            if (target) target.classList.add('active');
-
-            document.querySelectorAll('#clienteSidebar nav a').forEach(a => a.classList.remove('active'));
-            const menuItem = document.querySelector(`#clienteSidebar nav a[onclick="showClientePage('${page}')"]`);
-            if (menuItem) menuItem.classList.add('active');
-
-            const sb = document.getElementById('clienteSidebar');
-            if (sb) sb.classList.remove('open');
-        }
-
-        // =============================
-        // API – LISTAR VISITANTES
-        // =============================
-        async function apiListarVisitantes(eventoId) {
+    // =============================
+    // API – LISTAR VISITANTES (CORRIGIDA)
+    // =============================
+    async function apiListarVisitantes(eventoId) {
+        try {
+            console.log('Buscando visitantes para evento:', eventoId);
             const { data, error } = await supabaseClient
                 .from('visitantes')
                 .select('*')
                 .eq('evento_id', eventoId)
                 .order('acesso', { ascending: false });
-            if (error) throw error;
+
+            if (error) {
+                console.error('Erro ao buscar visitantes:', error);
+                // Tenta sem order (caso a coluna 'acesso' não exista)
+                const { data: dataFallback, error: errorFallback } = await supabaseClient
+                    .from('visitantes')
+                    .select('*')
+                    .eq('evento_id', eventoId);
+                if (errorFallback) {
+                    console.error('Erro no fallback:', errorFallback);
+                    return [];
+                }
+                return dataFallback || [];
+            }
+            console.log('Visitantes obtidos:', data?.length || 0);
             return data || [];
+        } catch (err) {
+            console.error('Exceção em apiListarVisitantes:', err);
+            return [];
+        }
+    }
+
+    // =============================
+    // ABRIR ÁREA DO CLIENTE (CORRIGIDA)
+    // =============================
+    async function abrirAreaClienteEvento(evento) {
+        console.log('Abrindo área do cliente para evento:', evento);
+        eventoClienteAtual = evento;
+
+        // --- Status ---
+        const status = calcularStatusEvento(evento);
+        const badge = document.getElementById('clienteStatusBadge');
+        if (badge) {
+            badge.textContent = status;
+            badge.className = 'badge ' + statusBadgeClass(status);
+            badge.style.display = 'inline-block';
         }
 
-        // =============================
-        // ABRIR ÁREA DO CLIENTE (CORRIGIDA)
-        // =============================
-        async function abrirAreaClienteEvento(evento) {
-            eventoClienteAtual = evento;
+        // --- Buscar visitantes ---
+        let visitantes = [];
+        try {
+            visitantes = await apiListarVisitantes(evento.id);
+        } catch (e) {
+            console.error('Falha ao carregar visitantes:', e);
+            visitantes = [];
+        }
+        const total = visitantes.length;
 
-            // --- Cabeçalho (apenas o badge de status) ---
-            const status = calcularStatusEvento(evento);
-            const badge = document.getElementById('clienteStatusBadge');
-            if (badge) {
-                badge.textContent = status;
-                badge.className = 'badge ' + statusBadgeClass(status);
-                badge.style.display = 'inline-block';
-            }
+        // --- Total de visitantes (com animação) ---
+        const totalEl = document.getElementById('clienteTotalVisitantes');
+        const totalBadge = document.getElementById('clienteTotalVisitantesBadge');
+        if (totalEl) {
+            const anterior = parseInt(totalEl.textContent) || 0;
+            if (anterior !== total) animarContagem(totalEl, total);
+            else totalEl.textContent = total;
+        }
+        if (totalBadge) totalBadge.textContent = total;
 
-            // --- Buscar visitantes ---
-            let visitantes = [];
-            try {
-                visitantes = await apiListarVisitantes(evento.id);
-            } catch (e) {
-                visitantes = evento.visitantes || [];
-            }
-            const total = visitantes.length;
+        // --- Conectados agora (simulação) ---
+        const conectados = total > 0 ? Math.max(1, Math.floor(total * 0.3)) : 0;
+        const liveEl = document.getElementById('clienteLiveConnected');
+        if (liveEl) liveEl.textContent = conectados;
 
-            // --- Total de visitantes (com animação) ---
-            const totalEl = document.getElementById('clienteTotalVisitantes');
-            const totalBadge = document.getElementById('clienteTotalVisitantesBadge');
-            if (totalEl) {
-                const anterior = parseInt(totalEl.textContent) || 0;
-                if (anterior !== total) animarContagem(totalEl, total);
-                else totalEl.textContent = total;
-            }
-            if (totalBadge) totalBadge.textContent = total;
+        // --- Percentual mobile (simulação) ---
+        const pctMobile = Math.min(100, Math.floor((total > 0 ? Math.random() * 40 + 40 : 0)));
+        const pctEl = document.getElementById('clientePctMobile');
+        if (pctEl) pctEl.textContent = pctMobile + '%';
 
-            // --- Conectados agora (simulação) ---
-            const conectados = total > 0 ? Math.max(1, Math.floor(total * 0.3)) : 0;
-            const liveEl = document.getElementById('clienteLiveConnected');
-            if (liveEl) liveEl.textContent = conectados;
-
-            // --- Percentual mobile (simulação) ---
-            const pctMobile = Math.min(100, Math.floor((total > 0 ? Math.random() * 40 + 40 : 0)));
-            const pctEl = document.getElementById('clientePctMobile');
-            if (pctEl) pctEl.textContent = pctMobile + '%';
-
-            // --- Mapa de calor ---
-            const horas = {};
-            for (let h = 8; h <= 20; h++) horas[h] = 0;
-            visitantes.forEach(v => {
-                const h = v.hora || 8;
-                if (horas[h] !== undefined) horas[h]++;
-            });
-            const max = Math.max(...Object.values(horas), 1);
-            const heatmapEl = document.getElementById('clienteHeatmapContainer');
-            if (heatmapEl) {
-                heatmapEl.innerHTML = Object.entries(horas).map(([h, c]) =>
-                    `<div class="heatmap-bar" style="height:${Math.max((c / max) * 140, 4)}px;" title="${h}h: ${c}"></div>`
-                ).join('');
-            }
-
-            // --- Gráfico de pizza (cores personalizadas) ---
-            const dispositivos = { iPhone: 0, Android: 0, Desktop: 0, Outros: 0 };
-            visitantes.forEach(v => {
-                const d = v.dispositivo || 'Desktop';
-                if (d.includes('iPhone') || d.includes('iPad') || d.includes('iPod')) dispositivos.iPhone++;
-                else if (d.includes('Android')) dispositivos.Android++;
-                else if (d.includes('Desktop') || d.includes('Windows') || d.includes('Mac') || d.includes('Linux')) dispositivos.Desktop++;
-                else dispositivos.Outros++;
-            });
-            const totalDisp = total || 1;
-            const iosPct = (dispositivos.iPhone / totalDisp) * 100;
-            const androidPct = (dispositivos.Android / totalDisp) * 100;
-            const desktopPct = (dispositivos.Desktop / totalDisp) * 100;
-            const outrosPct = (dispositivos.Outros / totalDisp) * 100;
-
-            const pie = document.getElementById('clientePieChart');
-            if (pie) {
-                const cores = ['#39ff14', '#4da8da', '#ffb347', '#ff4d6a'];
-                pie.style.background = `conic-gradient(
-                    ${cores[0]} 0% ${iosPct}%,
-                    ${cores[1]} ${iosPct}% ${iosPct + androidPct}%,
-                    ${cores[2]} ${iosPct + androidPct}% ${iosPct + androidPct + desktopPct}%,
-                    ${cores[3]} ${iosPct + androidPct + desktopPct}% 100%
-                )`;
-            }
-
-            // --- Últimos 10 visitantes (cards) ---
-            const cardsContainer = document.getElementById('clienteUltimosCards');
-            if (cardsContainer) {
-                const ultimos = visitantes.slice(0, 10);
-                cardsContainer.innerHTML = ultimos.map(v => {
-                    const iniciais = v.nome.split(' ').map(p => p.charAt(0)).join('').substring(0, 2).toUpperCase();
-                    const dispositivo = v.dispositivo || 'Desktop';
-                    const icone = dispositivo.includes('iPhone') || dispositivo.includes('Android') ? '📱' : '💻';
-                    return `
-                        <div class="visitante-card">
-                            <div style="width:40px;height:40px;border-radius:50%;background:rgba(77,168,218,0.2);display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--azul);">${escapeHtml(iniciais)}</div>
-                            <div style="flex:1;min-width:0;">
-                                <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(v.nome)}</div>
-                                <div style="font-size:12px;color:var(--text2);">${v.acesso} • ${icone}</div>
-                            </div>
-                        </div>`;
-                }).join('');
-            }
-
-            // --- Tabela completa ---
-            const tbody = document.getElementById('clienteVisitantesTable');
-            if (tbody) {
-                tbody.innerHTML = visitantes.map(v =>
-                    `<tr>
-                        <td><strong>${escapeHtml(v.nome)}</strong></td>
-                        <td>${escapeHtml(v.email)}</td>
-                        <td>${escapeHtml(v.whatsapp)}</td>
-                        <td>${v.acesso}</td>
-                        <td>${escapeHtml(v.dispositivo || 'Desktop')}</td>
-                    </tr>`
-                ).join('');
-            }
-
-            // Atualizar nome do evento na sidebar
-            const sideName = document.getElementById('clienteSidebarNome');
-            if (sideName) sideName.textContent = evento.nome || 'Evento';
+        // --- Mapa de calor ---
+        const horas = {};
+        for (let h = 8; h <= 20; h++) horas[h] = 0;
+        visitantes.forEach(v => {
+            const h = v.hora || 8;
+            if (horas[h] !== undefined) horas[h]++;
+        });
+        const max = Math.max(...Object.values(horas), 1);
+        const heatmapEl = document.getElementById('clienteHeatmapContainer');
+        if (heatmapEl) {
+            heatmapEl.innerHTML = Object.entries(horas).map(([h, c]) =>
+                `<div class="heatmap-bar" style="height:${Math.max((c / max) * 140, 4)}px;" title="${h}h: ${c}"></div>`
+            ).join('');
         }
 
-        // =============================
-        // RELATÓRIOS (PDF e EXCEL)
-        // =============================
-        async function gerarRelatorioClientePDF() {
-            if (!eventoClienteAtual) { alert('Nenhum evento carregado.'); return; }
-            let visitantes = [];
-            try { visitantes = await apiListarVisitantes(eventoClienteAtual.id); } catch (e) {}
-            // Aqui você pode integrar com html2pdf para gerar um PDF bonito.
-            // Exemplo rápido:
-            alert('Função PDF ainda não implementada. Use html2pdf para gerar um relatório.');
+        // --- Gráfico de pizza (cores personalizadas) ---
+        const dispositivos = { iPhone: 0, Android: 0, Desktop: 0, Outros: 0 };
+        visitantes.forEach(v => {
+            const d = v.dispositivo || 'Desktop';
+            if (d.includes('iPhone') || d.includes('iPad') || d.includes('iPod')) dispositivos.iPhone++;
+            else if (d.includes('Android')) dispositivos.Android++;
+            else if (d.includes('Desktop') || d.includes('Windows') || d.includes('Mac') || d.includes('Linux')) dispositivos.Desktop++;
+            else dispositivos.Outros++;
+        });
+        const totalDisp = total || 1;
+        const iosPct = (dispositivos.iPhone / totalDisp) * 100;
+        const androidPct = (dispositivos.Android / totalDisp) * 100;
+        const desktopPct = (dispositivos.Desktop / totalDisp) * 100;
+        const outrosPct = (dispositivos.Outros / totalDisp) * 100;
+
+        const pie = document.getElementById('clientePieChart');
+        if (pie) {
+            const cores = ['#39ff14', '#4da8da', '#ffb347', '#ff4d6a'];
+            pie.style.background = `conic-gradient(
+                ${cores[0]} 0% ${iosPct}%,
+                ${cores[1]} ${iosPct}% ${iosPct + androidPct}%,
+                ${cores[2]} ${iosPct + androidPct}% ${iosPct + androidPct + desktopPct}%,
+                ${cores[3]} ${iosPct + androidPct + desktopPct}% 100%
+            )`;
         }
 
-        async function gerarRelatorioClienteExcel() {
-            if (!eventoClienteAtual) { alert('Nenhum evento carregado.'); return; }
-            let visitantes = [];
-            try { visitantes = await apiListarVisitantes(eventoClienteAtual.id); } catch (e) {}
-            const dados = visitantes.map(v => ({
-                Nome: v.nome,
-                Email: v.email,
-                WhatsApp: v.whatsapp,
-                Horário: v.acesso,
-                Dispositivo: v.dispositivo || 'Desktop'
-            }));
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.json_to_sheet(dados);
-            XLSX.utils.book_append_sheet(wb, ws, 'Visitantes');
-            XLSX.writeFile(wb, `visitantes_${eventoClienteAtual.nome}_${new Date().toISOString().slice(0,10)}.xlsx`);
+        // --- Últimos 10 visitantes (cards) ---
+        const cardsContainer = document.getElementById('clienteUltimosCards');
+        if (cardsContainer) {
+            const ultimos = visitantes.slice(0, 10);
+            cardsContainer.innerHTML = ultimos.map(v => {
+                const iniciais = v.nome.split(' ').map(p => p.charAt(0)).join('').substring(0, 2).toUpperCase();
+                const dispositivo = v.dispositivo || 'Desktop';
+                const icone = dispositivo.includes('iPhone') || dispositivo.includes('Android') ? '📱' : '💻';
+                return `
+                    <div class="visitante-card">
+                        <div style="width:40px;height:40px;border-radius:50%;background:rgba(77,168,218,0.2);display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--azul);">${escapeHtml(iniciais)}</div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(v.nome)}</div>
+                            <div style="font-size:12px;color:var(--text2);">${v.acesso} • ${icone}</div>
+                        </div>
+                    </div>`;
+            }).join('');
         }
 
-        // =============================
-        // LOGIN DO CLIENTE
-        // =============================
-        async function fazerLoginCliente() {
-            const usuario = document.getElementById('clienteUsuario').value.trim();
-            const senha = document.getElementById('clienteSenha').value.trim();
-            if (!usuario || !senha) { alert('Preencha usuário e senha.'); return; }
+        // --- Tabela completa ---
+        const tbody = document.getElementById('clienteVisitantesTable');
+        if (tbody) {
+            tbody.innerHTML = visitantes.map(v =>
+                `<tr>
+                    <td><strong>${escapeHtml(v.nome)}</strong></td>
+                    <td>${escapeHtml(v.email)}</td>
+                    <td>${escapeHtml(v.whatsapp)}</td>
+                    <td>${v.acesso}</td>
+                    <td>${escapeHtml(v.dispositivo || 'Desktop')}</td>
+                </tr>`
+            ).join('');
+        }
 
+        // Atualizar nome do evento na sidebar
+        const sideName = document.getElementById('clienteSidebarNome');
+        if (sideName) sideName.textContent = evento.nome || 'Evento';
+    }
+
+    // =============================
+    // RELATÓRIOS (PDF e EXCEL)
+    // =============================
+    async function gerarRelatorioClientePDF() {
+        if (!eventoClienteAtual) { alert('Nenhum evento carregado.'); return; }
+        let visitantes = [];
+        try { visitantes = await apiListarVisitantes(eventoClienteAtual.id); } catch (e) {}
+        alert('PDF – implementar com html2pdf. Dados: ' + visitantes.length + ' registros.');
+    }
+
+    async function gerarRelatorioClienteExcel() {
+        if (!eventoClienteAtual) { alert('Nenhum evento carregado.'); return; }
+        let visitantes = [];
+        try { visitantes = await apiListarVisitantes(eventoClienteAtual.id); } catch (e) {}
+        const dados = visitantes.map(v => ({
+            Nome: v.nome,
+            Email: v.email,
+            WhatsApp: v.whatsapp,
+            Horário: v.acesso,
+            Dispositivo: v.dispositivo || 'Desktop'
+        }));
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(dados);
+        XLSX.utils.book_append_sheet(wb, ws, 'Visitantes');
+        XLSX.writeFile(wb, `visitantes_${eventoClienteAtual.nome}_${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
+    // =============================
+    // LOGIN DO CLIENTE (CORRIGIDO)
+    // =============================
+    async function fazerLoginCliente() {
+        const usuario = document.getElementById('clienteUsuario').value.trim();
+        const senha = document.getElementById('clienteSenha').value.trim();
+        if (!usuario || !senha) {
+            alert('Preencha usuário e senha.');
+            return;
+        }
+
+        console.log('Tentando login com usuário:', usuario);
+
+        try {
             const { data, error } = await supabaseClient
                 .from('eventos')
                 .select('*')
@@ -632,97 +659,109 @@
                 .eq('cliente_senha', senha)
                 .single();
 
-            if (error || !data) {
-                alert('Credenciais inválidas.');
+            if (error) {
+                console.error('Erro na consulta de login:', error);
+                alert('Erro ao buscar evento: ' + error.message);
                 return;
             }
 
+            if (!data) {
+                alert('Credenciais inválidas. Verifique usuário e senha.');
+                return;
+            }
+
+            console.log('Login bem-sucedido! Evento:', data.nome);
             document.getElementById('loginClienteScreen').style.display = 'none';
             const dashboard = document.getElementById('clienteDashboard');
             dashboard.style.display = 'block';
             await abrirAreaClienteEvento(data);
+        } catch (err) {
+            console.error('Exceção em fazerLoginCliente:', err);
+            alert('Erro ao conectar com Supabase: ' + err.message);
         }
+    }
 
-        // =============================
-        // SAIR DO CLIENTE
-        // =============================
-        function confirmarSaidaCliente() {
-            if (confirm('Deseja sair da área do cliente?')) {
-                document.getElementById('clienteDashboard').style.display = 'none';
-                document.getElementById('loginClienteScreen').style.display = 'block';
-                eventoClienteAtual = null;
-            }
+    // =============================
+    // SAIR DO CLIENTE
+    // =============================
+    function confirmarSaidaCliente() {
+        if (confirm('Deseja sair da área do cliente?')) {
+            document.getElementById('clienteDashboard').style.display = 'none';
+            document.getElementById('loginClienteScreen').style.display = 'block';
+            eventoClienteAtual = null;
         }
+    }
 
-        // =============================
-        // FUNÇÕES DE NAVEGAÇÃO / LOGIN ADMIN (stubs)
-        // =============================
-        window.abrirAreaCliente = function() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('loginClienteScreen').style.display = 'flex';
-        };
-        window.voltarLoginAdmin = function() {
-            document.getElementById('loginClienteScreen').style.display = 'none';
-            document.getElementById('loginScreen').style.display = 'flex';
-        };
-        window.fazerLogin = function() {
-            alert('Login Admin – implementar com Supabase');
-        };
-        window.confirmarSaidaSistema = function() {
-            if (confirm('Sair do sistema?')) location.reload();
-        };
-        window.toggleMenu = function() {
-            document.getElementById('sidebar').classList.toggle('open');
-        };
-        window.closeMenu = function() {
-            document.getElementById('sidebar').classList.remove('open');
-        };
-        window.showPage = function(page) {
-            // navegação admin (stub)
-        };
-        window.fecharModal = function(id) {
-            document.getElementById(id).style.display = 'none';
-        };
-        window.salvarEvento = function() { alert('Salvar evento'); };
-        window.salvarFuncionario = function() { alert('Salvar funcionário'); };
-        window.previewLogoEvento = function(e) {};
-        window.adicionarPatrocinador = function(e) {};
-        window.copiarQR = function() {};
-        window.simularConexao = function() {};
-        window.atualizarPermPadrao = function() {};
-        window.apiSalvarConfig = function() {};
-        window.apiAlterarSenha = function() {};
-        window.carregarDados = function() {};
-        window.atualizarInterfaceUsuario = function() {};
-        window.sairDoSistema = function() { location.reload(); };
-        window.gerarRelatorioCliente = function() { gerarRelatorioClientePDF(); };
-        window.cancelarConfiguracao = function() {};
+    // =============================
+    // FUNÇÕES DE NAVEGAÇÃO / LOGIN ADMIN (stubs)
+    // =============================
+    window.abrirAreaCliente = function() {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('loginClienteScreen').style.display = 'flex';
+    };
+    window.voltarLoginAdmin = function() {
+        document.getElementById('loginClienteScreen').style.display = 'none';
+        document.getElementById('loginScreen').style.display = 'flex';
+    };
+    window.fazerLogin = function() {
+        alert('Login Admin – implementar com Supabase');
+    };
+    window.confirmarSaidaSistema = function() {
+        if (confirm('Sair do sistema?')) location.reload();
+    };
+    window.toggleMenu = function() {
+        document.getElementById('sidebar').classList.toggle('open');
+    };
+    window.closeMenu = function() {
+        document.getElementById('sidebar').classList.remove('open');
+    };
+    window.showPage = function(page) {
+        // stub
+    };
+    window.fecharModal = function(id) {
+        document.getElementById(id).style.display = 'none';
+    };
+    window.salvarEvento = function() { alert('Salvar evento'); };
+    window.salvarFuncionario = function() { alert('Salvar funcionário'); };
+    window.previewLogoEvento = function(e) {};
+    window.adicionarPatrocinador = function(e) {};
+    window.copiarQR = function() {};
+    window.simularConexao = function() {};
+    window.atualizarPermPadrao = function() {};
+    window.apiSalvarConfig = function() {};
+    window.apiAlterarSenha = function() {};
+    window.carregarDados = function() {};
+    window.atualizarInterfaceUsuario = function() {};
+    window.sairDoSistema = function() { location.reload(); };
+    window.gerarRelatorioCliente = function() { gerarRelatorioClientePDF(); };
+    window.cancelarConfiguracao = function() {};
 
-        // =============================
-        // OBSERVER – RECARREGA DADOS AO EXIBIR O DASHBOARD
-        // =============================
-        (function() {
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.target.id === 'clienteDashboard' && mutation.target.style.display === 'block') {
-                        if (eventoClienteAtual) {
-                            abrirAreaClienteEvento(eventoClienteAtual);
-                        }
+    // =============================
+    // OBSERVER – RECARREGA DADOS AO EXIBIR O DASHBOARD
+    // =============================
+    (function() {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.target.id === 'clienteDashboard' && mutation.target.style.display === 'block') {
+                    if (eventoClienteAtual) {
+                        abrirAreaClienteEvento(eventoClienteAtual);
                     }
-                });
+                }
             });
-            const dashboardEl = document.getElementById('clienteDashboard');
-            if (dashboardEl) {
-                observer.observe(dashboardEl, { attributes: true, attributeFilter: ['style'] });
-            }
-        })();
-
-        // =============================
-        // INICIALIZAÇÃO
-        // =============================
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('loginScreen').style.display = 'flex';
         });
-    </script>
+        const dashboardEl = document.getElementById('clienteDashboard');
+        if (dashboardEl) {
+            observer.observe(dashboardEl, { attributes: true, attributeFilter: ['style'] });
+        }
+    })();
+
+    // =============================
+    // INICIALIZAÇÃO
+    // =============================
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('loginScreen').style.display = 'flex';
+        console.log('Sistema inicializado. Conexão Supabase:', supabaseClient);
+    });
+</script>
 </body>
 </html>
