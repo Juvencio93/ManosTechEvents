@@ -703,38 +703,43 @@
         document.getElementById('loginClienteScreen').style.display = 'none';
         document.getElementById('loginScreen').style.display = 'flex';
     };
-    window.fazerLogin = function() {
-        alert('Login Admin – implementar com Supabase');
-    };
-    window.confirmarSaidaSistema = function() {
-        if (confirm('Sair do sistema?')) location.reload();
-    };
-    window.toggleMenu = function() {
-        document.getElementById('sidebar').classList.toggle('open');
-    };
-    window.closeMenu = function() {
-        document.getElementById('sidebar').classList.remove('open');
-    };
-    window.showPage = function(page) {
-        // stub
-    };
-    window.fecharModal = function(id) {
-        document.getElementById(id).style.display = 'none';
-    };
-    window.salvarEvento = function() { alert('Salvar evento'); };
-    window.salvarFuncionario = function() { alert('Salvar funcionário'); };
-    window.previewLogoEvento = function(e) {};
-    window.adicionarPatrocinador = function(e) {};
-    window.copiarQR = function() {};
-    window.simularConexao = function() {};
-    window.atualizarPermPadrao = function() {};
-    window.apiSalvarConfig = function() {};
-    window.apiAlterarSenha = function() {};
-    window.carregarDados = function() {};
-    window.atualizarInterfaceUsuario = function() {};
-    window.sairDoSistema = function() { location.reload(); };
-    window.gerarRelatorioCliente = function() { gerarRelatorioClientePDF(); };
-    window.cancelarConfiguracao = function() {};
+    window.fazerLogin = async function() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const senha = document.getElementById('loginPassword').value.trim();
+    if (!email || !senha) {
+        alert('Preencha e-mail e senha.');
+        return;
+    }
+
+    try {
+        // ALTERE O NOME DA TABELA CONFORME SUA BASE:
+        // Ex: 'funcionarios', 'admins', 'perfis', etc.
+        const { data, error } = await supabaseClient
+            .from('funcionarios')   // ← Mude aqui se necessário
+            .select('*')
+            .eq('email', email)
+            .eq('password', senha)  // ← Supabase usa 'password'
+            .single();
+
+        if (error || !data) {
+            alert('Credenciais inválidas. Verifique e-mail e senha.');
+            return;
+        }
+
+        // Esconde login e mostra dashboard admin
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+
+        // Atualiza nome do usuário na sidebar
+        const userEl = document.getElementById('sidebarUserName');
+        if (userEl) userEl.textContent = data.nome || 'Admin';
+
+        toast('✅ Bem-vindo, ' + (data.nome || 'Administrador') + '!');
+    } catch (err) {
+        console.error('Erro no login admin:', err);
+        alert('Erro ao conectar: ' + err.message);
+    }
+};
 
     // =============================
     // OBSERVER – RECARREGA DADOS AO EXIBIR O DASHBOARD
