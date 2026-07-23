@@ -162,9 +162,9 @@
     </div>
 
     <!-- ÁREA DO CLIENTE (sem alterações) -->
- <div class="dashboard" id="clienteDashboard">
-    <!-- Menu lateral do cliente -->
-    <div class="sidebar" id="clienteSidebar" style="display:flex; transform: translateX(0);">
+<div class="dashboard" id="clienteDashboard">
+    <!-- Menu lateral do cliente (hamburguer igual ao admin) -->
+    <div class="sidebar" id="clienteSidebar" style="display:flex;">
         <div class="logo-area" onclick="showClientePage('inicio')">
             <div class="logo-img" id="clienteSidebarLogo">🎪</div>
             <div><span class="logo-text" id="clienteSidebarNome">Evento</span></div>
@@ -179,15 +179,17 @@
         </div>
     </div>
 
-    <!-- Conteúdo principal do cliente -->
-    <div class="main-content" id="clienteMainContent" style="margin-left:280px; padding:36px 44px; min-height:100vh; background:var(--bg);">
-        <!-- Página Início (Dashboard do cliente) -->
+    <!-- Botão hamburguer para mobile (esconde a sidebar) -->
+    <button class="menu-toggle" id="clienteMenuToggle" onclick="toggleClienteMenu()" style="display:none;">☰</button>
+
+    <!-- Conteúdo principal -->
+    <div class="main-content" id="clienteMainContent">
+        <!-- Página Início -->
         <div class="page active" id="clientePage-inicio">
             <div class="top-bar">
                 <h2>🏠 Bem-vindo(a)</h2>
                 <span id="clienteStatusBadge" class="badge" style="font-size:14px;padding:8px 16px;"></span>
             </div>
-            <!-- Cards -->
             <div class="stats-grid" style="grid-template-columns: 1fr;">
                 <div class="stat-card">
                     <div class="stat-icon">👥</div>
@@ -202,19 +204,22 @@
                 </div>
                 <div class="card">
                     <h3>📱 Distribuição de Dispositivos</h3>
-                    <div class="pie-chart" id="clientePieChart" style="background:conic-gradient(var(--azul) 0% 60%, var(--green) 60% 85%, var(--yellow) 85% 100%);"></div>
+                    <div class="pie-chart" id="clientePieChart" style="background:conic-gradient(var(--azul) 0% 60%, #4dda8f 60% 85%, var(--yellow) 85% 100%);"></div>
                     <div class="pie-legend">
                         <span><span class="dot" style="background:var(--azul);"></span> iOS</span>
-                        <span><span class="dot" style="background:var(--green);"></span> Android</span>
+                        <span><span class="dot" style="background:#4dda8f;"></span> Android</span>
                         <span><span class="dot" style="background:var(--yellow);"></span> Desktop</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Página Visitantes (lista completa) -->
+        <!-- Página Visitantes -->
         <div class="page" id="clientePage-visitantes">
             <div class="top-bar"><h2>👥 Visitantes</h2></div>
+            <!-- Últimos 10 em cards destacados -->
+            <div id="clienteUltimosCards" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap:12px; margin-bottom:22px;"></div>
+            <!-- Tabela completa -->
             <div class="card">
                 <div style="overflow-x:auto;">
                     <table>
@@ -231,15 +236,15 @@
             <div class="card" style="text-align:center; padding:40px;">
                 <p style="color:var(--text2); margin-bottom:20px;">Escolha o formato do relatório:</p>
                 <div style="display:flex; gap:16px; justify-content:center;">
-                    <button class="btn btn-primary btn-sm" onclick="gerarRelatorioClientePDF()" style="width:200px;">📄 Gerar PDF</button>
-                    <button class="btn btn-primary btn-sm" onclick="gerarRelatorioClienteExcel()" style="width:200px; background:var(--green);">📊 Gerar Excel</button>
+                    <button class="btn btn-primary btn-sm" onclick="gerarRelatorioClientePDF()" style="width:200px; background:var(--azul);">📄 Baixar PDF</button>
+                    <button class="btn btn-primary btn-sm" onclick="gerarRelatorioClienteExcel()" style="width:200px; background:var(--green);">📊 Baixar Excel</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Script para atualizar ao exibir -->
     <script>
+        // Observer para carregar dados assim que a área do cliente ficar visível
         (function() {
             const observer = new MutationObserver(function(mutations) {
                 mutations.forEach(function(mutation) {
