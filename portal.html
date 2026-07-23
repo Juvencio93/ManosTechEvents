@@ -81,13 +81,11 @@
         .btn { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--azul), #3a8ec0); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s; }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(77,168,218,0.3); }
         .error-msg { color: var(--red); font-size: 12px; margin-top: 4px; display: none; }
-        .patrocinadores { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 16px 0; }
-        .patrocinadores img { width: 60px; height: 60px; border-radius: 8px; object-fit: contain; background: rgba(255,255,255,0.05); padding: 8px; }
-        .sucesso-msg { display: none; color: var(--green); font-weight: 600; margin-top: 20px; }
         .carrossel-container { width: 100%; overflow: hidden; position: relative; margin: 12px 0; }
         .carrossel-faixa { display: flex; gap: 20px; width: max-content; }
         .carrossel-faixa img { width: 80px; height: 80px; border-radius: 12px; object-fit: contain; background: rgba(255,255,255,0.05); padding: 8px; border: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; }
         @keyframes scrollPatrocinadores { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .sucesso-msg { display: none; color: var(--green); font-weight: 600; margin-top: 20px; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -380,6 +378,7 @@
             eventoAtual = data;
             document.getElementById('nomeEvento').textContent = data.nome;
 
+            // Logo
             const logoEl = document.getElementById('logoEvento');
             if (data.logo_url) {
                 logoEl.innerHTML = `<img src="${data.logo_url}" alt="Logo">`;
@@ -387,6 +386,7 @@
                 logoEl.innerHTML = '🎪';
             }
 
+            // Patrocinadores
             const faixa = document.getElementById('carrosselFaixa');
             let logos = data.patrocinadores_logos;
             if (typeof logos === 'string') {
@@ -443,6 +443,18 @@
             return digits.length >= 7 && digits.length <= 15;
         }
 
+        function detectarDispositivo() {
+            const ua = navigator.userAgent;
+            if (/iPhone/.test(ua)) return 'iPhone';
+            if (/iPad/.test(ua)) return 'iPad';
+            if (/iPod/.test(ua)) return 'iPod';
+            if (/Android/.test(ua)) return 'Android';
+            if (/Windows/.test(ua)) return 'Windows';
+            if (/Macintosh/.test(ua) && !/iPhone|iPad|iPod/.test(ua)) return 'Mac';
+            if (/Linux/.test(ua) && !/Android/.test(ua)) return 'Linux';
+            return 'Desktop';
+        }
+
         async function conectar() {
             document.querySelectorAll('.error-msg').forEach(el => el.style.display = 'none');
 
@@ -473,20 +485,21 @@
             btn.textContent = 'Registrando...';
 
             try {
-const agora = new Date();
-const horaLocal = agora.getHours();   // número 0-23
-const isoString = agora.toISOString(); // ex: "2026-07-23T01:27:56.249Z"
+                const agora = new Date();
+                const pad = n => String(n).padStart(2, '0');
+                const acessoLocal = `${agora.getFullYear()}-${pad(agora.getMonth()+1)}-${pad(agora.getDate())} ${pad(agora.getHours())}:${pad(agora.getMinutes())}:${pad(agora.getSeconds())}`;
+                const horaLocal = agora.getHours();
 
-const { error } = await supabaseClient.from('visitantes').insert([{
-    evento_id: eventoAtual.id,
-    nome: escapeHtml(nome),
-    email: email,
-    whatsapp: whatsapp ? '+' + ddi + ' ' + whatsapp : '(não informado)',
-    acesso: isoString,
-    hora: horaLocal,
-    dispositivo: /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
-    ip: '0.0.0.0'
-}]);
+                const { error } = await supabaseClient.from('visitantes').insert([{
+                    evento_id: eventoAtual.id,
+                    nome: escapeHtml(nome),
+                    email: email,
+                    whatsapp: whatsapp ? '+' + ddi + ' ' + whatsapp : '(não informado)',
+                    acesso: acessoLocal,
+                    hora: horaLocal,
+                    dispositivo: detectarDispositivo(),
+                    ip: '0.0.0.0'
+                }]);
                 if (error) throw error;
                 document.getElementById('sucessoMsg').style.display = 'block';
                 setTimeout(() => { window.location.href = 'https://www.google.com'; }, 2000);
