@@ -1,15 +1,14 @@
-// Área do Cliente – enriquecida (sem Tempo Médio e % Mobile)
+// Área do Cliente – reformulada
+
+let clienteVisitantesCache = [];
 
 async function abrirAreaClienteEvento(evento) {
     eventoClienteAtual = evento;
 
-    // Cabeçalho
-    document.getElementById('clienteEventoNome').textContent = evento.nome;
-    document.getElementById('clienteEventoPeriodo').textContent =
-        `${formatarData(evento.dataInicio)} a ${formatarData(evento.dataFim)}`;
-    document.getElementById('clienteEventoLocal').textContent = evento.local;
-    document.getElementById('clienteLogoHeader').innerHTML = evento.logoUrl
-        ? `<img src="${evento.logoUrl}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'">`
+    // Atualiza sidebar
+    document.getElementById('clienteSidebarNome').textContent = evento.nome;
+    document.getElementById('clienteSidebarLogo').innerHTML = evento.logoUrl
+        ? `<img src="${evento.logoUrl}" style="max-width:100%;max-height:100%;object-fit:contain;">`
         : '🎪';
 
     // Status
@@ -19,23 +18,20 @@ async function abrirAreaClienteEvento(evento) {
     badge.className = 'badge ' + statusBadgeClass(status);
     badge.style.display = 'inline-block';
 
-    // Visitantes
-    let visitantes = [];
+    // Busca visitantes
     try {
-        visitantes = await apiListarVisitantes(evento.id);
+        clienteVisitantesCache = await apiListarVisitantes(evento.id);
     } catch (e) {
-        visitantes = evento.visitantes || [];
+        clienteVisitantesCache = [];
     }
 
-    const total = visitantes.length;
-    document.getElementById('clienteTotalVisitantes').textContent = total;
-    const conectados = total > 0 ? Math.max(1, Math.floor(total * 0.3)) : 0;
-    document.getElementById('clienteLiveConnected').textContent = conectados;
+    // Total com animação
+    animarContador('clienteTotalVisitantes', clienteVisitantesCache.length);
 
     // Mapa de calor
     const horas = {};
     for (let h = 8; h <= 20; h++) horas[h] = 0;
-    visitantes.forEach(v => {
+    clienteVisitantesCache.forEach(v => {
         const h = v.hora || 8;
         if (horas[h] !== undefined) horas[h]++;
     });
@@ -47,47 +43,27 @@ async function abrirAreaClienteEvento(evento) {
         ).join('');
     }
 
-    // Pizza de dispositivos
-    const dispositivos = { iPhone: 0, Android: 0, Desktop: 0, Outros: 0 };
-    visitantes.forEach(v => {
+    // Pizza
+    const dispositivos = { iPhone: 0, Android: 0, Desktop: 0 };
+    clienteVisitantesCache.forEach(v => {
         const d = v.dispositivo || 'Desktop';
         if (d.includes('iPhone') || d.includes('iPad') || d.includes('iPod')) dispositivos.iPhone++;
         else if (d.includes('Android')) dispositivos.Android++;
-        else if (d.includes('Desktop') || d.includes('Windows') || d.includes('Mac') || d.includes('Linux')) dispositivos.Desktop++;
-        else dispositivos.Outros++;
+        else dispositivos.Desktop++;
     });
-    const totalDisp = total || 1;
+    const totalDisp = clienteVisitantesCache.length || 1;
     const iosPct = (dispositivos.iPhone / totalDisp) * 100;
     const androidPct = (dispositivos.Android / totalDisp) * 100;
     const desktopPct = (dispositivos.Desktop / totalDisp) * 100;
-    const outrosPct = (dispositivos.Outros / totalDisp) * 100;
     const pie = document.getElementById('clientePieChart');
     if (pie) {
-        pie.style.background = `conic-gradient(var(--azul) 0% ${iosPct}%, #40a0ff ${iosPct}% ${iosPct + androidPct}%, var(--yellow) ${iosPct + androidPct}% ${iosPct + androidPct + desktopPct}%, var(--red) ${iosPct + androidPct + desktopPct}% 100%)`;
+        pie.style.background = `conic-gradient(var(--azul) 0% ${iosPct}%, var(--green) ${iosPct}% ${iosPct + androidPct}%, var(--yellow) ${iosPct + androidPct}% 100%)`;
     }
 
-    // Cards últimos visitantes
-    const cardsContainer = document.getElementById('clienteVisitantesCards');
-    if (cardsContainer) {
-        cardsContainer.innerHTML = visitantes.slice(0, 10).map(v => {
-            const iniciais = v.nome.split(' ').map(p => p.charAt(0)).join('').substring(0, 2).toUpperCase();
-            const dispositivo = v.dispositivo || 'Desktop';
-            const icone = dispositivo.includes('iPhone') || dispositivo.includes('Android') ? '📱' : '💻';
-            return `
-                <div style="background:var(--glass); backdrop-filter:blur(10px); border:1px solid var(--glass-border); border-radius:var(--r); padding:16px; display:flex; align-items:center; gap:12px;">
-                    <div style="width:40px;height:40px;border-radius:50%;background:rgba(77,168,218,0.2);display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--azul);">${escapeHtml(iniciais)}</div>
-                    <div style="flex:1;min-width:0;">
-                        <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(v.nome)}</div>
-                        <div style="font-size:12px;color:var(--text2);">${v.acesso} • ${icone}</div>
-                    </div>
-                </div>`;
-        }).join('');
-    }
-
-    // Tabela completa
+    // Tabela de visitantes (página Visitantes)
     const tbody = document.getElementById('clienteVisitantesTable');
     if (tbody) {
-        tbody.innerHTML = visitantes.map(v =>
+        tbody.innerHTML = clienteVisitantesCache.map(v =>
             `<tr>
                 <td><strong>${escapeHtml(v.nome)}</strong></td>
                 <td>${escapeHtml(v.email)}</td>
@@ -99,17 +75,76 @@ async function abrirAreaClienteEvento(evento) {
     }
 }
 
-// Copiar link
-function copiarLinkPortalCliente() {
-    if (!eventoClienteAtual) return;
-    const link = gerarLinkPortal(eventoClienteAtual);
-    navigator.clipboard.writeText(link).then(() => toast('📋 Link do portal copiado!'));
+// Navegação do cliente
+function showClientePage(nome) {
+    document.querySelectorAll('#clienteMainContent .page').forEach(p => p.classList.remove('active'));
+    const pagina = document.getElementById('clientePage-' + nome);
+    if (pagina) pagina.classList.add('active');
+
+    document.querySelectorAll('#clienteSidebar nav a').forEach(a => a.classList.remove('active'));
+    document.querySelectorAll('#clienteSidebar nav a').forEach(a => {
+        if (a.getAttribute('onclick') && a.getAttribute('onclick').includes(`'${nome}'`)) {
+            a.classList.add('active');
+        }
+    });
 }
 
-async function atualizarAreaClienteSeAtiva() {
-    if (eventoClienteAtual) {
-        await abrirAreaClienteEvento(eventoClienteAtual);
+// Animação do contador
+function animarContador(elementId, valorFinal) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    const inicio = 0;
+    const duracao = 1000;
+    const startTime = performance.now();
+
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duracao, 1);
+        const atual = Math.floor(progress * valorFinal);
+        el.textContent = atual;
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        } else {
+            el.textContent = valorFinal;
+        }
     }
+    requestAnimationFrame(update);
+}
+
+// Relatórios
+async function gerarRelatorioClientePDF() {
+    if (!eventoClienteAtual) { alert('Nenhum evento carregado.'); return; }
+    gerarPDFEvento({ ...eventoClienteAtual, visitantes: clienteVisitantesCache, totalVisitantes: clienteVisitantesCache.length });
+}
+
+function gerarRelatorioClienteExcel() {
+    if (!eventoClienteAtual || clienteVisitantesCache.length === 0) {
+        alert('Nenhum dado para exportar.');
+        return;
+    }
+    const dados = clienteVisitantesCache.map(v => ({
+        Nome: v.nome,
+        Email: v.email,
+        WhatsApp: v.whatsapp,
+        Acesso: v.acesso,
+        Dispositivo: v.dispositivo || 'Desktop'
+    }));
+    const csv = [
+        Object.keys(dados[0]).join(','),
+        ...dados.map(row => Object.values(row).map(v => `"${v}"`).join(','))
+    ].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `visitantes_${eventoClienteAtual.nome.replace(/\s+/g, '_')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// Mantida a função antiga para compatibilidade com botão do admin
+async function gerarRelatorioCliente() {
+    gerarRelatorioClientePDF();
 }
 
 // Configuração (mantida)
@@ -174,13 +209,6 @@ async function salvarConfiguracao() {
     } catch (e) {
         toast('❌ Erro ao salvar configurações: ' + e.message);
     }
-}
-
-async function gerarRelatorioCliente() {
-    if (!eventoClienteAtual) { alert('Nenhum evento carregado.'); return; }
-    let visitantes = [];
-    try { visitantes = await apiListarVisitantes(eventoClienteAtual.id); } catch (e) {}
-    gerarPDFEvento({ ...eventoClienteAtual, visitantes, totalVisitantes: visitantes.length });
 }
 
 function cancelarConfiguracao() {
