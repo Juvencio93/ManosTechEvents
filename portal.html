@@ -502,7 +502,8 @@
                 }]);
                 if (error) throw error;
                 document.getElementById('sucessoMsg').style.display = 'block';
-                setTimeout(() => { window.location.href = 'https://www.google.com'; }, 2000);
+                const destino = eventoAtual.redirect_url || 'https://www.google.com';
+setTimeout(() => { window.location.href = destino; }, 2000);
             } catch (e) {
                 alert('Erro ao registrar: ' + e.message);
                 btn.disabled = false;
