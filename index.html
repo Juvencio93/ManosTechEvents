@@ -162,10 +162,12 @@
     </div>
 
     <!-- ÁREA DO CLIENTE (sem alterações) -->
-  <div class="dashboard" id="clienteDashboard">
+  <!-- ========== NOVA ÁREA DO CLIENTE ========== -->
+<div class="dashboard" id="clienteDashboard" style="display:none;">
     <div style="margin-left:0;padding:34px;min-height:100vh;background:var(--bg);">
-        <!-- Cabeçalho -->
+        <!-- Cabeçalho com hambúrguer à esquerda -->
         <div class="cliente-header-card" style="padding:22px 30px;display:flex;align-items:center;gap:16px;margin-bottom:26px;border-radius:var(--r);">
+            <button class="btn btn-sm" style="background:var(--glass);border:1px solid var(--glass-border);color:var(--text);font-size:22px;padding:4px 12px;border-radius:var(--r);" onclick="toggleMenuCliente()">☰</button>
             <div class="logo-preview" style="width:60px;height:60px;" id="clienteLogoHeader">🎪</div>
             <div>
                 <h2 id="clienteEventoNome">Evento</h2>
@@ -173,61 +175,99 @@
                     <span id="clienteEventoPeriodo"></span> • <span id="clienteEventoLocal"></span>
                 </div>
             </div>
-            <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
+            <div style="margin-left:auto;">
                 <span id="clienteStatusBadge" class="badge" style="font-size:14px;padding:8px 16px;"></span>
-                <button class="btn btn-sm" style="background:#4da8da;color:white;" onclick="copiarLinkPortalCliente()">📋 Copiar Link</button>
-                <button class="btn btn-sm" style="background:#6c5ce7;color:white;" onclick="gerarRelatorioCliente()">📄 Relatório PDF</button>
-                <button class="btn btn-sm" style="background:#ff4d6a;color:white;" onclick="confirmarSaidaCliente()">🚪 Sair</button>
             </div>
         </div>
 
-        <!-- Stats principais (apenas 2 cards) -->
-        <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr);">
-            <div class="stat-card">
-                <div class="stat-icon">👥</div>
-                <div class="stat-value" id="clienteTotalVisitantes">0</div>
-                <div class="stat-label">Total de Visitantes</div>
+        <!-- Menu lateral esquerdo (estilo sidebar ADM) -->
+        <div id="clienteSidebarMenu" style="display:none;position:fixed;top:0;left:0;width:280px;height:100vh;background:var(--glass);backdrop-filter:blur(20px);border-right:1px solid var(--glass-border);z-index:1000;padding:30px 20px;box-shadow:5px 0 20px rgba(0,0,0,0.2);overflow-y:auto;transition:transform 0.3s ease;">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:20px;">
+                <button onclick="toggleMenuCliente()" style="background:none;border:none;color:var(--text);font-size:24px;cursor:pointer;">✕</button>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon">🔗</div>
-                <div class="stat-value" id="clienteLiveConnected">0</div>
-                <div class="stat-label">Conectados Agora</div>
-            </div>
+            <ul style="list-style:none;padding:0;margin:0;">
+                <li onclick="navegarCliente('inicio')" style="padding:12px 16px;cursor:pointer;border-radius:var(--r);margin-bottom:8px;display:flex;align-items:center;gap:10px;">🏠 Início</li>
+                <li onclick="navegarCliente('visitantes')" style="padding:12px 16px;cursor:pointer;border-radius:var(--r);margin-bottom:8px;display:flex;align-items:center;gap:10px;">👥 Total de Visitantes</li>
+                <li onclick="navegarCliente('relatorios')" style="padding:12px 16px;cursor:pointer;border-radius:var(--r);margin-bottom:8px;display:flex;align-items:center;gap:10px;">📊 Relatórios</li>
+                <li onclick="confirmarSaidaCliente()" style="padding:12px 16px;cursor:pointer;border-radius:var(--r);margin-top:20px;display:flex;align-items:center;gap:10px;color:var(--red);">🚪 Sair</li>
+            </ul>
         </div>
 
-        <!-- Gráficos -->
-        <div class="grid-2">
-            <div class="card">
-                <h3>🔥 Acessos por Hora</h3>
-                <div class="heatmap" id="clienteHeatmapContainer"></div>
+        <!-- Views -->
+        <div id="clienteMainContent">
+            <!-- VIEW INÍCIO -->
+            <div id="clienteViewInicio">
+                <!-- Cards flutuantes (estilo ADM) -->
+                <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-value" id="clienteTotalVisitantes">0</div>
+                        <div class="stat-label">Total de Visitantes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔥</div>
+                        <div class="stat-value" id="clientePicoHora">--</div>
+                        <div class="stat-label">Pico de Acessos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📱</div>
+                        <div class="stat-value" id="clienteDispositivoPred">--</div>
+                        <div class="stat-label">Dispositivo Predominante</div>
+                    </div>
+                </div>
+                <!-- Gráficos -->
+                <div class="grid-2" style="margin-top:22px;">
+                    <div class="card">
+                        <h3>🔥 Acessos por Hora</h3>
+                        <div class="heatmap" id="clienteHeatmapContainer"></div>
+                    </div>
+                    <div class="card">
+                        <h3>📱 Distribuição de Dispositivos</h3>
+                        <div class="pie-chart" id="clientePieChart"></div>
+                        <div class="pie-legend">
+                            <span><span class="dot" style="background:#2ecc71;"></span> iOS</span>
+                            <span><span class="dot" style="background:#3498db;"></span> Android</span>
+                            <span><span class="dot" style="background:#f1c40f;"></span> Desktop</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card">
-                <h3>📱 Distribuição de Dispositivos</h3>
-                <div class="pie-chart" id="clientePieChart" style="background:conic-gradient(var(--azul) 0% 60%, #40a0ff 60% 85%, var(--yellow) 85% 100%);"></div>
-                <div class="pie-legend">
-                    <span><span class="dot" style="background:var(--azul);"></span> iOS</span>
-                    <span><span class="dot" style="background:#40a0ff;"></span> Android</span>
-                    <span><span class="dot" style="background:var(--yellow);"></span> Desktop</span>
+
+            <!-- VIEW VISITANTES -->
+            <div id="clienteViewVisitantes" style="display:none;">
+                <div class="card" style="margin-bottom:22px;">
+                    <h3>👋 Últimos 12 Visitantes</h3>
+                    <div id="clienteVisitantesCards" style="display:grid;grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap:12px; margin-top:16px;"></div>
+                </div>
+                <div class="card">
+                    <h3>📋 Todos os Visitantes</h3>
+                    <div style="overflow-x:auto;">
+                        <table>
+                            <thead><tr><th>Nome</th><th>E-mail</th><th>WhatsApp</th><th>Horário</th><th>Dispositivo</th></tr></thead>
+                            <tbody id="clienteVisitantesTable"></tbody>
+                        </table>
+                    </div>
+                    <div id="clientePaginacao" style="display:flex;justify-content:center;align-items:center;gap:8px;margin-top:16px;"></div>
+                </div>
+            </div>
+
+            <!-- VIEW RELATÓRIOS -->
+            <div id="clienteViewRelatorios" style="display:none;">
+                <div class="card" style="text-align:center;">
+                    <h3 style="margin-bottom:30px;">📊 Relatórios do Evento</h3>
+                    <div style="display:flex;gap:24px;justify-content:center;flex-wrap:wrap;">
+                        <button class="btn btn-primary" style="font-size:18px;padding:20px 40px;" onclick="gerarRelatorioCliente()">
+                            📄 Gerar PDF
+                        </button>
+                        <button class="btn" style="background:#28a745;color:white;font-size:18px;padding:20px 40px;" onclick="exportarExcelCliente()">
+                            📊 Gerar Excel
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- Últimos visitantes em cards -->
-        <div class="card" style="margin-top:22px;">
-            <h3>👋 Últimos Visitantes</h3>
-            <div id="clienteVisitantesCards" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap:12px; margin-top:16px;"></div>
-        </div>
-
-        <!-- Tabela completa -->
-        <div class="card" style="margin-top:22px;">
-            <h3>📋 Todos os Visitantes</h3>
-            <div style="overflow-x:auto;">
-                <table>
-                    <thead><tr><th>Nome</th><th>E-mail</th><th>WhatsApp</th><th>Horário</th><th>Dispositivo</th></tr></thead>
-                    <tbody id="clienteVisitantesTable"></tbody>
-                </table>
-            </div>
-        </div>
+    </div>
+</div>
 
         <script>
             (function() {
