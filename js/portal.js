@@ -454,9 +454,16 @@ if (eventoClienteAtual?.id === evento.id) await abrirAreaClienteEvento(evento);
         whatsapp: whatsapp ? '+' + ddi + ' ' + whatsapp : '(não informado)',
         acesso: new Date().toISOString(),
         hora: new Date().getHours(),
-        dispositivo: navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop',
+        dispositivo: detectarDispositivoAdmin(),
         ip: '0.0.0.0'
     };
+    function detectarDispositivoAdmin() {
+    const ua = navigator.userAgent;
+    if (/iPhone|iPad|iPod/.test(ua)) return 'iOS';
+    if (/Android/.test(ua)) return 'Android';
+    if (/Mobile/.test(ua)) return 'Mobile';
+    return 'Desktop';
+}
 
     try {
         const resultado = await apiRegistrarVisitante(evento.token, visitante);
