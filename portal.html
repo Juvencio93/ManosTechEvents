@@ -473,17 +473,20 @@
             btn.textContent = 'Registrando...';
 
             try {
-                const agora = new Date();
-                const { error } = await supabaseClient.from('visitantes').insert([{
-                    evento_id: eventoAtual.id,
-                    nome: escapeHtml(nome),
-                    email: email,
-                    whatsapp: whatsapp ? '+' + ddi + ' ' + whatsapp : '(não informado)',
-                    acesso: agora.toISOString(),
-                    hora: agora.getHours(),
-                    dispositivo: /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
-                    ip: '0.0.0.0'
-                }]);
+const agora = new Date();
+const horaLocal = agora.getHours();   // número 0-23
+const isoString = agora.toISOString(); // ex: "2026-07-23T01:27:56.249Z"
+
+const { error } = await supabaseClient.from('visitantes').insert([{
+    evento_id: eventoAtual.id,
+    nome: escapeHtml(nome),
+    email: email,
+    whatsapp: whatsapp ? '+' + ddi + ' ' + whatsapp : '(não informado)',
+    acesso: isoString,
+    hora: horaLocal,
+    dispositivo: /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
+    ip: '0.0.0.0'
+}]);
                 if (error) throw error;
                 document.getElementById('sucessoMsg').style.display = 'block';
                 setTimeout(() => { window.location.href = 'https://www.google.com'; }, 2000);
