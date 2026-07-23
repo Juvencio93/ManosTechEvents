@@ -418,159 +418,236 @@
     <script src="js/app.js?v=2"></script>
     <script src="js/init.js?v=2"></script>
 
-    <!-- ====================================================================== -->
-    <!-- SOBRESCRITA DA FUNÇÃO abrirAreaClienteEvento PARA ADICIONAR MELHORIAS  -->
-    <!-- ====================================================================== -->
-    <script>
-        // --- 1. Função de animação de contagem ---
-        function animarContagem(elemento, valorFinal, duracao = 1000) {
-            if (!elemento) return;
-            const start = performance.now();
-            function update(timestamp) {
-                const progress = Math.min((timestamp - start) / duracao, 1);
-                const valorAtual = Math.floor(progress * valorFinal);
-                elemento.textContent = valorAtual;
-                if (progress < 1) requestAnimationFrame(update);
-                else elemento.textContent = valorFinal;
-            }
-            requestAnimationFrame(update);
+<!-- SOBRESCRITA COMPLETA DA FUNÇÃO abrirAreaClienteEvento (substitui a original) -->
+
+<script>
+    // --- 1. Função de animação de contagem ---
+    function animarContagem(elemento, valorFinal, duracao = 1000) {
+        if (!elemento) return;
+        const start = performance.now();
+        function update(timestamp) {
+            const progress = Math.min((timestamp - start) / duracao, 1);
+            const valorAtual = Math.floor(progress * valorFinal);
+            elemento.textContent = valorAtual;
+            if (progress < 1) requestAnimationFrame(update);
+            else elemento.textContent = valorFinal;
         }
+        requestAnimationFrame(update);
+    }
 
-        // --- 2. Salvar referência da função original (definida em cliente.js) ---
-        const originalAbrirAreaClienteEvento = window.abrirAreaClienteEvento;
-
-        // --- 3. Nova função com as melhorias ---
-        window.abrirAreaClienteEvento = async function(evento) {
-            // Chama a original para preencher todos os dados (cabeçalho, cards, gráficos, tabela)
-            await originalAbrirAreaClienteEvento(evento);
-
-            // --- Aplicar animação no total de visitantes ---
-            const totalEl = document.getElementById('clienteTotalVisitantes');
-            const totalBadge = document.getElementById('clienteTotalVisitantesBadge');
-            if (totalEl) {
-                const total = parseInt(totalEl.textContent) || 0;
-                // Se for > 0, anima de 0 até o total
-                if (total > 0) {
-                    totalEl.textContent = '0';
-                    animarContagem(totalEl, total);
-                }
-            }
-            // Atualiza o badge da página de visitantes também
-            if (totalBadge) {
-                const total = parseInt(totalEl?.textContent) || 0;
-                totalBadge.textContent = total;
-            }
-
-            // --- Reaplicar cores personalizadas no gráfico de pizza ---
-            // O original já desenhou a pizza com as cores padrão (var(--azul), #40a0ff, var(--yellow), var(--red))
-            // Vamos recalcular com as cores novas, usando os visitantes que já foram carregados
-            // Precisamos dos visitantes – vamos buscá-los novamente ou usar os que estão em eventoClienteAtual
-            // A função original não guarda os visitantes em lugar nenhum, então vamos buscá-los de novo
-            let visitantes = [];
-            try {
-                visitantes = await apiListarVisitantes(evento.id);
-            } catch (e) {
-                visitantes = evento.visitantes || [];
-            }
-            const total = visitantes.length || 1;
-            const dispositivos = { iPhone: 0, Android: 0, Desktop: 0, Outros: 0 };
-            visitantes.forEach(v => {
-                const d = v.dispositivo || 'Desktop';
-                if (d.includes('iPhone') || d.includes('iPad') || d.includes('iPod')) dispositivos.iPhone++;
-                else if (d.includes('Android')) dispositivos.Android++;
-                else if (d.includes('Desktop') || d.includes('Windows') || d.includes('Mac') || d.includes('Linux')) dispositivos.Desktop++;
-                else dispositivos.Outros++;
-            });
-            const iosPct = (dispositivos.iPhone / total) * 100;
-            const androidPct = (dispositivos.Android / total) * 100;
-            const desktopPct = (dispositivos.Desktop / total) * 100;
-            const outrosPct = (dispositivos.Outros / total) * 100;
-
-            const pie = document.getElementById('clientePieChart');
-            if (pie) {
-                const cores = ['#39ff14', '#4da8da', '#ffb347', '#ff4d6a']; // verde neon, azul, amarelo, vermelho
-                pie.style.background = `conic-gradient(
-                    ${cores[0]} 0% ${iosPct}%,
-                    ${cores[1]} ${iosPct}% ${iosPct + androidPct}%,
-                    ${cores[2]} ${iosPct + androidPct}% ${iosPct + androidPct + desktopPct}%,
-                    ${cores[3]} ${iosPct + androidPct + desktopPct}% 100%
-                )`;
-            }
-
-            // --- Atualizar nome do evento na sidebar ---
-            const sideName = document.getElementById('clienteSidebarNome');
-            if (sideName) sideName.textContent = evento.nome || 'Evento';
-        };
-
-        // --- 4. Funções auxiliares para navegação entre páginas do cliente ---
-        function showClientePage(page) {
+    // --- 2. Funções auxiliares de navegação (já definidas, mas vamos garantir) ---
+    if (typeof showClientePage === 'undefined') {
+        window.showClientePage = function(page) {
             document.querySelectorAll('#clienteMainContent .page').forEach(p => p.classList.remove('active'));
             const target = document.getElementById('clientePage-' + page);
             if (target) target.classList.add('active');
-
             document.querySelectorAll('#clienteSidebar nav a').forEach(a => a.classList.remove('active'));
             const menuItem = document.querySelector(`#clienteSidebar nav a[onclick="showClientePage('${page}')"]`);
             if (menuItem) menuItem.classList.add('active');
-
             const sb = document.getElementById('clienteSidebar');
             if (sb) sb.classList.remove('open');
-        }
-
-        function toggleClienteMenu() {
+        };
+    }
+    if (typeof toggleClienteMenu === 'undefined') {
+        window.toggleClienteMenu = function() {
             const sb = document.getElementById('clienteSidebar');
             if (sb) sb.classList.toggle('open');
+        };
+    }
+
+    // --- 3. Nova função abrirAreaClienteEvento (completa, substitui a original) ---
+    window.abrirAreaClienteEvento = async function(evento) {
+        eventoClienteAtual = evento;
+
+        // --- Cabeçalho ---
+        const nomeEl = document.getElementById('clienteEventoNome');
+        if (nomeEl) nomeEl.textContent = evento.nome || 'Evento';
+
+        const periodoEl = document.getElementById('clienteEventoPeriodo');
+        if (periodoEl) {
+            periodoEl.textContent = evento.dataInicio && evento.dataFim ?
+                `${formatarData(evento.dataInicio)} a ${formatarData(evento.dataFim)}` : '';
         }
 
-        // --- 5. Sobrescrever também a função gerarRelatorioCliente para usar Excel ---
-        // Mantemos a original para PDF (gerarRelatorioCliente) e adicionamos a Excel
-        window.gerarRelatorioClientePDF = async function() {
-            if (!eventoClienteAtual) { alert('Nenhum evento carregado.'); return; }
-            // Chama a função original que gera PDF (está em cliente.js)
-            if (typeof gerarRelatorioCliente === 'function') {
-                await gerarRelatorioCliente();
+        const localEl = document.getElementById('clienteEventoLocal');
+        if (localEl) localEl.textContent = evento.local || '';
+
+        const logoEl = document.getElementById('clienteLogoHeader');
+        if (logoEl) {
+            if (evento.logoUrl) {
+                logoEl.innerHTML = `<img src="${evento.logoUrl}" alt="Logo" style="width:100%;height:100%;object-fit:contain;">`;
             } else {
-                alert('Função PDF não disponível.');
+                logoEl.textContent = '🎪';
             }
-        };
+        }
 
-        window.gerarRelatorioClienteExcel = async function() {
-            if (!eventoClienteAtual) { alert('Nenhum evento carregado.'); return; }
-            let visitantes = [];
-            try { visitantes = await apiListarVisitantes(eventoClienteAtual.id); } catch (e) {}
-            const dados = visitantes.map(v => ({
-                Nome: v.nome,
-                Email: v.email,
-                WhatsApp: v.whatsapp,
-                Horário: v.acesso,
-                Dispositivo: v.dispositivo || 'Desktop'
-            }));
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.json_to_sheet(dados);
-            XLSX.utils.book_append_sheet(wb, ws, 'Visitantes');
-            XLSX.writeFile(wb, `visitantes_${eventoClienteAtual.nome}_${new Date().toISOString().slice(0,10)}.xlsx`);
-        };
+        // --- Status ---
+        const status = calcularStatusEvento(evento);
+        const badge = document.getElementById('clienteStatusBadge');
+        if (badge) {
+            badge.textContent = status;
+            badge.className = 'badge ' + statusBadgeClass(status);
+            badge.style.display = 'inline-block';
+        }
 
-        // --- 6. Ajuste no login do cliente para chamar a nova função (já está ok) ---
-        // A função fazerLoginCliente já chama abrirAreaClienteEvento, que agora é a nova.
+        // --- Buscar visitantes ---
+        let visitantes = [];
+        try {
+            visitantes = await apiListarVisitantes(evento.id);
+        } catch (e) {
+            visitantes = [];
+        }
+        const total = visitantes.length;
 
-        // --- 7. Observer para recarregar dados quando o dashboard cliente for exibido ---
-        (function() {
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.target.id === 'clienteDashboard' && mutation.target.style.display === 'block') {
-                        if (eventoClienteAtual) {
-                            abrirAreaClienteEvento(eventoClienteAtual);
-                        }
+        // --- Total de visitantes (com animação) ---
+        const totalEl = document.getElementById('clienteTotalVisitantes');
+        const totalBadge = document.getElementById('clienteTotalVisitantesBadge');
+        if (totalEl) {
+            const anterior = parseInt(totalEl.textContent) || 0;
+            if (anterior !== total) {
+                totalEl.textContent = '0';
+                animarContagem(totalEl, total);
+            } else {
+                totalEl.textContent = total;
+            }
+        }
+        if (totalBadge) totalBadge.textContent = total;
+
+        // --- Conectados agora (simulação) ---
+        const conectados = total > 0 ? Math.max(1, Math.floor(total * 0.3)) : 0;
+        const liveEl = document.getElementById('clienteLiveConnected');
+        if (liveEl) liveEl.textContent = conectados;
+
+        // --- Percentual mobile (simulação) ---
+        const pctMobile = Math.min(100, Math.floor((total > 0 ? Math.random() * 40 + 40 : 0)));
+        const pctEl = document.getElementById('clientePctMobile');
+        if (pctEl) pctEl.textContent = pctMobile + '%';
+
+        // --- Mapa de calor ---
+        const horas = {};
+        for (let h = 8; h <= 20; h++) horas[h] = 0;
+        visitantes.forEach(v => {
+            const h = v.hora || 8;
+            if (horas[h] !== undefined) horas[h]++;
+        });
+        const max = Math.max(...Object.values(horas), 1);
+        const heatmapEl = document.getElementById('clienteHeatmapContainer');
+        if (heatmapEl) {
+            heatmapEl.innerHTML = Object.entries(horas).map(([h, c]) =>
+                `<div class="heatmap-bar" style="height:${Math.max((c / max) * 140, 4)}px;" title="${h}h: ${c}"></div>`
+            ).join('');
+        }
+
+        // --- Gráfico de pizza (cores personalizadas) ---
+        const dispositivos = { iPhone: 0, Android: 0, Desktop: 0, Outros: 0 };
+        visitantes.forEach(v => {
+            const d = v.dispositivo || 'Desktop';
+            if (d.includes('iPhone') || d.includes('iPad') || d.includes('iPod')) dispositivos.iPhone++;
+            else if (d.includes('Android')) dispositivos.Android++;
+            else if (d.includes('Desktop') || d.includes('Windows') || d.includes('Mac') || d.includes('Linux')) dispositivos.Desktop++;
+            else dispositivos.Outros++;
+        });
+        const totalDisp = total || 1;
+        const iosPct = (dispositivos.iPhone / totalDisp) * 100;
+        const androidPct = (dispositivos.Android / totalDisp) * 100;
+        const desktopPct = (dispositivos.Desktop / totalDisp) * 100;
+        // const outrosPct = (dispositivos.Outros / totalDisp) * 100;
+
+        const pie = document.getElementById('clientePieChart');
+        if (pie) {
+            const cores = ['#39ff14', '#4da8da', '#ffb347', '#ff4d6a']; // verde neon, azul, amarelo, vermelho
+            pie.style.background = `conic-gradient(
+                ${cores[0]} 0% ${iosPct}%,
+                ${cores[1]} ${iosPct}% ${iosPct + androidPct}%,
+                ${cores[2]} ${iosPct + androidPct}% ${iosPct + androidPct + desktopPct}%,
+                ${cores[3]} ${iosPct + androidPct + desktopPct}% 100%
+            )`;
+        }
+
+        // --- Últimos 10 visitantes (cards) ---
+        const cardsContainer = document.getElementById('clienteVisitantesCards');
+        if (cardsContainer) {
+            const ultimos = visitantes.slice(0, 10);
+            cardsContainer.innerHTML = ultimos.map(v => {
+                const iniciais = v.nome.split(' ').map(p => p.charAt(0)).join('').substring(0, 2).toUpperCase();
+                const dispositivo = v.dispositivo || 'Desktop';
+                const icone = dispositivo.includes('iPhone') || dispositivo.includes('Android') ? '📱' : '💻';
+                return `
+                    <div class="visitante-card">
+                        <div style="width:40px;height:40px;border-radius:50%;background:rgba(77,168,218,0.2);display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--azul);">${escapeHtml(iniciais)}</div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(v.nome)}</div>
+                            <div style="font-size:12px;color:var(--text2);">${v.acesso} • ${icone}</div>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        // --- Tabela completa ---
+        const tbody = document.getElementById('clienteVisitantesTable');
+        if (tbody) {
+            tbody.innerHTML = visitantes.map(v =>
+                `<tr>
+                    <td><strong>${escapeHtml(v.nome)}</strong></td>
+                    <td>${escapeHtml(v.email)}</td>
+                    <td>${escapeHtml(v.whatsapp)}</td>
+                    <td>${v.acesso}</td>
+                    <td>${escapeHtml(v.dispositivo || 'Desktop')}</td>
+                </tr>`
+            ).join('');
+        }
+
+        // --- Atualizar nome do evento na sidebar ---
+        const sideName = document.getElementById('clienteSidebarNome');
+        if (sideName) sideName.textContent = evento.nome || 'Evento';
+    };
+
+    // --- 4. Funções para relatórios (PDF e Excel) ---
+    window.gerarRelatorioClientePDF = async function() {
+        if (!eventoClienteAtual) { alert('Nenhum evento carregado.'); return; }
+        // Chama a função original do cliente.js se existir, senão avisa
+        if (typeof gerarRelatorioCliente === 'function') {
+            await gerarRelatorioCliente();
+        } else {
+            alert('PDF – função não disponível. Use a função original gerarRelatorioCliente.');
+        }
+    };
+
+    window.gerarRelatorioClienteExcel = async function() {
+        if (!eventoClienteAtual) { alert('Nenhum evento carregado.'); return; }
+        let visitantes = [];
+        try { visitantes = await apiListarVisitantes(eventoClienteAtual.id); } catch (e) {}
+        const dados = visitantes.map(v => ({
+            Nome: v.nome,
+            Email: v.email,
+            WhatsApp: v.whatsapp,
+            Horário: v.acesso,
+            Dispositivo: v.dispositivo || 'Desktop'
+        }));
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(dados);
+        XLSX.utils.book_append_sheet(wb, ws, 'Visitantes');
+        XLSX.writeFile(wb, `visitantes_${eventoClienteAtual.nome}_${new Date().toISOString().slice(0,10)}.xlsx`);
+    };
+
+    // --- 5. Observer para recarregar dados quando o dashboard cliente for exibido ---
+    (function() {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.target.id === 'clienteDashboard' && mutation.target.style.display === 'block') {
+                    if (eventoClienteAtual) {
+                        abrirAreaClienteEvento(eventoClienteAtual);
                     }
-                });
+                }
             });
-            const dashboardEl = document.getElementById('clienteDashboard');
-            if (dashboardEl) {
-                observer.observe(dashboardEl, { attributes: true, attributeFilter: ['style'] });
-            }
-        })();
+        });
+        const dashboardEl = document.getElementById('clienteDashboard');
+        if (dashboardEl) {
+            observer.observe(dashboardEl, { attributes: true, attributeFilter: ['style'] });
+        }
+    })();
 
-        console.log('✅ Sistema atualizado com melhorias na área do cliente!');
-    </script>
+    console.log('✅ Área do cliente substituída completamente com todas as melhorias!');
+</script>
 </body>
 </html>
