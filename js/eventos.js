@@ -1,4 +1,4 @@
-// CRUD de Eventos (Supabase) – com ocultação de campos financeiros
+// CRUD de Eventos (Supabase) – com suporte a redirectUrl
 
 function preencherSelectsEventos() {
     const opcoes = EV.map(e => `<option value="${e.id}">${e.nome} - ${e.cliente} (${calcularStatusEvento(e)})</option>`).join('');
@@ -16,12 +16,10 @@ function abrirModalEvento() {
     const titulo = document.getElementById('eventoModalTitle');
     if (titulo) titulo.textContent = '📅 Novo Evento';
     limparFormularioEvento();
-    
     const financeiroFields = document.getElementById('financeiroFields');
     if (financeiroFields) {
         financeiroFields.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
     }
-    
     abrirModal('eventoModal');
 }
 
@@ -41,6 +39,7 @@ function editarEvento(id) {
     document.getElementById('eventoClienteSenha').value = evento.clienteSenha || '';
     document.getElementById('eventoPatrocinadores').value = evento.patrocinadores || '';
     document.getElementById('eventoObservacoes').value = evento.observacoes || '';
+    document.getElementById('eventoRedirectUrl').value = evento.redirectUrl || '';
     document.getElementById('eventoValorCobrado').value = evento.valorCobrado || 0;
     document.getElementById('eventoCustoOperacional').value = evento.custoOperacional || 0;
     document.getElementById('eventoValorPago').value = evento.valorPago || 0;
@@ -49,69 +48,23 @@ function editarEvento(id) {
     document.getElementById('eventoParcelas').value = evento.parcelas || 1;
     logoTemporario = evento.logoUrl;
     document.getElementById('logoPreview').innerHTML = evento.logoUrl ? `<img src="${evento.logoUrl}">` : '<span>📷 Upload</span>';
-
     const logos = evento.patrocinadoresLogos || [];
     patrocinadoresTemp = Array.isArray(logos)
         ? logos
             .map(item => (typeof item === 'string' && item.length > 10 && (item.startsWith('http') || item.startsWith('data:'))) ? item : null)
             .filter(url => url !== null)
         : [];
-
     renderizarPatrocinadores();
     esconderDicas();
-    
     const financeiroFields = document.getElementById('financeiroFields');
     if (financeiroFields) {
         financeiroFields.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
     }
-    
-    abrirModal('eventoModal');
-}
-
-function editarEvento(id) {
-    if (!usuarioLogado?.permissoes?.e) { toast('🔒 Sem permissão!'); return; }
-    eventoEmEdicao = id;
-    document.getElementById('eventoModalTitle').textContent = '✏️ Editar Evento';
-    const evento = EV.find(e => e.id === id);
-    if (!evento) return;
-    document.getElementById('eventoNome').value = evento.nome;
-    document.getElementById('eventoCliente').value = evento.cliente;
-    document.getElementById('eventoDataInicio').value = evento.dataInicio;
-    document.getElementById('eventoDataFim').value = evento.dataFim;
-    document.getElementById('eventoLocalInput').value = evento.local;
-    document.getElementById('eventoClienteUsuario').value = evento.clienteUsuario || '';
-    document.getElementById('eventoClienteSenha').value = evento.clienteSenha || '';
-    document.getElementById('eventoPatrocinadores').value = evento.patrocinadores || '';
-    document.getElementById('eventoObservacoes').value = evento.observacoes || '';
-    document.getElementById('eventoValorCobrado').value = evento.valorCobrado || 0;
-    document.getElementById('eventoCustoOperacional').value = evento.custoOperacional || 0;
-    document.getElementById('eventoValorPago').value = evento.valorPago || 0;
-    document.getElementById('eventoVencimento').value = evento.vencimento || '';
-    document.getElementById('eventoFormaPagamento').value = evento.formaPagamento || '';
-    document.getElementById('eventoParcelas').value = evento.parcelas || 1;
-    logoTemporario = evento.logoUrl;
-    document.getElementById('logoPreview').innerHTML = evento.logoUrl ? `<img src="${evento.logoUrl}">` : '<span>📷 Upload</span>';
-
-    const logos = evento.patrocinadoresLogos || [];
-    patrocinadoresTemp = Array.isArray(logos)
-        ? logos
-            .map(item => (typeof item === 'string' && item.length > 10 && (item.startsWith('http') || item.startsWith('data:'))) ? item : null)
-            .filter(url => url !== null)
-        : [];
-
-    renderizarPatrocinadores();
-    esconderDicas();
-    
-    const financeiroFields = document.getElementById('financeiroFields');
-    if (financeiroFields) {
-        financeiroFields.style.display = (usuarioLogado?.permissoes?.f) ? 'block' : 'none';
-    }
-    
     abrirModal('eventoModal');
 }
 
 function limparFormularioEvento() {
-    ['eventoNome','eventoCliente','eventoDataInicio','eventoDataFim','eventoLocalInput','eventoClienteUsuario','eventoClienteSenha','eventoPatrocinadores','eventoObservacoes'].forEach(id => document.getElementById(id).value = '');
+    ['eventoNome','eventoCliente','eventoDataInicio','eventoDataFim','eventoLocalInput','eventoClienteUsuario','eventoClienteSenha','eventoPatrocinadores','eventoObservacoes','eventoRedirectUrl'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('eventoValorCobrado').value = '0';
     document.getElementById('eventoCustoOperacional').value = '0';
     document.getElementById('eventoValorPago').value = '0';
@@ -213,6 +166,7 @@ async function salvarEvento() {
         patrocinadoresLogos: logosLimpos,
         logoUrl: logoTemporario || null,
         observacoes: document.getElementById('eventoObservacoes').value.trim(),
+        redirectUrl: document.getElementById('eventoRedirectUrl').value.trim(),
         valorCobrado: parseFloat(document.getElementById('eventoValorCobrado').value) || 0,
         custoOperacional: parseFloat(document.getElementById('eventoCustoOperacional').value) || 0,
         valorPago: parseFloat(document.getElementById('eventoValorPago').value) || 0,
@@ -238,7 +192,6 @@ async function salvarEvento() {
                 abrirModal('qrModal');
             }
         }
-
         fecharModal('eventoModal');
         EV = await apiListarEventos();
         preencherSelectsEventos();
