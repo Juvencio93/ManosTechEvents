@@ -245,6 +245,7 @@ const countries = [
     { code: '263', label: '🇿🇼 +263', name: '🇿🇼 Zimbabwe+263' },
     { code: '358', label: '🇦🇽 +358', name: '🇦🇽 Åland Islands+358' },
     { code: 'outro', label: '🌎 Outro', name: '🌎 Outro país' }
+
 ];
 
 let selectedCountryModal = countries.find(c => c.code === '55');
@@ -315,7 +316,7 @@ function abrirPortalCat(id) {
 
     eventoSelecionadoId = id;
 
-    // Logo do evento
+        // Logo do evento
     const logoGrande = document.getElementById('portalLogoGrande');
     const urlLogo = evento.logoUrl;
     console.log('🔍 Logo recebida no portal:', urlLogo, '| Tipo:', typeof urlLogo);
@@ -400,17 +401,11 @@ function formatWhatsApp(input) {
     input.value = valor;
 }
 
-function detectarDispositivoAdmin() {
-    const ua = navigator.userAgent;
-    if (/iPhone|iPad|iPod/.test(ua)) return 'iOS';
-    if (/Android/.test(ua)) return 'Android';
-    if (/Mobile/.test(ua)) return 'Mobile';
-    return 'Desktop';
-}
-
 async function simularConexao() {
     const erroWhatsapp = document.getElementById('erroWhatsapp');
     if (erroWhatsapp) erroWhatsapp.style.display = 'none';
+    if (eventoSelecionadoId === evento.id) selecionarEvento();
+if (eventoClienteAtual?.id === evento.id) await abrirAreaClienteEvento(evento);
 
     const nome = document.getElementById('portalNome')?.value.trim();
     const email = document.getElementById('portalEmail')?.value.trim();
@@ -447,7 +442,6 @@ async function simularConexao() {
         return;
     }
 
-    // Obtém o evento a partir do ID selecionado ou do cliente atual
     const evento = EV.find(ev => ev.id === eventoSelecionadoId) || eventoClienteAtual;
     if (!evento) {
         alert('Evento não encontrado.');
@@ -463,30 +457,34 @@ async function simularConexao() {
         dispositivo: detectarDispositivoAdmin(),
         ip: '0.0.0.0'
     };
+    function detectarDispositivoAdmin() {
+    const ua = navigator.userAgent;
+    if (/iPhone|iPad|iPod/.test(ua)) return 'iOS';
+    if (/Android/.test(ua)) return 'Android';
+    if (/Mobile/.test(ua)) return 'Mobile';
+    return 'Desktop';
+}
 
     try {
         const resultado = await apiRegistrarVisitante(evento.token, visitante);
         // Após registrar o visitante, ativa o MikroTik
-        try {
-            await mikrotikLogin(evento.token);
-        } catch (e) {
-            console.warn('Falha ao ativar MikroTik:', e);
-        }
-
+try {
+    await mikrotikLogin(evento.token);
+} catch (e) {
+    console.warn('Falha ao ativar MikroTik:', e);
+}
         // Atualiza o totalVisitantes no array EV
         if (resultado && resultado.totalVisitantes !== null) {
-            const ev = EV.find(e => e.id === evento.id);
+            const ev = EV.find(e => e.id === eventoSelecionadoId);
             if (ev) ev.totalVisitantes = resultado.totalVisitantes;
-            if (eventoClienteAtual && eventoClienteAtual.id === evento.id) {
+            if (eventoClienteAtual && eventoClienteAtual.id === eventoSelecionadoId) {
                 eventoClienteAtual.totalVisitantes = resultado.totalVisitantes;
             }
         }
 
-        // Atualiza a interface (se necessário)
         if (eventoSelecionadoId === evento.id) selecionarEvento();
-        if (eventoClienteAtual?.id === evento.id) await abrirAreaClienteEvento(evento);
+        if (eventoClienteAtual?.id === evento.id) abrirAreaClienteEvento(evento);
         renderizarEventos();
-
         fecharModal('portalModal');
         toast('✅ Conectado!');
     } catch (e) {
