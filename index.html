@@ -9,9 +9,7 @@
         #loginScreen,
         #loginClienteScreen,
         #dashboard,
-        #clienteDashboard {
-            display: none;
-        }
+        #clienteDashboard { display: none; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -49,6 +47,8 @@
 
     <div id="toast" class="toast"></div>
 
+    <!-- MODAIS (confirm, funcionario, qr, portal) iguais aos anteriores -->
+
     <!-- MODAL DE CONFIRMAÇÃO -->
     <div class="modal confirm-modal" id="confirmModal">
         <div class="modal-content">
@@ -61,7 +61,7 @@
         </div>
     </div>
 
-    <!-- MODAL EVENTO (completo, sem duplicação) -->
+    <!-- MODAL EVENTO (com campo redirect) -->
     <div class="modal" id="eventoModal"><div class="modal-content">
         <h2 id="eventoModalTitle">📅 Novo Evento</h2>
         <h4>📋 Dados</h4>
@@ -74,6 +74,8 @@
         <div class="row"><div class="col"><div class="input-group"><label>Logo</label><div class="logo-preview" id="logoPreview" onclick="document.getElementById('logoUpload').click()"><span>📷 Upload</span></div><input type="file" id="logoUpload" accept="image/*" style="display:none;" onchange="previewLogoEvento(event)"></div></div><div class="col"><div class="input-group"><label>Patrocinadores</label><textarea id="eventoPatrocinadores" rows="2"></textarea></div></div></div>
         <div class="row"><div class="col-2"><div class="input-group"><label>Logos Patrocinadores</label><div class="patrocinadores-upload" id="patrocinadoresContainer"><div class="patrocinador-add" onclick="document.getElementById('patrocinadorUpload').click()">+</div></div><input type="file" id="patrocinadorUpload" accept="image/*" style="display:none;" onchange="adicionarPatrocinador(event)" multiple></div></div></div>
         <div class="row"><div class="col-2"><div class="input-group"><label>Observações</label><textarea id="eventoObservacoes" rows="2"></textarea></div></div></div>
+        <!-- NOVO CAMPO: LINK DE REDIRECIONAMENTO -->
+        <div class="row"><div class="col-2"><div class="input-group"><label>🔗 Link de Redirecionamento</label><input type="text" id="eventoRedirectUrl" placeholder="https://... (opcional)"></div></div></div>
         <div id="financeiroFields">
             <h4 style="color:var(--yellow);">💰 Financeiro</h4>
             <div class="row"><div class="col"><div class="input-group"><label>Valor Total</label><input type="number" id="eventoValorCobrado" step="0.01" value="0"></div></div><div class="col"><div class="input-group"><label>Custo</label><input type="number" id="eventoCustoOperacional" step="0.01" value="0"></div></div></div>
@@ -83,7 +85,7 @@
         <div style="display:flex;gap:12px;margin-top:20px;"><button class="btn btn-primary" onclick="salvarEvento()">💾 Salvar</button><button class="btn btn-ghost" onclick="fecharModal('eventoModal')">Cancelar</button></div>
     </div></div>
 
-    <!-- MODAL FUNCIONÁRIO -->
+    <!-- MODAL FUNCIONÁRIO (sem alterações) -->
     <div class="modal" id="funcionarioModal"><div class="modal-content" style="max-width:550px;">
         <h2 id="funcionarioModalTitle">👷 Novo Funcionário</h2>
         <div class="row"><div class="col"><div class="input-group"><label>Nome *</label><input type="text" id="funcNome"></div></div></div>
@@ -159,7 +161,7 @@
         </div>
     </div>
 
-    <!-- ÁREA DO CLIENTE -->
+    <!-- ÁREA DO CLIENTE (sem alterações) -->
     <div class="dashboard" id="clienteDashboard">
         <div style="margin-left:0;padding:34px;min-height:100vh;background:var(--bg);">
             <div class="cliente-header-card" style="padding:22px 30px;display:flex;align-items:center;gap:16px;margin-bottom:26px;border-radius:var(--r);">
@@ -176,13 +178,11 @@
             </div>
             <div class="card"><h3>🔥 Mapa de Calor - Acessos por Hora</h3><div class="heatmap" id="clienteHeatmapContainer"></div></div>
             <div class="card"><h3>📋 Visitantes</h3><table><thead><tr><th>Nome</th><th>E-mail</th><th>WhatsApp</th><th>Horário</th></tr></thead><tbody id="clienteVisitantesTable"></tbody></table></div>
-
             <script>
                 (function() {
                     const observer = new MutationObserver(function(mutations) {
                         mutations.forEach(function(mutation) {
                             if (mutation.target.id === 'clienteDashboard' && mutation.target.style.display === 'block') {
-                                console.log('👀 Área do cliente exibida. Disparando atualização...');
                                 if (typeof eventoClienteAtual !== 'undefined' && eventoClienteAtual) {
                                     abrirAreaClienteEvento(eventoClienteAtual);
                                 }
@@ -198,6 +198,7 @@
         </div>
     </div>
 
+    <!-- Scripts JS -->
     <script src="js/api.js?v=2"></script>
     <script src="js/config.js?v=2"></script>
     <script src="js/utils.js?v=2"></script>
