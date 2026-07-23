@@ -1,169 +1,295 @@
 // js/core/api.js
+const SUPABASE_URL = 'https://uojdbrjxeapzfrulcipr.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_ZGrmIWRubt_0MgPi_a4mgQ_RNYdNflM';
 
-const API = (() => {
-  // Configuração interna
-  const CONFIG = {
-    baseURL: window.location.origin + '/api', // ou a URL do seu Supabase
-    storageType: 'supabase', // 'supabase' | 'local' | 'direct'
-    supabaseUrl: 'https://seusupabase.supabase.co',
-    supabaseKey: 'SUA_CHAVE_ANON',
-  };
+const supabaseClient = window.__SUPABASE__ || window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+window.__SUPABASE__ = supabaseClient;
 
-  // Cliente Supabase (se existir)
-  let supabaseClient = null;
-  if (typeof supabase !== 'undefined' && CONFIG.storageType === 'supabase') {
-    supabaseClient = supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+// ------------------- HELPERS (iguais aos seus) -------------------
+function toSnakeCase(obj) {
+  const novo = {};
+  for (const chave in obj) {
+    if (obj[chave] === undefined) continue;
+    let snake = chave.replace(/[A-Z]/g, letra => '_' + letra.toLowerCase());
+    let valor = obj[chave];
+    if (Array.isArray(valor)) valor = JSON.stringify(valor);
+    novo[snake] = valor;
   }
+  return novo;
+}
 
-  // --- MÉTODOS PÚBLICOS ---
+function toCamelCase(obj) {
+  const novo = {};
+  for (const chave in obj) {
+    const camel = chave.replace(/_([a-z])/g, (_, letra) => letra.toUpperCase());
+    novo[camel] = obj[chave];
+  }
+  return novo;
+}
 
-  /**
-   * Login do usuário
-   * @param {string} email 
-   * @param {string} password 
-   * @returns {Promise<object>}
-   */
+// ------------------- API PRINCIPAL -------------------
+const API = (() => {
+
+  // ---------- AUTENTICAÇÃO ----------
   async function login(email, password) {
     try {
-      if (CONFIG.storageType === 'supabase' && supabaseClient) {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        return { success: true, user: data.user, session: data.session };
-      } else {
-        // Fallback para chamada direta ao seu PHP (api/login.php)
-        const response = await fetch(`${CONFIG.baseURL}/login.php`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.message || 'Erro no login');
-        return { success: true, user: data.user, token: data.token };
-      }
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) throw new Error(error.message);
+      
+      const { data: perfil, error: perfilError } = await supabaseClient
+        .from('perfis')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+      if (perfilError) throw new Error('Perfil não encontrado');
+
+      // Lógica especial do Admin que você tinha
+      try {
+        const { data: configData } = await supabaseClient.from('config').select('admin_nome').eq('id', 1).single();
+        if (configData?.admin_nome && perfil.nivel === 'Administrador' && perfil.nome !== configData.admin_nome) {
+          await supabaseClient.from('perfis').update({ nome: configData.admin_nome }).eq('id', data.user.id);
+          perfil.nome = configData.admin_nome;
+        }
+      } catch (e) {}
+
+      return {
+        success: true,
+        user: { id: data.user.id, email: data.user.email },
+        perfil: { nome: perfil.nome, nivel: perfil.nivel, permissoes: perfil.permissoes || {} },
+        token: data.session?.access_token || null
+      };
     } catch (error) {
-      console.error('[API] Erro no login:', error);
       return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Logout
-   */
   async function logout() {
     try {
-      if (CONFIG.storageType === 'supabase' && supabaseClient) {
-        await supabaseClient.auth.signOut();
-      }
-      // Sempre limpa o localStorage também
-      localStorage.removeItem('manos_user');
-      localStorage.removeItem('manos_token');
+      await supabaseClient.auth.signOut();
       return { success: true };
     } catch (error) {
-      console.error('[API] Erro no logout:', error);
       return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Buscar eventos
-   */
-  async function getEventos(filtros = {}) {
+  async function alterarSenha(novaSenha) {
     try {
-      if (CONFIG.storageType === 'supabase' && supabaseClient) {
-        let query = supabaseClient.from('eventos').select('*');
-        if (filtros.status) query = query.eq('status', filtros.status);
-        if (filtros.data_inicio) query = query.gte('data', filtros.data_inicio);
-        const { data, error } = await query;
-        if (error) throw error;
-        return { success: true, data };
-      } else {
-        // Fallback: busca do seu backend PHP
-        const params = new URLSearchParams(filtros).toString();
-        const response = await fetch(`${CONFIG.baseURL}/eventos.php?${params}`);
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.message);
-        return { success: true, data };
-      }
+      const { error } = await supabaseClient.auth.updateUser({ password: novaSenha });
+      if (error) throw error;
+      return { success: true };
     } catch (error) {
-      console.error('[API] Erro ao buscar eventos:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // ---------- CONFIGURAÇÕES ----------
+  async function getConfig() {
+    try {
+      const { data, error } = await supabaseClient.from('config').select('*').eq('id', 1).single();
+      if (error) throw error;
+      return {
+        success: true,
+        data: {
+          empresaNome: data.empresa_nome,
+          email: data.email,
+          telefoneSuporte: data.telefone_suporte,
+          adminNome: data.admin_nome,
+          adminEmail: data.admin_email,
+          logoUrl: data.logo_url
+        }
+      };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async function salvarConfig(cfg) {
+    try {
+      const { error } = await supabaseClient.from('config').update({
+        empresa_nome: cfg.empresaNome,
+        email: cfg.email,
+        telefone_suporte: cfg.telefoneSuporte,
+        admin_nome: cfg.adminNome,
+        admin_email: cfg.adminEmail,
+        logo_url: cfg.logoUrl
+      }).eq('id', 1);
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  // ---------- EVENTOS ----------
+  async function getEventos() {
+    try {
+      const { data, error } = await supabaseClient.from('eventos').select('*').order('id', { ascending: false });
+      if (error) throw error;
+      const eventos = data.map(e => {
+        const ev = toCamelCase(e);
+        if (typeof ev.patrocinadoresLogos === 'string') {
+          try { ev.patrocinadoresLogos = JSON.parse(ev.patrocinadoresLogos); } catch (_) { ev.patrocinadoresLogos = []; }
+        }
+        ev.visitantes = [];
+        return ev;
+      });
+      return { success: true, data: eventos };
+    } catch (error) {
       return { success: false, error: error.message, data: [] };
     }
   }
 
-  /**
-   * Salvar evento (criar ou atualizar)
-   */
   async function salvarEvento(evento) {
     try {
-      const payload = {
-        ...evento,
-        data: DATE_UTILS.toISO(evento.data) // Força ISO (vide item 2)
-      };
-
-      if (CONFIG.storageType === 'supabase' && supabaseClient) {
-        let result;
-        if (evento.id) {
-          result = await supabaseClient.from('eventos').update(payload).eq('id', evento.id);
-        } else {
-          result = await supabaseClient.from('eventos').insert(payload);
-        }
-        if (result.error) throw result.error;
-        return { success: true, data: result.data };
-      } else {
-        const response = await fetch(`${CONFIG.baseURL}/eventos.php`, {
-          method: evento.id ? 'PUT' : 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.message);
-        return { success: true, data };
+      let dados = { ...evento };
+      if (!dados.id) {
+        dados.token = 'tok_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
       }
+      const dadosSnake = toSnakeCase(dados);
+      
+      let result;
+      if (dados.id) {
+        result = await supabaseClient.from('eventos').update(dadosSnake).eq('id', dados.id);
+      } else {
+        result = await supabaseClient.from('eventos').insert([dadosSnake]);
+      }
+      if (result.error) throw result.error;
+      return { success: true };
     } catch (error) {
-      console.error('[API] Erro ao salvar evento:', error);
       return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Registrar visitante
-   */
-  async function registrarVisitante(visitante) {
+  async function excluirEvento(id) {
     try {
-      const payload = {
-        ...visitante,
-        data_registro: DATE_UTILS.nowISO() // Força ISO
-      };
-
-      if (CONFIG.storageType === 'supabase' && supabaseClient) {
-        const { data, error } = await supabaseClient.from('visitantes').insert(payload);
-        if (error) throw error;
-        return { success: true, data };
-      } else {
-        const response = await fetch(`${CONFIG.baseURL}/visitantes.php`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.message);
-        return { success: true, data };
-      }
+      const { error } = await supabaseClient.from('eventos').delete().eq('id', id);
+      if (error) throw error;
+      return { success: true };
     } catch (error) {
-      console.error('[API] Erro ao registrar visitante:', error);
       return { success: false, error: error.message };
     }
   }
 
-  // --- EXPORTAÇÃO ---
+  // ---------- VISITANTES ----------
+  async function registrarVisitante(token, dados) {
+    try {
+      const { data: evento, error: errEvento } = await supabaseClient.from('eventos').select('id').eq('token', token).single();
+      if (errEvento || !evento) throw new Error('Evento não encontrado');
+      
+      dados.evento_id = parseInt(evento.id, 10);
+      const { error } = await supabaseClient.from('visitantes').insert([toSnakeCase(dados)]);
+      if (error) throw error;
+
+      // Atualiza total de visitantes
+      try {
+        const { count } = await supabaseClient.from('visitantes').select('*', { count: 'exact', head: true }).eq('evento_id', evento.id);
+        if (count !== null) {
+          await supabaseClient.from('eventos').update({ totalVisitantes: count }).eq('id', evento.id);
+        }
+      } catch (e) {}
+      
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async function getVisitantes(eventoId) {
+    try {
+      const { data, error } = await supabaseClient.from('visitantes').select('*').eq('evento_id', eventoId).order('id', { ascending: false });
+      if (error) throw error;
+      return { success: true, data: data.map(toCamelCase) };
+    } catch (error) {
+      return { success: false, error: error.message, data: [] };
+    }
+  }
+
+  // ---------- FUNCIONÁRIOS ----------
+  async function getFuncionarios() {
+    try {
+      const { data, error } = await supabaseClient.from('funcionarios').select('*').order('id');
+      if (error) throw error;
+      const funcs = data.map(f => {
+        const func = toCamelCase(f);
+        if (typeof func.permissoes === 'string') {
+          try { func.permissoes = JSON.parse(func.permissoes); } catch (e) { func.permissoes = {}; }
+        }
+        return func;
+      });
+      return { success: true, data: funcs };
+    } catch (error) {
+      return { success: false, error: error.message, data: [] };
+    }
+  }
+
+  async function salvarFuncionario(func) {
+    try {
+      const dados = { ...func };
+      if (typeof dados.permissoes === 'object') dados.permissoes = JSON.stringify(dados.permissoes);
+      const dadosSnake = toSnakeCase(dados);
+      
+      let result;
+      if (dados.id) {
+        result = await supabaseClient.from('funcionarios').update(dadosSnake).eq('id', dados.id);
+      } else {
+        result = await supabaseClient.from('funcionarios').insert([dadosSnake]);
+      }
+      if (result.error) throw result.error;
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async function excluirFuncionario(id) {
+    try {
+      const { error } = await supabaseClient.from('funcionarios').delete().eq('id', id);
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  // ---------- MIKROTIK ----------
+  async function mikrotikLogin(token) {
+    try {
+      const { error } = await supabaseClient.functions.invoke('mikrotik-login', { body: { token } });
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async function mikrotikAtivos() {
+    try {
+      const { data, error } = await supabaseClient.functions.invoke('mikrotik-ativos');
+      if (error) throw error;
+      return { success: true, total: data.total };
+    } catch (error) {
+      return { success: false, error: error.message, total: 0 };
+    }
+  }
+
+  // ---------- EXPORTA TUDO ----------
   return {
     login,
     logout,
+    alterarSenha,
+    getConfig,
+    salvarConfig,
     getEventos,
     salvarEvento,
+    excluirEvento,
     registrarVisitante,
+    getVisitantes,
+    getFuncionarios,
+    salvarFuncionario,
+    excluirFuncionario,
+    mikrotikLogin,
+    mikrotikAtivos
   };
 })();
 
-// Expor globalmente (já que o sistema é vanilla)
 window.API = API;
