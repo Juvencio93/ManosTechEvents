@@ -11,14 +11,16 @@ async function abrirAreaClienteEvento(evento) {
     try {
         visitantes = await apiListarVisitantes(evento.id);
     } catch (e) {
-        console.warn('Usando dados locais para o relatório');
+        console.warn('Usando dados locais para visitantes');
         visitantes = evento.visitantes || [];
     }
 
     const total = visitantes.length;
     document.getElementById('clienteTotalVisitantes').textContent = total;
-    document.getElementById('clienteLiveConnected').textContent = total > 0 ? Math.max(1, Math.floor(total * 0.3)) : 0;
+    const conectados = total > 0 ? Math.max(1, Math.floor(total * 0.3)) : 0;
+    document.getElementById('clienteLiveConnected').textContent = conectados;
 
+    // Mapa de calor (garantido mesmo que vazio)
     const horas = {};
     for (let h = 8; h <= 20; h++) horas[h] = 0;
     visitantes.forEach(v => {
@@ -26,21 +28,30 @@ async function abrirAreaClienteEvento(evento) {
         if (horas[h] !== undefined) horas[h]++;
     });
     const max = Math.max(...Object.values(horas), 1);
-    document.getElementById('clienteHeatmapContainer').innerHTML = Object.entries(horas).map(([h, c]) =>
-        `<div class="heatmap-bar" style="height:${Math.max((c / max) * 140, 4)}px;" title="${h}h: ${c}"></div>`
-    ).join('');
+    const heatmapEl = document.getElementById('clienteHeatmapContainer');
+    if (heatmapEl) {
+        heatmapEl.innerHTML = Object.entries(horas).map(([h, c]) =>
+            `<div class="heatmap-bar" style="height:${Math.max((c / max) * 140, 4)}px;" title="${h}h: ${c}"></div>`
+        ).join('');
+    }
 
-    document.getElementById('clienteVisitantesTable').innerHTML = visitantes.slice(0, 50).map(v =>
-        `<tr><td><strong>${escapeHtml(v.nome)}</strong></td><td>${escapeHtml(v.email)}</td><td>${escapeHtml(v.whatsapp)}</td><td>${v.acesso}</td></tr>`
-    ).join('');
+    // Tabela de visitantes
+    const tbody = document.getElementById('clienteVisitantesTable');
+    if (tbody) {
+        tbody.innerHTML = visitantes.slice(0, 50).map(v =>
+            `<tr><td><strong>${escapeHtml(v.nome)}</strong></td><td>${escapeHtml(v.email)}</td><td>${escapeHtml(v.whatsapp)}</td><td>${v.acesso}</td></tr>`
+        ).join('');
+    }
 }
 
+// Atualiza área do cliente se já estiver visível
 async function atualizarAreaClienteSeAtiva() {
     if (eventoClienteAtual) {
         await abrirAreaClienteEvento(eventoClienteAtual);
     }
 }
 
+// Configuração
 function previewLogoConfig(event) {
     const file = event.target.files[0];
     if (file) {
@@ -53,7 +64,6 @@ function previewLogoConfig(event) {
     }
 }
 
-// ===== FUNÇÃO CORRIGIDA =====
 async function salvarConfiguracao() {
     CFG.empresaNome = document.getElementById('configEmpresaNome').value.trim() || 'Manos Tech';
     CFG.email = document.getElementById('configEmail').value.trim();
@@ -74,9 +84,7 @@ async function salvarConfiguracao() {
                 .from('perfis')
                 .update({ nome: CFG.adminNome })
                 .eq('id', sessao.id);
-            if (perfilError) {
-                console.warn('Erro ao atualizar nome no perfil:', perfilError);
-            }
+            if (perfilError) console.warn('Erro ao atualizar nome no perfil:', perfilError);
         }
 
         if (usuarioLogado && usuarioLogado.nivel === 'Administrador') {
@@ -86,16 +94,13 @@ async function salvarConfiguracao() {
         }
 
         if (novaSenha) {
-            if (novaSenha.length < 4) {
-                toast('⚠️ Senha deve ter no mínimo 4 caracteres');
-                return;
-            }
+            if (novaSenha.length < 4) { toast('⚠️ Senha deve ter no mínimo 4 caracteres'); return; }
             try {
                 await apiAlterarSenha(novaSenha);
                 document.getElementById('configAdminSenha').value = '';
                 toast('🔒 Senha alterada. Você será desconectado para usar a nova senha.');
                 setTimeout(() => sairDoSistema(), 2000);
-                return; // não redireciona porque o usuário será deslogado
+                return;
             } catch (e) {
                 toast('❌ Erro ao alterar senha: ' + e.message);
                 return;
@@ -104,25 +109,17 @@ async function salvarConfiguracao() {
 
         atualizarInterfaceUsuario();
         toast('✅ Configurações salvas!');
-        showPage('inicio'); // redireciona para o menu principal
+        showPage('inicio');
     } catch (e) {
         toast('❌ Erro ao salvar configurações: ' + e.message);
     }
 }
 
 async function gerarRelatorioCliente() {
-    if (!eventoClienteAtual) {
-        alert('Nenhum evento carregado.');
-        return;
-    }
+    if (!eventoClienteAtual) { alert('Nenhum evento carregado.'); return; }
     let visitantes = [];
-    try {
-        visitantes = await apiListarVisitantes(eventoClienteAtual.id);
-    } catch (e) {
-        visitantes = eventoClienteAtual.visitantes || [];
-    }
-    const eventoCompleto = { ...eventoClienteAtual, visitantes, totalVisitantes: visitantes.length };
-    gerarPDFEvento(eventoCompleto);
+    try { visitantes = await apiListarVisitantes(eventoClienteAtual.id); } catch (e) {}
+    gerarPDFEvento({ ...eventoClienteAtual, visitantes, totalVisitantes: visitantes.length });
 }
 
 function cancelarConfiguracao() {
