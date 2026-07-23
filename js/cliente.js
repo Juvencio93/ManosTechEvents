@@ -1,4 +1,4 @@
-// Área do Cliente – reformulada
+// Área do Cliente – reformulada com menu lateral
 
 let clienteVisitantesCache = [];
 
@@ -60,7 +60,25 @@ async function abrirAreaClienteEvento(evento) {
         pie.style.background = `conic-gradient(var(--azul) 0% ${iosPct}%, var(--green) ${iosPct}% ${iosPct + androidPct}%, var(--yellow) ${iosPct + androidPct}% 100%)`;
     }
 
-    // Tabela de visitantes (página Visitantes)
+    // Cards dos últimos 10 visitantes
+    const cardsContainer = document.getElementById('clienteUltimosCards');
+    if (cardsContainer) {
+        cardsContainer.innerHTML = clienteVisitantesCache.slice(0, 10).map(v => {
+            const iniciais = v.nome.split(' ').map(p => p.charAt(0)).join('').substring(0, 2).toUpperCase();
+            const dispositivo = v.dispositivo || 'Desktop';
+            const icone = dispositivo.includes('iPhone') || dispositivo.includes('Android') ? '📱' : '💻';
+            return `
+                <div style="background:var(--glass); backdrop-filter:blur(10px); border:1px solid var(--glass-border); border-radius:var(--r); padding:16px; display:flex; align-items:center; gap:12px;">
+                    <div style="width:40px;height:40px;border-radius:50%;background:rgba(77,168,218,0.2);display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--azul);">${escapeHtml(iniciais)}</div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:600;font-size:14px;">${escapeHtml(v.nome)}</div>
+                        <div style="font-size:12px;color:var(--text2);">${v.acesso} • ${icone} ${escapeHtml(dispositivo)}</div>
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
+    // Tabela completa
     const tbody = document.getElementById('clienteVisitantesTable');
     if (tbody) {
         tbody.innerHTML = clienteVisitantesCache.map(v =>
@@ -93,20 +111,14 @@ function showClientePage(nome) {
 function animarContador(elementId, valorFinal) {
     const el = document.getElementById(elementId);
     if (!el) return;
-    const inicio = 0;
     const duracao = 1000;
     const startTime = performance.now();
-
     function update(currentTime) {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duracao, 1);
-        const atual = Math.floor(progress * valorFinal);
-        el.textContent = atual;
-        if (progress < 1) {
-            requestAnimationFrame(update);
-        } else {
-            el.textContent = valorFinal;
-        }
+        el.textContent = Math.floor(progress * valorFinal);
+        if (progress < 1) requestAnimationFrame(update);
+        else el.textContent = valorFinal;
     }
     requestAnimationFrame(update);
 }
@@ -137,12 +149,12 @@ function gerarRelatorioClienteExcel() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `visitantes_${eventoClienteAtual.nome.replace(/\s+/g, '_')}.csv`;
+    a.download = `visitantes_${eventoClienteAtual.nome.replace(/\s+/g, '_')}.xls`;
     a.click();
     URL.revokeObjectURL(url);
 }
 
-// Mantida a função antiga para compatibilidade com botão do admin
+// Mantida para compatibilidade com botão antigo
 async function gerarRelatorioCliente() {
     gerarRelatorioClientePDF();
 }
