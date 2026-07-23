@@ -1,135 +1,122 @@
-async function fazerLogin() {
-    const email = document.getElementById('loginEmail').value.trim();
-    const senha = document.getElementById('loginPassword').value.trim();
-
-    if (!FN || FN.length === 0) {
-        try { if (typeof carregarFuncionarios === 'function') await carregarFuncionarios(); } catch (e) {}
-    }
-    const func = FN.find(f => f.email === email && f.senha === senha);
-    if (func) {
-        usuarioLogado = func;
-        EV = await apiListarEventos();
-        entrarSistema();
-        return;
-    }
-    try {
-        const user = await apiLogin(email, senha);
-        usuarioLogado = user;
-        EV = await apiListarEventos();
-        entrarSistema();
-    } catch (e) { alert('❌ ' + e.message); }
-}
-
-function entrarSistema() {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-    document.getElementById('menuToggle').style.display = 'flex';
-    atualizarInterfaceUsuario();
-    aplicarPermissoes();
-    showPage('inicio');
-}
-
-async function sairDoSistema() {
-    try { await apiLogout(); } catch (e) {}
-    sessao = null;
-    document.getElementById('dashboard').style.display = 'none';
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('menuToggle').style.display = 'none';
-    closeMenu();
-    usuarioLogado = null;
-    eventoSelecionadoId = null;
-}
-
-function confirmarSaidaSistema() {
-    confirmarAcao('Deseja realmente sair do sistema?', sairDoSistema);
-}
-
-function abrirAreaCliente() {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('loginClienteScreen').style.display = 'flex';
-}
-
-function voltarLoginAdmin() {
-    document.getElementById('loginClienteScreen').style.display = 'none';
-    document.getElementById('loginScreen').style.display = 'flex';
-}
+// ============================================================
+// LOGIN DO CLIENTE – AGORA USANDO SUPABASE (sem localStorage)
+// ============================================================
 
 async function fazerLoginCliente() {
     const usuario = document.getElementById('clienteUsuario').value.trim();
     const senha = document.getElementById('clienteSenha').value.trim();
+
     if (!EV || EV.length === 0) {
-        try { EV = await apiListarEventos(); } catch (e) { alert('❌ Erro ao conectar.'); return; }
+        try {
+            EV = await apiListarEventos();
+        } catch (e) {
+            alert('❌ Erro ao conectar.');
+            return;
+        }
     }
+
+    // Busca o evento com as credenciais fornecidas
     const evento = EV.find(ev => ev.clienteUsuario === usuario && ev.clienteSenha === senha);
-    if (evento) {
-        localStorage.setItem('clienteSession', JSON.stringify({ eventoId: evento.id }));
+    if (!evento) {
+        alert('❌ Usuário ou senha inválidos!');
+        return;
+    }
+
+    // --- AGORA USAMOS A AUTENTICAÇÃO DO SUPABASE ---
+    // Construímos um email único para o cliente (baseado no ID do evento)
+    const emailCliente = `cliente_${evento.id}@eventos.local`;
+    try {
+        // Tenta logar com as credenciais (o Supabase já deve ter esse usuário criado)
+        const result = await apiLogin(emailCliente, senha);
+        // Se chegou aqui, login bem-sucedido
+        eventoClienteAtual = evento; // guarda o evento na memória
+
+        // Fecha a tela de login e abre o dashboard do cliente
         document.getElementById('loginClienteScreen').style.display = 'none';
         document.getElementById('clienteDashboard').style.display = 'block';
         abrirAreaClienteEvento(evento);
-    } else {
-        alert('❌ Usuário ou senha inválidos!');
+
+        // NÃO USAMOS localStorage – a sessão fica no Supabase (cookie/token)
+
+    } catch (error) {
+        // Se o usuário não existir no Supabase, podemos criá-lo agora
+        if (error.message.includes('Invalid login credentials')) {
+            // Cria o usuário no Supabase (primeiro acesso)
+            try {
+                await supabaseClient.auth.signUp({
+                    email: emailCliente,
+                    password: senha,
+                });
+                // Após criar, faz login novamente
+                await apiLogin(emailCliente, senha);
+                eventoClienteAtual = evento;
+                document.getElementById('loginClienteScreen').style.display = 'none';
+                document.getElementById('clienteDashboard').style.display = 'block';
+                abrirAreaClienteEvento(evento);
+            } catch (e) {
+                alert('❌ Erro ao criar conta do cliente: ' + e.message);
+            }
+        } else {
+            alert('❌ Erro no login: ' + error.message);
+        }
     }
 }
 
+// ============================================================
+// SAÍDA DO CLIENTE
+// ============================================================
+
 function confirmarSaidaCliente() {
-    confirmarAcao('Deseja realmente sair?', () => {
-        localStorage.removeItem('clienteSession');
+    confirmarAcao('Deseja realmente sair?', async () => {
+        // Faz logout no Supabase
+        try {
+            await apiLogout();
+        } catch (e) {
+            console.warn('Erro ao deslogar:', e);
+        }
+        // Limpa variáveis locais
+        eventoClienteAtual = null;
+        // Fecha o dashboard e mostra a tela de login do cliente
         document.getElementById('clienteDashboard').style.display = 'none';
         document.getElementById('loginClienteScreen').style.display = 'flex';
-        eventoClienteAtual = null;
     });
 }
 
-function atualizarInterfaceUsuario() {
-    const sidebarEmpresa = document.getElementById('sidebarEmpresaNome');
-    if (sidebarEmpresa) sidebarEmpresa.textContent = CFG.empresaNome;
-    const loginEmpresa = document.getElementById('loginEmpresaNome');
-    if (loginEmpresa) loginEmpresa.textContent = CFG.empresaNome;
-    const sidebarUser = document.getElementById('sidebarUserName');
-    if (sidebarUser) sidebarUser.textContent = usuarioLogado ? usuarioLogado.nome.split(' ')[0] : 'Admin';
-    const sidebarRole = document.getElementById('sidebarUserRole');
-    if (sidebarRole) sidebarRole.textContent = usuarioLogado ? usuarioLogado.nivel : 'Administrador';
-    const logotipo = CFG.logoUrl ? `<img src="${CFG.logoUrl}" style="max-width:100%;max-height:100%;object-fit:contain;">` : '🏢';
-    document.getElementById('sidebarLogoImg').innerHTML = logotipo;
-    document.getElementById('loginLogoPreview').innerHTML = logotipo;
-    const clienteLoginLogo = document.getElementById('clienteLoginLogo');
-    if (clienteLoginLogo) clienteLoginLogo.innerHTML = logotipo;
-    const clienteLoginEmpresaNome = document.getElementById('clienteLoginEmpresaNome');
-    if (clienteLoginEmpresaNome) clienteLoginEmpresaNome.textContent = CFG.empresaNome;
-}
+// ============================================================
+// RESTAURAR SESSÃO DO CLIENTE (ao recarregar a página)
+// ============================================================
 
-function preencherCamposConfiguracao() {
-    const elNome = document.getElementById('configEmpresaNome');
-    if (elNome) elNome.value = CFG.empresaNome;
-    const elEmail = document.getElementById('configEmail');
-    if (elEmail) elEmail.value = CFG.email;
-    const elTelefone = document.getElementById('configTelefoneSuporte');
-    if (elTelefone) elTelefone.value = CFG.telefoneSuporte;
-    const elAdminNome = document.getElementById('configAdminNome');
-    if (elAdminNome) elAdminNome.value = CFG.adminNome;
-    const elAdminEmail = document.getElementById('configAdminEmail');
-    if (elAdminEmail) elAdminEmail.value = CFG.adminEmail;
-    const elAdminSenha = document.getElementById('configAdminSenha');
-    if (elAdminSenha) elAdminSenha.value = '';
-    configLogoTemp = CFG.logoUrl;
-    atualizarPreviewLogoConfig();
-}
-
-function atualizarPreviewLogoConfig() {
-    const preview = document.getElementById('configLogoPreview');
-    if (preview) {
-        preview.innerHTML = configLogoTemp ? `<img src="${configLogoTemp}" style="max-width:100%;max-height:100%;object-fit:contain;">` : '<span style="font-size:30px;">🏢</span>';
+async function restaurarSessaoCliente() {
+    // Tenta restaurar a sessão via Supabase
+    try {
+        const sessao = await apiRestaurarSessao();
+        if (sessao) {
+            // Se a sessão for de um cliente (email começa com "cliente_")
+            if (sessao.email && sessao.email.startsWith('cliente_')) {
+                // Extrai o ID do evento do email
+                const idEvento = parseInt(sessao.email.split('_')[1]);
+                const evento = EV.find(ev => ev.id === idEvento);
+                if (evento) {
+                    eventoClienteAtual = evento;
+                    document.getElementById('loginClienteScreen').style.display = 'none';
+                    document.getElementById('clienteDashboard').style.display = 'block';
+                    abrirAreaClienteEvento(evento);
+                    return true;
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('Erro ao restaurar sessão do cliente:', e);
     }
+    return false;
 }
 
-function aplicarPermissoes() {
-    const p = usuarioLogado?.permissoes || {};
-    const menuFinanceiro = document.getElementById('menuFinanceiro');
-    if (menuFinanceiro) menuFinanceiro.style.display = p.f ? 'flex' : 'none';
-    const menuFuncionarios = document.getElementById('menuFuncionarios');
-    if (menuFuncionarios) menuFuncionarios.style.display = p.g ? 'flex' : 'none';
-    const menuConfig = document.getElementById('menuConfig');
-    if (menuConfig) menuConfig.style.display = p.c ? 'flex' : 'none';
-    const btnNovo = document.getElementById('btnNovoEvento');
-    if (btnNovo) btnNovo.style.display = p.e ? 'inline-block' : 'none';
-}
+// ============================================================
+// CHAMAR A RESTAURAÇÃO NA INICIALIZAÇÃO DA PÁGINA
+// ============================================================
+
+// Adicione esta chamada ao final do seu script de inicialização
+document.addEventListener('DOMContentLoaded', async () => {
+    // ... (outras inicializações)
+    await restaurarSessaoCliente();
+});
