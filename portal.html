@@ -84,6 +84,11 @@
         .patrocinadores { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 16px 0; }
         .patrocinadores img { width: 60px; height: 60px; border-radius: 8px; object-fit: contain; background: rgba(255,255,255,0.05); padding: 8px; }
         .sucesso-msg { display: none; color: var(--green); font-weight: 600; margin-top: 20px; }
+        /* Animação do carrossel (mesma do admin) */
+        .carrossel-container { width: 100%; overflow: hidden; position: relative; margin: 12px 0; }
+        .carrossel-faixa { display: flex; gap: 20px; width: max-content; }
+        .carrossel-faixa img { width: 80px; height: 80px; border-radius: 12px; object-fit: contain; background: rgba(255,255,255,0.05); padding: 8px; border: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; }
+        @keyframes scrollPatrocinadores { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -91,7 +96,7 @@
     <div class="portal-card" id="portalCard">
         <div class="logo-evento" id="logoEvento">🎪</div>
         <div class="evento-nome" id="nomeEvento">Carregando...</div>
-        <div class="patrocinadores" id="patrocinadoresContainer"></div>
+        <div class="carrossel-container" id="carrosselContainer"><div class="carrossel-faixa" id="carrosselFaixa"></div></div>
         <div class="input-group">
             <label>Nome completo</label>
             <input type="text" id="nome" placeholder="Seu nome">
@@ -319,6 +324,13 @@
         let selectedCountry = countries.find(c => c.code === '55');
         let eventoAtual = null;
 
+        function atualizarPlaceholder() {
+            const input = document.getElementById('whatsapp');
+            if (input) {
+                input.placeholder = (selectedCountry.code === '55') ? '(DDD) 9 9999-9999' : 'Número sem formatação';
+            }
+        }
+
         function renderOptions() {
             const container = document.getElementById('customOptions');
             container.innerHTML = countries.map(c =>
@@ -335,6 +347,7 @@
                     renderOptions();
                     document.getElementById('whatsapp').value = '';
                     document.getElementById('erroWhatsapp').style.display = 'none';
+                    atualizarPlaceholder();
                 });
             });
         }
@@ -376,21 +389,23 @@
                 logoEl.innerHTML = '🎪';
             }
 
-            // Patrocinadores
-            const patContainer = document.getElementById('patrocinadoresContainer');
+            // Patrocinadores (agora usando carrossel-faixa igual ao admin)
+            const faixa = document.getElementById('carrosselFaixa');
             let logos = data.patrocinadores_logos;
-            if (logos) {
-                if (typeof logos === 'string') {
-                    try { logos = JSON.parse(logos); } catch(e) { logos = []; }
-                }
-                if (Array.isArray(logos) && logos.length > 0) {
-                    patContainer.innerHTML = logos.map(url => `<img src="${url}" alt="Patrocinador">`).join('');
-                    patContainer.style.display = 'flex';
+            if (typeof logos === 'string') {
+                try { logos = JSON.parse(logos); } catch(e) { logos = []; }
+            }
+            const logosValidos = Array.isArray(logos) ? logos.filter(url => typeof url === 'string' && url.length > 20 && (url.startsWith('http') || url.startsWith('data:'))) : [];
+            if (faixa) {
+                if (logosValidos.length > 4) {
+                    faixa.innerHTML = [...logosValidos, ...logosValidos].map(url => `<img src="${url}" alt="Patrocinador" onerror="this.style.display='none'">`).join('');
+                    faixa.style.animation = 'scrollPatrocinadores 20s linear infinite';
+                } else if (logosValidos.length > 0) {
+                    faixa.innerHTML = logosValidos.map(url => `<img src="${url}" alt="Patrocinador" onerror="this.style.display='none'">`).join('');
+                    faixa.style.animation = 'none';
                 } else {
-                    patContainer.style.display = 'none';
+                    faixa.innerHTML = '';
                 }
-            } else {
-                patContainer.style.display = 'none';
             }
         }
 
