@@ -1,137 +1,135 @@
-// js/auth.js – Centraliza autenticação usando a nova API
+async function fazerLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const senha = document.getElementById('loginPassword').value.trim();
 
-const Auth = (() => {
-    let currentUser = null;
-    let currentProfile = null;
-
-    // Carrega o usuário do localStorage (apenas para manter estado entre recargas)
-    function loadFromStorage() {
-        try {
-            const savedUser = localStorage.getItem('manos_user');
-            const savedProfile = localStorage.getItem('manos_profile');
-            if (savedUser) currentUser = JSON.parse(savedUser);
-            if (savedProfile) currentProfile = JSON.parse(savedProfile);
-        } catch (e) {}
+    if (!FN || FN.length === 0) {
+        try { if (typeof carregarFuncionarios === 'function') await carregarFuncionarios(); } catch (e) {}
     }
-    loadFromStorage();
-
-    // ---------- Login (admin ou funcionário) ----------
-    async function login(email, password) {
-        try {
-            // Tenta login via API (que usa Supabase)
-            const result = await API.login(email, password);
-            if (!result.success) throw new Error(result.error);
-
-            currentUser = result.user;
-            currentProfile = result.perfil;
-
-            // Persiste no localStorage (opcional, para manter estado)
-            localStorage.setItem('manos_user', JSON.stringify(currentUser));
-            localStorage.setItem('manos_profile', JSON.stringify(currentProfile));
-
-            return { success: true, user: currentUser, perfil: currentProfile };
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
+    const func = FN.find(f => f.email === email && f.senha === senha);
+    if (func) {
+        usuarioLogado = func;
+        EV = await apiListarEventos();
+        entrarSistema();
+        return;
     }
+    try {
+        const user = await apiLogin(email, senha);
+        usuarioLogado = user;
+        EV = await apiListarEventos();
+        entrarSistema();
+    } catch (e) { alert('❌ ' + e.message); }
+}
 
-    // ---------- Logout ----------
-    async function logout() {
-        try {
-            await API.logout();
-            currentUser = null;
-            currentProfile = null;
-            localStorage.removeItem('manos_user');
-            localStorage.removeItem('manos_profile');
-            return { success: true };
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
+function entrarSistema() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('menuToggle').style.display = 'flex';
+    atualizarInterfaceUsuario();
+    aplicarPermissoes();
+    showPage('inicio');
+}
+
+async function sairDoSistema() {
+    try { await apiLogout(); } catch (e) {}
+    sessao = null;
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('menuToggle').style.display = 'none';
+    closeMenu();
+    usuarioLogado = null;
+    eventoSelecionadoId = null;
+}
+
+function confirmarSaidaSistema() {
+    confirmarAcao('Deseja realmente sair do sistema?', sairDoSistema);
+}
+
+function abrirAreaCliente() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('loginClienteScreen').style.display = 'flex';
+}
+
+function voltarLoginAdmin() {
+    document.getElementById('loginClienteScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+}
+
+async function fazerLoginCliente() {
+    const usuario = document.getElementById('clienteUsuario').value.trim();
+    const senha = document.getElementById('clienteSenha').value.trim();
+    if (!EV || EV.length === 0) {
+        try { EV = await apiListarEventos(); } catch (e) { alert('❌ Erro ao conectar.'); return; }
     }
-
-    // ---------- Restaurar sessão (admin) ----------
-    async function restaurarSessao() {
-        try {
-            const result = await API.restaurarSessao();
-            if (result.success && result.data) {
-                currentUser = { email: result.data.email, id: result.data.id };
-                currentProfile = { nome: result.data.nome, nivel: result.data.nivel, permissoes: result.data.permissoes };
-                localStorage.setItem('manos_user', JSON.stringify(currentUser));
-                localStorage.setItem('manos_profile', JSON.stringify(currentProfile));
-                return { success: true, user: currentUser, perfil: currentProfile };
-            }
-            return { success: false };
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
+    const evento = EV.find(ev => ev.clienteUsuario === usuario && ev.clienteSenha === senha);
+    if (evento) {
+        localStorage.setItem('clienteSession', JSON.stringify({ eventoId: evento.id }));
+        document.getElementById('loginClienteScreen').style.display = 'none';
+        document.getElementById('clienteDashboard').style.display = 'block';
+        abrirAreaClienteEvento(evento);
+    } else {
+        alert('❌ Usuário ou senha inválidos!');
     }
+}
 
-    // ---------- Restaurar sessão do cliente (baseado no evento) ----------
-    async function restaurarSessaoCliente() {
-        try {
-            // Tenta restaurar a sessão via Supabase (verifica se há um cliente logado)
-            const result = await API.restaurarSessao();
-            if (result.success && result.data) {
-                const email = result.data.email;
-                if (email && email.startsWith('cliente_')) {
-                    // Extrai o ID do evento do email
-                    const idEvento = parseInt(email.split('_')[1]);
-                    if (!isNaN(idEvento)) {
-                        // Busca o evento na lista global EV (supondo que já esteja carregada)
-                        if (typeof EV !== 'undefined') {
-                            const evento = EV.find(ev => ev.id === idEvento);
-                            if (evento) {
-                                window.eventoClienteAtual = evento;
-                                return { success: true, evento };
-                            }
-                        }
-                    }
-                }
-            }
-            return { success: false };
-        } catch (error) {
-            console.warn('Erro ao restaurar sessão do cliente:', error);
-            return { success: false, error: error.message };
-        }
+function confirmarSaidaCliente() {
+    confirmarAcao('Deseja realmente sair?', () => {
+        localStorage.removeItem('clienteSession');
+        document.getElementById('clienteDashboard').style.display = 'none';
+        document.getElementById('loginClienteScreen').style.display = 'flex';
+        eventoClienteAtual = null;
+    });
+}
+
+function atualizarInterfaceUsuario() {
+    const sidebarEmpresa = document.getElementById('sidebarEmpresaNome');
+    if (sidebarEmpresa) sidebarEmpresa.textContent = CFG.empresaNome;
+    const loginEmpresa = document.getElementById('loginEmpresaNome');
+    if (loginEmpresa) loginEmpresa.textContent = CFG.empresaNome;
+    const sidebarUser = document.getElementById('sidebarUserName');
+    if (sidebarUser) sidebarUser.textContent = usuarioLogado ? usuarioLogado.nome.split(' ')[0] : 'Admin';
+    const sidebarRole = document.getElementById('sidebarUserRole');
+    if (sidebarRole) sidebarRole.textContent = usuarioLogado ? usuarioLogado.nivel : 'Administrador';
+    const logotipo = CFG.logoUrl ? `<img src="${CFG.logoUrl}" style="max-width:100%;max-height:100%;object-fit:contain;">` : '🏢';
+    document.getElementById('sidebarLogoImg').innerHTML = logotipo;
+    document.getElementById('loginLogoPreview').innerHTML = logotipo;
+    const clienteLoginLogo = document.getElementById('clienteLoginLogo');
+    if (clienteLoginLogo) clienteLoginLogo.innerHTML = logotipo;
+    const clienteLoginEmpresaNome = document.getElementById('clienteLoginEmpresaNome');
+    if (clienteLoginEmpresaNome) clienteLoginEmpresaNome.textContent = CFG.empresaNome;
+}
+
+function preencherCamposConfiguracao() {
+    const elNome = document.getElementById('configEmpresaNome');
+    if (elNome) elNome.value = CFG.empresaNome;
+    const elEmail = document.getElementById('configEmail');
+    if (elEmail) elEmail.value = CFG.email;
+    const elTelefone = document.getElementById('configTelefoneSuporte');
+    if (elTelefone) elTelefone.value = CFG.telefoneSuporte;
+    const elAdminNome = document.getElementById('configAdminNome');
+    if (elAdminNome) elAdminNome.value = CFG.adminNome;
+    const elAdminEmail = document.getElementById('configAdminEmail');
+    if (elAdminEmail) elAdminEmail.value = CFG.adminEmail;
+    const elAdminSenha = document.getElementById('configAdminSenha');
+    if (elAdminSenha) elAdminSenha.value = '';
+    configLogoTemp = CFG.logoUrl;
+    atualizarPreviewLogoConfig();
+}
+
+function atualizarPreviewLogoConfig() {
+    const preview = document.getElementById('configLogoPreview');
+    if (preview) {
+        preview.innerHTML = configLogoTemp ? `<img src="${configLogoTemp}" style="max-width:100%;max-height:100%;object-fit:contain;">` : '<span style="font-size:30px;">🏢</span>';
     }
+}
 
-    // ---------- Verificar se está logado ----------
-    function isLoggedIn() {
-        return !!currentUser;
-    }
-
-    // ---------- Obter usuário ----------
-    function usuario() {
-        return currentUser;
-    }
-
-    // ---------- Obter perfil ----------
-    function perfil() {
-        return currentProfile;
-    }
-
-    // ---------- Verificar permissão ----------
-    function temPermissao(permissao) {
-        if (!currentProfile) return false;
-        if (currentProfile.nivel === 'Administrador') return true;
-        if (Array.isArray(currentProfile.permissoes)) {
-            return currentProfile.permissoes.includes(permissao);
-        }
-        return false;
-    }
-
-    // ---------- API pública ----------
-    return {
-        login,
-        logout,
-        restaurarSessao,
-        restaurarSessaoCliente,
-        isLoggedIn,
-        usuario,
-        perfil,
-        temPermissao
-    };
-})();
-
-// Expor globalmente
-window.Auth = Auth;
+function aplicarPermissoes() {
+    const p = usuarioLogado?.permissoes || {};
+    const menuFinanceiro = document.getElementById('menuFinanceiro');
+    if (menuFinanceiro) menuFinanceiro.style.display = p.f ? 'flex' : 'none';
+    const menuFuncionarios = document.getElementById('menuFuncionarios');
+    if (menuFuncionarios) menuFuncionarios.style.display = p.g ? 'flex' : 'none';
+    const menuConfig = document.getElementById('menuConfig');
+    if (menuConfig) menuConfig.style.display = p.c ? 'flex' : 'none';
+    const btnNovo = document.getElementById('btnNovoEvento');
+    if (btnNovo) btnNovo.style.display = p.e ? 'inline-block' : 'none';
+}
