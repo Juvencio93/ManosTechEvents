@@ -234,12 +234,12 @@ table th { color: var(--text2); font-weight: 600; font-size: 11px; text-transfor
     .stat-card .stat-value { font-size: 28px; }
 }
 /* Esconde elementos que exigem permissão; o JavaScript os exibe se necessário */
-#cardFinanceiro,
-#financeiroFields {
+cardFinanceiro,
+financeiroFields {
     display: none;
 }
 /* Menu lateral do cliente (igual ao admin) */
-#clienteDashboard .sidebar {
+clienteDashboard .sidebar {
     width: 280px;
     background: var(--glass);
     backdrop-filter: blur(20px);
