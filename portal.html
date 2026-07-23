@@ -81,11 +81,13 @@
         .btn { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--azul), #3a8ec0); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s; }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(77,168,218,0.3); }
         .error-msg { color: var(--red); font-size: 12px; margin-top: 4px; display: none; }
+        .patrocinadores { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 16px 0; }
+        .patrocinadores img { width: 60px; height: 60px; border-radius: 8px; object-fit: contain; background: rgba(255,255,255,0.05); padding: 8px; }
+        .sucesso-msg { display: none; color: var(--green); font-weight: 600; margin-top: 20px; }
         .carrossel-container { width: 100%; overflow: hidden; position: relative; margin: 12px 0; }
         .carrossel-faixa { display: flex; gap: 20px; width: max-content; }
         .carrossel-faixa img { width: 80px; height: 80px; border-radius: 12px; object-fit: contain; background: rgba(255,255,255,0.05); padding: 8px; border: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; }
         @keyframes scrollPatrocinadores { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        .sucesso-msg { display: none; color: var(--green); font-weight: 600; margin-top: 20px; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -386,7 +388,7 @@
                 logoEl.innerHTML = '🎪';
             }
 
-            // Patrocinadores (carrossel)
+            // Patrocinadores
             const faixa = document.getElementById('carrosselFaixa');
             let logos = data.patrocinadores_logos;
             if (typeof logos === 'string') {
@@ -413,14 +415,6 @@
             return text.replace(/[&<>"']/g, m => map[m]);
         }
         function validarEmail(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
-
-        function detectarDispositivo() {
-            const ua = navigator.userAgent;
-            if (/iPhone|iPad|iPod/.test(ua)) return 'iOS';
-            if (/Android/.test(ua)) return 'Android';
-            if (/Mobile/.test(ua)) return 'Mobile';
-            return 'Desktop';
-        }
 
         function aplicarMascara(event) {
             const input = event.target;
@@ -481,14 +475,15 @@
             btn.textContent = 'Registrando...';
 
             try {
+                const agora = new Date();
                 const { error } = await supabaseClient.from('visitantes').insert([{
                     evento_id: eventoAtual.id,
                     nome: escapeHtml(nome),
                     email: email,
                     whatsapp: whatsapp ? '+' + ddi + ' ' + whatsapp : '(não informado)',
-                    acesso: new Date().toISOString(),
-                    hora: new Date().getHours(),
-                    dispositivo: detectarDispositivo(),
+                    acesso: agora.toLocaleString('pt-BR'),   // exibe 22/07/2026, 14:30:00
+                    hora: agora.getHours(),                  // 0-23 local
+                    dispositivo: /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
                     ip: '0.0.0.0'
                 }]);
                 if (error) throw error;
