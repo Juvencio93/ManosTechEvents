@@ -1,6 +1,12 @@
-// Área do Cliente – reformulada com menu lateral
+// Área do Cliente – com menu lateral funcional
 
 let clienteVisitantesCache = [];
+
+// Toggle do menu hamburguer do cliente
+function toggleClienteMenu() {
+    const sb = document.getElementById('clienteSidebar');
+    if (sb) sb.classList.toggle('open');
+}
 
 async function abrirAreaClienteEvento(evento) {
     eventoClienteAtual = evento;
@@ -60,7 +66,7 @@ async function abrirAreaClienteEvento(evento) {
         pie.style.background = `conic-gradient(var(--azul) 0% ${iosPct}%, var(--green) ${iosPct}% ${iosPct + androidPct}%, var(--yellow) ${iosPct + androidPct}% 100%)`;
     }
 
-    // Cards dos últimos 10 visitantes
+    // Cards últimos 10
     const cardsContainer = document.getElementById('clienteUltimosCards');
     if (cardsContainer) {
         cardsContainer.innerHTML = clienteVisitantesCache.slice(0, 10).map(v => {
@@ -154,7 +160,7 @@ function gerarRelatorioClienteExcel() {
     URL.revokeObjectURL(url);
 }
 
-// Mantida para compatibilidade com botão antigo
+// Mantida para compatibilidade
 async function gerarRelatorioCliente() {
     gerarRelatorioClientePDF();
 }
