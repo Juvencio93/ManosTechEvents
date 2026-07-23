@@ -165,7 +165,7 @@
 <div class="dashboard" id="clienteDashboard" style="display:none;">
     <style>
         /* Estilos exclusivos da área do cliente */
-        #clienteDashboard {
+        clienteDashboard {
             --bg: #06080d; --glass: rgba(18, 24, 36, 0.85); --text: #e8edf3; --text2: #8899b0;
             --azul: #4da8da; --green: #4dda8f; --yellow: #ffb347; --red: #ff4d6a;
             font-family: 'Segoe UI', system-ui, sans-serif;
@@ -177,12 +177,12 @@
             display: flex; flex-direction: column; position: fixed; left: 0; top: 0; height: 100vh;
             z-index: 100; transition: transform 0.3s ease;
         }
-        #clienteSidebar.closed { transform: translateX(-100%); }
-        #clienteMainContent { margin-left: 280px; padding: 36px 44px; width: 100%; transition: margin-left 0.3s ease; }
-        #clienteMainContent.expanded { margin-left: 0 !important; }
+        clienteSidebar.closed { transform: translateX(-100%); }
+        clienteMainContent { margin-left: 280px; padding: 36px 44px; width: 100%; transition: margin-left 0.3s ease; }
+        clienteMainContent.expanded { margin-left: 0 !important; }
 
         /* Botão hamburguer flutuante */
-        #clienteMenuToggle {
+        clienteMenuToggle {
             position: fixed; top: 20px; left: 20px; z-index: 200;
             background: var(--azul); color: #fff; border: none;
             width: 44px; height: 44px; border-radius: 50%;
@@ -191,7 +191,7 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.4);
             transition: opacity 0.3s;
         }
-        #clienteMenuToggle.hidden { opacity: 0; pointer-events: none; }
+        clienteMenuToggle.hidden { opacity: 0; pointer-events: none; }
 
         /* Cards flutuantes */
         .floating-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 30px; }
@@ -207,9 +207,9 @@
         .floating-card .card-label { font-size: 14px; color: var(--text2); margin-top: 4px; }
 
         @media (max-width: 768px) {
-            #clienteSidebar { transform: translateX(-100%); }
-            #clienteSidebar.open { transform: translateX(0); }
-            #clienteMainContent { margin-left: 0 !important; }
+            clienteSidebar { transform: translateX(-100%); }
+            clienteSidebar.open { transform: translateX(0); }
+            clienteMainContent { margin-left: 0 !important; }
         }
     </style>
 
