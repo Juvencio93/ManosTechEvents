@@ -1,122 +1,137 @@
-// ============================================================
-// LOGIN DO CLIENTE – AGORA USANDO SUPABASE (sem localStorage)
-// ============================================================
+// js/auth.js – Centraliza autenticação usando a nova API
 
-async function fazerLoginCliente() {
-    const usuario = document.getElementById('clienteUsuario').value.trim();
-    const senha = document.getElementById('clienteSenha').value.trim();
+const Auth = (() => {
+    let currentUser = null;
+    let currentProfile = null;
 
-    if (!EV || EV.length === 0) {
+    // Carrega o usuário do localStorage (apenas para manter estado entre recargas)
+    function loadFromStorage() {
         try {
-            EV = await apiListarEventos();
-        } catch (e) {
-            alert('❌ Erro ao conectar.');
-            return;
+            const savedUser = localStorage.getItem('manos_user');
+            const savedProfile = localStorage.getItem('manos_profile');
+            if (savedUser) currentUser = JSON.parse(savedUser);
+            if (savedProfile) currentProfile = JSON.parse(savedProfile);
+        } catch (e) {}
+    }
+    loadFromStorage();
+
+    // ---------- Login (admin ou funcionário) ----------
+    async function login(email, password) {
+        try {
+            // Tenta login via API (que usa Supabase)
+            const result = await API.login(email, password);
+            if (!result.success) throw new Error(result.error);
+
+            currentUser = result.user;
+            currentProfile = result.perfil;
+
+            // Persiste no localStorage (opcional, para manter estado)
+            localStorage.setItem('manos_user', JSON.stringify(currentUser));
+            localStorage.setItem('manos_profile', JSON.stringify(currentProfile));
+
+            return { success: true, user: currentUser, perfil: currentProfile };
+        } catch (error) {
+            return { success: false, error: error.message };
         }
     }
 
-    // Busca o evento com as credenciais fornecidas
-    const evento = EV.find(ev => ev.clienteUsuario === usuario && ev.clienteSenha === senha);
-    if (!evento) {
-        alert('❌ Usuário ou senha inválidos!');
-        return;
+    // ---------- Logout ----------
+    async function logout() {
+        try {
+            await API.logout();
+            currentUser = null;
+            currentProfile = null;
+            localStorage.removeItem('manos_user');
+            localStorage.removeItem('manos_profile');
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
     }
 
-    // --- AGORA USAMOS A AUTENTICAÇÃO DO SUPABASE ---
-    // Construímos um email único para o cliente (baseado no ID do evento)
-    const emailCliente = `cliente_${evento.id}@eventos.local`;
-    try {
-        // Tenta logar com as credenciais (o Supabase já deve ter esse usuário criado)
-        const result = await apiLogin(emailCliente, senha);
-        // Se chegou aqui, login bem-sucedido
-        eventoClienteAtual = evento; // guarda o evento na memória
-
-        // Fecha a tela de login e abre o dashboard do cliente
-        document.getElementById('loginClienteScreen').style.display = 'none';
-        document.getElementById('clienteDashboard').style.display = 'block';
-        abrirAreaClienteEvento(evento);
-
-        // NÃO USAMOS localStorage – a sessão fica no Supabase (cookie/token)
-
-    } catch (error) {
-        // Se o usuário não existir no Supabase, podemos criá-lo agora
-        if (error.message.includes('Invalid login credentials')) {
-            // Cria o usuário no Supabase (primeiro acesso)
-            try {
-                await supabaseClient.auth.signUp({
-                    email: emailCliente,
-                    password: senha,
-                });
-                // Após criar, faz login novamente
-                await apiLogin(emailCliente, senha);
-                eventoClienteAtual = evento;
-                document.getElementById('loginClienteScreen').style.display = 'none';
-                document.getElementById('clienteDashboard').style.display = 'block';
-                abrirAreaClienteEvento(evento);
-            } catch (e) {
-                alert('❌ Erro ao criar conta do cliente: ' + e.message);
+    // ---------- Restaurar sessão (admin) ----------
+    async function restaurarSessao() {
+        try {
+            const result = await API.restaurarSessao();
+            if (result.success && result.data) {
+                currentUser = { email: result.data.email, id: result.data.id };
+                currentProfile = { nome: result.data.nome, nivel: result.data.nivel, permissoes: result.data.permissoes };
+                localStorage.setItem('manos_user', JSON.stringify(currentUser));
+                localStorage.setItem('manos_profile', JSON.stringify(currentProfile));
+                return { success: true, user: currentUser, perfil: currentProfile };
             }
-        } else {
-            alert('❌ Erro no login: ' + error.message);
+            return { success: false };
+        } catch (error) {
+            return { success: false, error: error.message };
         }
     }
-}
 
-// ============================================================
-// SAÍDA DO CLIENTE
-// ============================================================
-
-function confirmarSaidaCliente() {
-    confirmarAcao('Deseja realmente sair?', async () => {
-        // Faz logout no Supabase
+    // ---------- Restaurar sessão do cliente (baseado no evento) ----------
+    async function restaurarSessaoCliente() {
         try {
-            await apiLogout();
-        } catch (e) {
-            console.warn('Erro ao deslogar:', e);
-        }
-        // Limpa variáveis locais
-        eventoClienteAtual = null;
-        // Fecha o dashboard e mostra a tela de login do cliente
-        document.getElementById('clienteDashboard').style.display = 'none';
-        document.getElementById('loginClienteScreen').style.display = 'flex';
-    });
-}
-
-// ============================================================
-// RESTAURAR SESSÃO DO CLIENTE (ao recarregar a página)
-// ============================================================
-
-async function restaurarSessaoCliente() {
-    // Tenta restaurar a sessão via Supabase
-    try {
-        const sessao = await apiRestaurarSessao();
-        if (sessao) {
-            // Se a sessão for de um cliente (email começa com "cliente_")
-            if (sessao.email && sessao.email.startsWith('cliente_')) {
-                // Extrai o ID do evento do email
-                const idEvento = parseInt(sessao.email.split('_')[1]);
-                const evento = EV.find(ev => ev.id === idEvento);
-                if (evento) {
-                    eventoClienteAtual = evento;
-                    document.getElementById('loginClienteScreen').style.display = 'none';
-                    document.getElementById('clienteDashboard').style.display = 'block';
-                    abrirAreaClienteEvento(evento);
-                    return true;
+            // Tenta restaurar a sessão via Supabase (verifica se há um cliente logado)
+            const result = await API.restaurarSessao();
+            if (result.success && result.data) {
+                const email = result.data.email;
+                if (email && email.startsWith('cliente_')) {
+                    // Extrai o ID do evento do email
+                    const idEvento = parseInt(email.split('_')[1]);
+                    if (!isNaN(idEvento)) {
+                        // Busca o evento na lista global EV (supondo que já esteja carregada)
+                        if (typeof EV !== 'undefined') {
+                            const evento = EV.find(ev => ev.id === idEvento);
+                            if (evento) {
+                                window.eventoClienteAtual = evento;
+                                return { success: true, evento };
+                            }
+                        }
+                    }
                 }
             }
+            return { success: false };
+        } catch (error) {
+            console.warn('Erro ao restaurar sessão do cliente:', error);
+            return { success: false, error: error.message };
         }
-    } catch (e) {
-        console.warn('Erro ao restaurar sessão do cliente:', e);
     }
-    return false;
-}
 
-// ============================================================
-// CHAMAR A RESTAURAÇÃO NA INICIALIZAÇÃO DA PÁGINA
-// ============================================================
+    // ---------- Verificar se está logado ----------
+    function isLoggedIn() {
+        return !!currentUser;
+    }
 
-// Adicione esta chamada ao final do seu script de inicialização
-document.addEventListener('DOMContentLoaded', async () => {
-    // ... (outras inicializações)
-    await restaurarSessaoCliente();
-});
+    // ---------- Obter usuário ----------
+    function usuario() {
+        return currentUser;
+    }
+
+    // ---------- Obter perfil ----------
+    function perfil() {
+        return currentProfile;
+    }
+
+    // ---------- Verificar permissão ----------
+    function temPermissao(permissao) {
+        if (!currentProfile) return false;
+        if (currentProfile.nivel === 'Administrador') return true;
+        if (Array.isArray(currentProfile.permissoes)) {
+            return currentProfile.permissoes.includes(permissao);
+        }
+        return false;
+    }
+
+    // ---------- API pública ----------
+    return {
+        login,
+        logout,
+        restaurarSessao,
+        restaurarSessaoCliente,
+        isLoggedIn,
+        usuario,
+        perfil,
+        temPermissao
+    };
+})();
+
+// Expor globalmente
+window.Auth = Auth;
