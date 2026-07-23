@@ -280,73 +280,292 @@
     </div>
 
     <!-- ========== NOVA ÁREA DO CLIENTE ========== -->
-    <div class="dashboard" id="clienteDashboard" style="display:none;">
-        <div style="margin-left:0;padding:34px;min-height:100vh;background:var(--bg);">
-            <!-- Cabeçalho com hambúrguer à esquerda -->
-            <div class="cliente-header-card" style="padding:22px 30px;display:flex;align-items:center;gap:16px;margin-bottom:26px;border-radius:var(--r);">
-                <button class="btn btn-sm" style="background:var(--glass);border:1px solid var(--glass-border);color:var(--text);font-size:22px;padding:4px 12px;border-radius:var(--r);" onclick="toggleMenuCliente()">☰</button>
-                <div class="logo-preview" style="width:60px;height:60px;" id="clienteLogoHeader">🎪</div>
-                <div>
-                    <h2 id="clienteEventoNome">Evento</h2>
-                    <div style="font-size:13px;color:var(--text2);margin-top:4px;">
-                        <span id="clienteEventoPeriodo"></span> • <span id="clienteEventoLocal"></span>
-                    </div>
+<div class="dashboard" id="clienteDashboard">
+    <div style="margin-left:0;padding:34px;min-height:100vh;background:var(--bg);">
+        <!-- Cabeçalho (estilo ADM) -->
+        <div class="cliente-header-card" style="padding:22px 30px;display:flex;align-items:center;gap:16px;margin-bottom:26px;border-radius:var(--r);">
+            <div class="logo-preview" style="width:60px;height:60px;" id="clienteLogoHeader">🎪</div>
+            <div>
+                <h2 id="clienteEventoNome">Evento</h2>
+                <div style="font-size:13px;color:var(--text2);margin-top:4px;">
+                    <span id="clienteEventoPeriodo"></span> • <span id="clienteEventoLocal"></span>
                 </div>
-                <div style="margin-left:auto;">
-                    <span id="clienteStatusBadge" class="badge" style="font-size:14px;padding:8px 16px;"></span>
+            </div>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
+                <span id="clienteStatusBadge" class="badge" style="font-size:14px;padding:8px 16px;"></span>
+                <button class="btn btn-sm" style="background:var(--glass);border:1px solid var(--glass-border);color:var(--text);font-size:22px;line-height:1;padding:4px 12px;border-radius:var(--r);" onclick="toggleMenuCliente()">☰</button>
+            </div>
+        </div>
+
+        <!-- Menu lateral (hambúrguer) -->
+        <div id="clienteSidebarMenu" style="display:none;position:fixed;top:0;right:0;width:280px;height:100vh;background:var(--glass);backdrop-filter:blur(20px);border-left:1px solid var(--glass-border);z-index:1000;padding:30px 20px;box-shadow:-5px 0 20px rgba(0,0,0,0.2);overflow-y:auto;transition:transform 0.3s ease;">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:20px;">
+                <button onclick="toggleMenuCliente()" style="background:none;border:none;color:var(--text);font-size:24px;cursor:pointer;">✕</button>
+            </div>
+            <ul style="list-style:none;padding:0;margin:0;">
+                <li onclick="navegarCliente('inicio')" style="padding:12px 16px;cursor:pointer;border-radius:var(--r);margin-bottom:8px;display:flex;align-items:center;gap:10px;transition:background 0.2s;">🏠 Início</li>
+                <li onclick="navegarCliente('visitantes')" style="padding:12px 16px;cursor:pointer;border-radius:var(--r);margin-bottom:8px;display:flex;align-items:center;gap:10px;">👥 Total de Visitantes</li>
+                <li id="menuRelatorios" style="padding:12px 16px;border-radius:var(--r);margin-bottom:8px;">
+                    <div onclick="toggleSubmenuRelatorios()" style="display:flex;align-items:center;gap:10px;cursor:pointer;">📊 Relatórios <span style="margin-left:auto;font-size:12px;">▼</span></div>
+                    <ul id="submenuRelatorios" style="display:none;list-style:none;padding:8px 0 0 28px;margin:0;">
+                        <li onclick="gerarRelatorioCliente(); toggleMenuCliente();" style="padding:8px 12px;cursor:pointer;border-radius:var(--r);margin-bottom:4px;">📄 PDF</li>
+                        <li onclick="exportarExcelCliente(); toggleMenuCliente();" style="padding:8px 12px;cursor:pointer;border-radius:var(--r);">📊 Excel</li>
+                    </ul>
+                </li>
+                <li onclick="confirmarSaidaCliente()" style="padding:12px 16px;cursor:pointer;border-radius:var(--r);margin-top:20px;display:flex;align-items:center;gap:10px;color:var(--red);">🚪 Sair</li>
+            </ul>
+        </div>
+
+        <!-- Conteúdo principal (views) -->
+        <div id="clienteMainContent">
+            <!-- VIEW: INÍCIO -->
+            <div id="clienteViewInicio">
+                <!-- Card Total de Visitantes (animado) -->
+                <div class="stat-card" style="margin-bottom:22px;">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-value" id="clienteTotalVisitantes">0</div>
+                    <div class="stat-label">Total de Visitantes</div>
+                </div>
+                
+                <!-- Gráficos (estilo ADM) -->
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>🔥 Acessos por Hora</h3>
+                        <div class="heatmap" id="clienteHeatmapContainer"></div>
+                    </div>
+                    <div class="card">
+                        <h3>📱 Distribuição de Dispositivos</h3>
+                        <div class="pie-chart" id="clientePieChart"></div>
+                        <div class="pie-legend">
+                            <span><span class="dot" style="background:#2ecc71;"></span> iOS</span>
+                            <span><span class="dot" style="background:#3498db;"></span> Android</span>
+                            <span><span class="dot" style="background:#f1c40f;"></span> Desktop</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Menu lateral esquerdo (estilo sidebar ADM) -->
-            <div id="clienteSidebarMenu" style="display:none;position:fixed;top:0;left:0;width:280px;height:100vh;background:var(--glass);backdrop-filter:blur(20px);border-right:1px solid var(--glass-border);z-index:1000;padding:30px 20px;box-shadow:5px 0 20px rgba(0,0,0,0.2);overflow-y:auto;transition:transform 0.3s ease;">
-                <div style="display:flex;justify-content:flex-end;margin-bottom:20px;">
-                    <button onclick="toggleMenuCliente()" style="background:none;border:none;color:var(--text);font-size:24px;cursor:pointer;">✕</button>
+            <!-- VIEW: TOTAL DE VISITANTES (lista completa) -->
+            <div id="clienteViewVisitantes" style="display:none;">
+                <div class="card" style="margin-bottom:22px;">
+                    <h3>👋 Últimos Visitantes</h3>
+                    <div id="clienteVisitantesCards" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap:12px; margin-top:16px;"></div>
                 </div>
-                <ul style="list-style:none;padding:0;margin:0;">
-                    <li onclick="navegarCliente('inicio')" style="padding:12px 16px;cursor:pointer;border-radius:var(--r);margin-bottom:8px;display:flex;align-items:center;gap:10px;">🏠 Início</li>
-                    <li onclick="navegarCliente('visitantes')" style="padding:12px 16px;cursor:pointer;border-radius:var(--r);margin-bottom:8px;display:flex;align-items:center;gap:10px;">👥 Total de Visitantes</li>
-                    <li onclick="navegarCliente('relatorios')" style="padding:12px 16px;cursor:pointer;border-radius:var(--r);margin-bottom:8px;display:flex;align-items:center;gap:10px;">📊 Relatórios</li>
-                    <li onclick="confirmarSaidaCliente()" style="padding:12px 16px;cursor:pointer;border-radius:var(--r);margin-top:20px;display:flex;align-items:center;gap:10px;color:var(--red);">🚪 Sair</li>
-                </ul>
+                <div class="card">
+                    <h3>📋 Todos os Visitantes</h3>
+                    <div style="overflow-x:auto;">
+                        <table>
+                            <thead><tr><th>Nome</th><th>E-mail</th><th>WhatsApp</th><th>Horário</th><th>Dispositivo</th></tr></thead>
+                            <tbody id="clienteVisitantesTable"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
+        </div>
 
-            <!-- Views -->
-            <div id="clienteMainContent">
-                <!-- VIEW INÍCIO -->
-                <div id="clienteViewInicio">
-                    <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
-                        <div class="stat-card">
-                            <div class="stat-icon">👥</div>
-                            <div class="stat-value" id="clienteTotalVisitantes">0</div>
-                            <div class="stat-label">Total de Visitantes</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon">🔥</div>
-                            <div class="stat-value" id="clientePicoHora">--</div>
-                            <div class="stat-label">Pico de Acessos</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon">📱</div>
-                            <div class="stat-value" id="clienteDispositivoPred">--</div>
-                            <div class="stat-label">Dispositivo Predominante</div>
-                        </div>
-                    </div>
-                    <div class="grid-2" style="margin-top:22px;">
-                        <div class="card">
-                            <h3>🔥 Acessos por Hora</h3>
-                            <div class="heatmap" id="clienteHeatmapContainer"></div>
-                        </div>
-                        <div class="card">
-                            <h3>📱 Distribuição de Dispositivos</h3>
-                            <div class="pie-chart" id="clientePieChart"></div>
-                            <div class="pie-legend">
-                                <span><span class="dot" style="background:#2ecc71;"></span> iOS</span>
-                                <span><span class="dot" style="background:#3498db;"></span> Android</span>
-                                <span><span class="dot" style="background:#f1c40f;"></span> Desktop</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <script>
+            // Variável de controle da view atual
+            let clienteViewAtual = 'inicio';
+
+            // Toggle do menu hambúrguer
+            function toggleMenuCliente() {
+                const menu = document.getElementById('clienteSidebarMenu');
+                if (menu.style.display === 'none' || menu.style.display === '') {
+                    menu.style.display = 'block';
+                } else {
+                    menu.style.display = 'none';
+                }
+            }
+
+            // Navegação entre views
+            function navegarCliente(view) {
+                document.getElementById('clienteViewInicio').style.display = view === 'inicio' ? 'block' : 'none';
+                document.getElementById('clienteViewVisitantes').style.display = view === 'visitantes' ? 'block' : 'none';
+                clienteViewAtual = view;
+                toggleMenuCliente(); // fecha o menu após seleção
+            }
+
+            // Submenu Relatórios (expande/recolhe)
+            function toggleSubmenuRelatorios() {
+                const sub = document.getElementById('submenuRelatorios');
+                sub.style.display = sub.style.display === 'none' ? 'block' : 'none';
+            }
+
+            // Animação de contagem
+            function animarContagem(elemento, valorFinal, duracao = 800) {
+                const passo = Math.ceil(valorFinal / (duracao / 16));
+                let atual = 0;
+                const timer = setInterval(() => {
+                    atual += passo;
+                    if (atual >= valorFinal) {
+                        elemento.textContent = valorFinal;
+                        clearInterval(timer);
+                    } else {
+                        elemento.textContent = atual;
+                    }
+                }, 16);
+            }
+
+            // Função principal (substitui a anterior)
+            async function abrirAreaClienteEvento(evento) {
+                eventoClienteAtual = evento;
+
+                // Cabeçalho
+                document.getElementById('clienteEventoNome').textContent = evento.nome;
+                document.getElementById('clienteEventoPeriodo').textContent =
+                    `${formatarData(evento.dataInicio)} a ${formatarData(evento.dataFim)}`;
+                document.getElementById('clienteEventoLocal').textContent = evento.local;
+                document.getElementById('clienteLogoHeader').innerHTML = evento.logoUrl
+                    ? `<img src="${evento.logoUrl}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'">`
+                    : '🎪';
+
+                const status = calcularStatusEvento(evento);
+                const badge = document.getElementById('clienteStatusBadge');
+                badge.textContent = status;
+                badge.className = 'badge ' + statusBadgeClass(status);
+                badge.style.display = 'inline-block';
+
+                // Visitantes
+                let visitantes = [];
+                try {
+                    visitantes = await apiListarVisitantes(evento.id);
+                } catch (e) {
+                    visitantes = evento.visitantes || [];
+                }
+                const total = visitantes.length;
+                const totalEl = document.getElementById('clienteTotalVisitantes');
+                animarContagem(totalEl, total, 600);
+
+                // Heatmap
+                const horas = {};
+                for (let h = 8; h <= 20; h++) horas[h] = 0;
+                visitantes.forEach(v => {
+                    const h = v.hora || 8;
+                    if (horas[h] !== undefined) horas[h]++;
+                });
+                const max = Math.max(...Object.values(horas), 1);
+                document.getElementById('clienteHeatmapContainer').innerHTML = Object.entries(horas)
+                    .map(([h, c]) => `<div class="heatmap-bar" style="height:${Math.max((c / max) * 140, 4)}px;" title="${h}h: ${c}"></div>`)
+                    .join('');
+
+                // Pizza de dispositivos (verde, azul, amarelo)
+                const disp = { iPhone: 0, Android: 0, Desktop: 0, Outros: 0 };
+                visitantes.forEach(v => {
+                    const d = v.dispositivo || 'Desktop';
+                    if (/iPhone|iPad|iPod/.test(d)) disp.iPhone++;
+                    else if (/Android/.test(d)) disp.Android++;
+                    else if (/Desktop|Windows|Mac|Linux/.test(d)) disp.Desktop++;
+                    else disp.Outros++;
+                });
+                const totalDisp = total || 1;
+                const pIos = (disp.iPhone / totalDisp) * 100;
+                const pAnd = (disp.Android / totalDisp) * 100;
+                const pDesk = (disp.Desktop / totalDisp) * 100;
+                const pOut = (disp.Outros / totalDisp) * 100;
+                const pie = document.getElementById('clientePieChart');
+                if (pie) {
+                    pie.style.background = `conic-gradient(#2ecc71 0% ${pIos}%, #3498db ${pIos}% ${pIos + pAnd}%, #f1c40f ${pIos + pAnd}% ${pIos + pAnd + pDesk}%, #95a5a6 ${pIos + pAnd + pDesk}% 100%)`;
+                }
+
+                // Cards últimos visitantes (view visitantes)
+                const cardsContainer = document.getElementById('clienteVisitantesCards');
+                if (cardsContainer) {
+                    cardsContainer.innerHTML = visitantes.slice(0, 10).map(v => {
+                        const iniciais = v.nome.split(' ').map(p => p.charAt(0)).join('').substring(0, 2).toUpperCase();
+                        const icone = /iPhone|Android/.test(v.dispositivo || '') ? '📱' : '💻';
+                        return `<div style="background:var(--glass); backdrop-filter:blur(10px); border:1px solid var(--glass-border); border-radius:var(--r); padding:16px; display:flex; align-items:center; gap:12px;">
+                                    <div style="width:40px;height:40px;border-radius:50%;background:rgba(77,168,218,0.2);display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--azul);">${escapeHtml(iniciais)}</div>
+                                    <div style="flex:1;min-width:0;">
+                                        <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(v.nome)}</div>
+                                        <div style="font-size:12px;color:var(--text2);">${v.acesso} • ${icone}</div>
+                                    </div>
+                                </div>`;
+                    }).join('');
+                }
+
+                // Tabela completa (view visitantes)
+                const tbody = document.getElementById('clienteVisitantesTable');
+                if (tbody) {
+                    tbody.innerHTML = visitantes.map(v =>
+                        `<tr>
+                            <td><strong>${escapeHtml(v.nome)}</strong></td>
+                            <td>${escapeHtml(v.email)}</td>
+                            <td>${escapeHtml(v.whatsapp)}</td>
+                            <td>${v.acesso}</td>
+                            <td>${escapeHtml(v.dispositivo || 'Desktop')}</td>
+                        </tr>`
+                    ).join('');
+                }
+
+                // Garante que a view inicial seja exibida
+                navegarCliente('inicio');
+            }
+
+            // NOVA: Exportar Excel
+            function exportarExcelCliente() {
+                if (!eventoClienteAtual) {
+                    alert('Nenhum evento carregado.');
+                    return;
+                }
+                let visitantes = eventoClienteAtual.visitantes || [];
+                // Se não estiverem carregados, tentar obter via api (síncrono ou assíncrono simplificado)
+                if (visitantes.length === 0 && eventoClienteAtual.id) {
+                    // Podemos usar os visitantes já carregados da última chamada
+                    // Como alternativa, podemos recarregar rapidamente:
+                    apiListarVisitantes(eventoClienteAtual.id).then(data => {
+                        eventoClienteAtual.visitantes = data;
+                        gerarCSV(data);
+                    }).catch(() => alert('Erro ao carregar visitantes.'));
+                } else {
+                    gerarCSV(visitantes);
+                }
+            }
+
+            function gerarCSV(visitantes) {
+                if (visitantes.length === 0) {
+                    alert('Nenhum visitante para exportar.');
+                    return;
+                }
+                let csv = 'Nome,E-mail,WhatsApp,Horário,Dispositivo\n';
+                visitantes.forEach(v => {
+                    const linha = [v.nome, v.email, v.whatsapp, v.acesso, v.dispositivo || 'Desktop']
+                        .map(c => `"${(c || '').replace(/"/g, '""')}"`)
+                        .join(',');
+                    csv += linha + '\n';
+                });
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `visitantes_${eventoClienteAtual.nome.replace(/\s+/g, '_')}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            // Função antiga mantida como stub (não usada na UI)
+            function copiarLinkPortalCliente() {}
+
+            // Observer (mantido)
+            (function() {
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.target.id === 'clienteDashboard' && mutation.target.style.display === 'block') {
+                            if (typeof eventoClienteAtual !== 'undefined' && eventoClienteAtual) {
+                                abrirAreaClienteEvento(eventoClienteAtual);
+                            }
+                        }
+                    });
+                });
+                const dashboardEl = document.getElementById('clienteDashboard');
+                if (dashboardEl) {
+                    observer.observe(dashboardEl, { attributes: true, attributeFilter: ['style'] });
+                }
+            })();
+        </script>
+    </div>
+</div>
 
                 <!-- VIEW VISITANTES -->
                 <div id="clienteViewVisitantes" style="display:none;">
