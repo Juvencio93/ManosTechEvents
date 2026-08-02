@@ -2,7 +2,7 @@
 
 Sistema web para gestão de eventos com backend em **Supabase**.
 
-## Stack atual
+## Stack atualK
 
 - Frontend estático com HTML/CSS/JS
 - Build/dev server com Vite
