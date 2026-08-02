@@ -1,72 +1,58 @@
-# ManosTechEvents
+# Manos Tech Events
 
-Sistema de Gerenciamento de Eventos da Manos Tech — powered by **GitHub + Supabase**.
+Sistema web para gestão de eventos com backend em **Supabase**.
 
-## Tecnologias
+## Stack atual
 
-- HTML, CSS e JavaScript (vanilla)
-- [Supabase](https://supabase.com) (banco de dados PostgreSQL + autenticação)
-- Vite (servidor de desenvolvimento e build)
+- Frontend estático com HTML/CSS/JS
+- Build/dev server com Vite
+- Backend único: Supabase (Auth, Database e Functions)
 
-## Pré-requisitos
+## Requisitos
 
-- [Node.js](https://nodejs.org) (v18 ou superior) e npm
-- Projeto no [Supabase](https://supabase.com) criado e configurado
+- Node.js 20+
+- npm 10+
 
-## Variáveis de ambiente
+## Configuração local
 
-Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis (use `.env.example` como base):
+1. Instale dependências:
 
-```env
-VITE_SUPABASE_URL=https://<seu-projeto>.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=<sua-anon-key>
+```bash
+npm install
 ```
 
-> As chaves de publicação (`anon`/`publishable`) são seguras para uso no cliente.
-> Nunca exponha a `service_role` key.
+2. Copie `.env.example` para `.env` e preencha com as credenciais do seu projeto Supabase:
 
-## Instalação e execução local
+```env
+VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co
+VITE_SUPABASE_ANON_KEY=SEU_ANON_KEY
+```
 
-```sh
-git clone https://github.com/Juvencio93/ManosTechEvents.git
-cd ManosTechEvents
-npm install
+> Compatibilidade: `VITE_SUPABASE_PUBLISHABLE_KEY` também é aceito como fallback.
+
+3. Rode em desenvolvimento:
+
+```bash
 npm run dev
 ```
 
-Acesse `http://localhost:5173` no navegador.
+## Build de produção
 
-## Build para produção
-
-```sh
+```bash
 npm run build
+npm run preview
 ```
 
-Os arquivos de saída ficam em `dist/`.
+## Fluxo principal
 
-## Lint e formatação
+- Painel administrativo: `/` (redireciona para `/pages/index.html`)
+- Portal cativo: `/portal.html`
 
-```sh
-npm run lint
-npm run format
-```
+## Validação manual
 
-## Estrutura do projeto
-
-```
-├── pages/          # Páginas HTML do admin
-├── portal.html     # Portal público de cadastro de visitantes
-├── js/
-│   ├── core/
-│   │   ├── api.js      # Integração com Supabase
-│   │   └── auth.js     # Módulo de autenticação
-│   └── ...             # Outros módulos JS
-├── assets/         # CSS e outros recursos estáticos
-└── api/            # (legado) PHP + SQLite — não utilizado na versão atual
-```
-
-## Notas de migração
-
-Este projeto foi desconectado do Lovable. As dependências e configurações
-específicas do Lovable (`@lovable.dev/cloud-auth-js`, `@lovable.dev/vite-tanstack-config`)
-foram removidas. O projeto agora funciona exclusivamente via **GitHub + Supabase**.
+1. Abrir o painel e fazer login.
+2. Confirmar carregamento de configurações e listagem de eventos.
+3. Criar/editar/excluir evento.
+4. Abrir área do cliente e conferir dashboard.
+5. Abrir `/portal.html` com token válido e registrar visitante.
+6. Confirmar atualização de visitantes no evento.

@@ -1,191 +1,269 @@
 // api.js – Comunicação exclusiva com Supabase
-const SUPABASE_URL = 'https://uojdbrjxeapzfrulcipr.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_ZGrmIWRubt_0MgPi_a4mgQ_RNYdNflM';
+const normalizeEnvValue = (value) => (!value || /^%VITE_[A-Z0-9_]+%$/.test(value) ? "" : value);
+const SUPABASE_URL = normalizeEnvValue(
+  window.__SUPABASE_URL__ || window.__ENV__?.VITE_SUPABASE_URL || "",
+);
+const SUPABASE_KEY = normalizeEnvValue(
+  window.__SUPABASE_ANON_KEY__ ||
+    window.__ENV__?.VITE_SUPABASE_ANON_KEY ||
+    window.__ENV__?.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    "",
+);
 
-const supabaseClient = window.__SUPABASE__ || window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  throw new Error("Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.");
+}
+
+const supabaseClient =
+  window.__SUPABASE__ || window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 window.__SUPABASE__ = supabaseClient;
 
 let sessao = null;
 
 // ---------- Autenticação ----------
 async function apiLogin(email, password) {
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) throw new Error(error.message);
-    sessao = data.user;
-    const { data: perfil, error: perfilError } = await supabaseClient
-        .from('perfis')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
-    if (perfilError) throw new Error('Perfil não encontrado');
-    if (perfil.nivel === 'Administrador' && CFG.adminNome && perfil.nome !== CFG.adminNome) {
-        try {
-            await supabaseClient.from('perfis').update({ nome: CFG.adminNome }).eq('id', data.user.id);
-            perfil.nome = CFG.adminNome;
-        } catch (e) {}
-    }
-    return { nome: perfil.nome, email: data.user.email, nivel: perfil.nivel, permissoes: perfil.permissoes };
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  if (error) throw new Error(error.message);
+  sessao = data.user;
+  const { data: perfil, error: perfilError } = await supabaseClient
+    .from("perfis")
+    .select("*")
+    .eq("id", data.user.id)
+    .single();
+  if (perfilError) throw new Error("Perfil não encontrado");
+  if (perfil.nivel === "Administrador" && CFG.adminNome && perfil.nome !== CFG.adminNome) {
+    try {
+      await supabaseClient.from("perfis").update({ nome: CFG.adminNome }).eq("id", data.user.id);
+      perfil.nome = CFG.adminNome;
+    } catch (e) {}
+  }
+  return {
+    nome: perfil.nome,
+    email: data.user.email,
+    nivel: perfil.nivel,
+    permissoes: perfil.permissoes,
+  };
 }
 
 async function apiLogout() {
-    try { await supabaseClient.auth.signOut(); } catch (e) {}
-    sessao = null;
+  try {
+    await supabaseClient.auth.signOut();
+  } catch (e) {}
+  sessao = null;
 }
 
 async function apiRestaurarSessao() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) {
-        sessao = session.user;
-        try {
-            const { data: perfil } = await supabaseClient.from('perfis').select('*').eq('id', sessao.id).single();
-            if (perfil) {
-                return { nome: perfil.nome, email: sessao.email, nivel: perfil.nivel, permissoes: perfil.permissoes };
-            }
-        } catch (e) {}
-    }
-    return null;
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+  if (session) {
+    sessao = session.user;
+    try {
+      const { data: perfil } = await supabaseClient
+        .from("perfis")
+        .select("*")
+        .eq("id", sessao.id)
+        .single();
+      if (perfil) {
+        return {
+          nome: perfil.nome,
+          email: sessao.email,
+          nivel: perfil.nivel,
+          permissoes: perfil.permissoes,
+        };
+      }
+    } catch (e) {}
+  }
+  return null;
 }
 
 async function apiAlterarSenha(novaSenha) {
-    const { error } = await supabaseClient.auth.updateUser({ password: novaSenha });
-    if (error) throw error;
+  const { error } = await supabaseClient.auth.updateUser({ password: novaSenha });
+  if (error) throw error;
 }
 
 // ---------- Configurações ----------
 async function apiCarregarConfig() {
-    const { data, error } = await supabaseClient.from('config').select('*').eq('id', 1).single();
-    if (error) return null;
-    return { empresaNome: data.empresa_nome, email: data.email, telefoneSuporte: data.telefone_suporte, adminNome: data.admin_nome, adminEmail: data.admin_email, logoUrl: data.logo_url };
+  const { data, error } = await supabaseClient.from("config").select("*").eq("id", 1).single();
+  if (error) return null;
+  return {
+    empresaNome: data.empresa_nome,
+    email: data.email,
+    telefoneSuporte: data.telefone_suporte,
+    adminNome: data.admin_nome,
+    adminEmail: data.admin_email,
+    logoUrl: data.logo_url,
+  };
 }
 
 async function apiSalvarConfig(cfg) {
-    const { error } = await supabaseClient.from('config').update({
-        empresa_nome: cfg.empresaNome, email: cfg.email, telefone_suporte: cfg.telefoneSuporte,
-        admin_nome: cfg.adminNome, admin_email: cfg.adminEmail, logo_url: cfg.logoUrl
-    }).eq('id', 1);
-    if (error) throw error;
+  const { error } = await supabaseClient
+    .from("config")
+    .update({
+      empresa_nome: cfg.empresaNome,
+      email: cfg.email,
+      telefone_suporte: cfg.telefoneSuporte,
+      admin_nome: cfg.adminNome,
+      admin_email: cfg.adminEmail,
+      logo_url: cfg.logoUrl,
+    })
+    .eq("id", 1);
+  if (error) throw error;
 }
 
 // ---------- Eventos ----------
 async function apiListarEventos() {
-    const { data, error } = await supabaseClient.from('eventos').select('*').order('id', { ascending: false });
-    if (error) throw error;
-    return data.map(e => {
-        const evento = toCamelCase(e);
-        if (typeof evento.patrocinadoresLogos === 'string') {
-            try { evento.patrocinadoresLogos = JSON.parse(evento.patrocinadoresLogos); } catch (_) { evento.patrocinadoresLogos = []; }
-        }
-        evento.visitantes = [];
-        return evento;
-    });
+  const { data, error } = await supabaseClient
+    .from("eventos")
+    .select("*")
+    .order("id", { ascending: false });
+  if (error) throw error;
+  return data.map((e) => {
+    const evento = toCamelCase(e);
+    if (typeof evento.patrocinadoresLogos === "string") {
+      try {
+        evento.patrocinadoresLogos = JSON.parse(evento.patrocinadoresLogos);
+      } catch (_) {
+        evento.patrocinadoresLogos = [];
+      }
+    }
+    evento.visitantes = [];
+    return evento;
+  });
 }
 
 async function apiCriarEvento(evento) {
-    evento.token = 'tok_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
-    const dadosSnake = toSnakeCase(evento);
-    const { data, error } = await supabaseClient.from('eventos').insert([dadosSnake]).select('*').single();
-    if (error) throw error;
-    return toCamelCase(data);
+  evento.token = "tok_" + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+  const dadosSnake = toSnakeCase(evento);
+  const { data, error } = await supabaseClient
+    .from("eventos")
+    .insert([dadosSnake])
+    .select("*")
+    .single();
+  if (error) throw error;
+  return toCamelCase(data);
 }
 
 async function apiAtualizarEvento(id, evento) {
-    const { error } = await supabaseClient.from('eventos').update(toSnakeCase(evento)).eq('id', id);
-    if (error) throw error;
+  const { error } = await supabaseClient.from("eventos").update(toSnakeCase(evento)).eq("id", id);
+  if (error) throw error;
 }
 
 async function apiExcluirEvento(id) {
-    const { error } = await supabaseClient.from('eventos').delete().eq('id', id);
-    if (error) throw error;
+  const { error } = await supabaseClient.from("eventos").delete().eq("id", id);
+  if (error) throw error;
 }
 
 // ---------- Visitantes ----------
 async function apiRegistrarVisitante(token, dados) {
-    const { data: evento } = await supabaseClient.from('eventos').select('id').eq('token', token).single();
-    if (!evento) throw new Error('Evento não encontrado');
-    dados.evento_id = parseInt(evento.id, 10);
-    const { error } = await supabaseClient.from('visitantes').insert([toSnakeCase(dados)]);
-    if (error) throw error;
-    await atualizarTotalVisitantes(evento.id);
+  const { data: evento } = await supabaseClient
+    .from("eventos")
+    .select("id")
+    .eq("token", token)
+    .single();
+  if (!evento) throw new Error("Evento não encontrado");
+  dados.evento_id = parseInt(evento.id, 10);
+  const { error } = await supabaseClient.from("visitantes").insert([toSnakeCase(dados)]);
+  if (error) throw error;
+  await atualizarTotalVisitantes(evento.id);
 }
 
 async function apiListarVisitantes(eventoId) {
-    const { data, error } = await supabaseClient.from('visitantes').select('*').eq('evento_id', eventoId).order('id', { ascending: false });
-    if (error) throw error;
-    return data.map(toCamelCase);
+  const { data, error } = await supabaseClient
+    .from("visitantes")
+    .select("*")
+    .eq("evento_id", eventoId)
+    .order("id", { ascending: false });
+  if (error) throw error;
+  return data.map(toCamelCase);
 }
 
 async function atualizarTotalVisitantes(eventoId) {
-    try {
-        const { count, error } = await supabaseClient.from('visitantes').select('*', { count: 'exact', head: true }).eq('evento_id', eventoId);
-        if (!error && count !== null) {
-            await supabaseClient.from('eventos').update({ totalVisitantes: count }).eq('id', eventoId);
-        }
-    } catch (e) {}
+  try {
+    const { count, error } = await supabaseClient
+      .from("visitantes")
+      .select("*", { count: "exact", head: true })
+      .eq("evento_id", eventoId);
+    if (!error && count !== null) {
+      await supabaseClient.from("eventos").update({ totalVisitantes: count }).eq("id", eventoId);
+    }
+  } catch (e) {}
 }
 
 // ---------- Funcionários ----------
 async function apiListarFuncionarios() {
-    const { data, error } = await supabaseClient.from('funcionarios').select('*').order('id');
-    if (error) throw error;
-    return data.map(f => {
-        const func = toCamelCase(f);
-        if (typeof func.permissoes === 'string') {
-            try { func.permissoes = JSON.parse(func.permissoes); } catch (e) { func.permissoes = {}; }
-        }
-        return func;
-    });
+  const { data, error } = await supabaseClient.from("funcionarios").select("*").order("id");
+  if (error) throw error;
+  return data.map((f) => {
+    const func = toCamelCase(f);
+    if (typeof func.permissoes === "string") {
+      try {
+        func.permissoes = JSON.parse(func.permissoes);
+      } catch (e) {
+        func.permissoes = {};
+      }
+    }
+    return func;
+  });
 }
 
 async function apiCriarFuncionario(func) {
-    const dados = { ...func };
-    if (typeof dados.permissoes === 'object') dados.permissoes = JSON.stringify(dados.permissoes);
-    const { data, error } = await supabaseClient.from('funcionarios').insert([toSnakeCase(dados)]).select().single();
-    if (error) throw error;
-    return toCamelCase(data);
+  const dados = { ...func };
+  if (typeof dados.permissoes === "object") dados.permissoes = JSON.stringify(dados.permissoes);
+  const { data, error } = await supabaseClient
+    .from("funcionarios")
+    .insert([toSnakeCase(dados)])
+    .select()
+    .single();
+  if (error) throw error;
+  return toCamelCase(data);
 }
 
 async function apiAtualizarFuncionario(id, func) {
-    const dados = { ...func };
-    if (typeof dados.permissoes === 'object') dados.permissoes = JSON.stringify(dados.permissoes);
-    const { error } = await supabaseClient.from('funcionarios').update(toSnakeCase(dados)).eq('id', id);
-    if (error) throw error;
+  const dados = { ...func };
+  if (typeof dados.permissoes === "object") dados.permissoes = JSON.stringify(dados.permissoes);
+  const { error } = await supabaseClient
+    .from("funcionarios")
+    .update(toSnakeCase(dados))
+    .eq("id", id);
+  if (error) throw error;
 }
 
 async function apiExcluirFuncionario(id) {
-    const { error } = await supabaseClient.from('funcionarios').delete().eq('id', id);
-    if (error) throw error;
+  const { error } = await supabaseClient.from("funcionarios").delete().eq("id", id);
+  if (error) throw error;
 }
 
 // ---------- Helpers ----------
 function toSnakeCase(obj) {
-    const novo = {};
-    for (const chave in obj) {
-        if (obj[chave] === undefined) continue;
-        let snake = chave.replace(/[A-Z]/g, letra => '_' + letra.toLowerCase());
-        let valor = obj[chave];
-        if (Array.isArray(valor)) valor = JSON.stringify(valor);
-        novo[snake] = valor;
-    }
-    return novo;
+  const novo = {};
+  for (const chave in obj) {
+    if (obj[chave] === undefined) continue;
+    let snake = chave.replace(/[A-Z]/g, (letra) => "_" + letra.toLowerCase());
+    let valor = obj[chave];
+    if (Array.isArray(valor)) valor = JSON.stringify(valor);
+    novo[snake] = valor;
+  }
+  return novo;
 }
 
 function toCamelCase(obj) {
-    const novo = {};
-    for (const chave in obj) {
-        const camel = chave.replace(/_([a-z])/g, (_, letra) => letra.toUpperCase());
-        novo[camel] = obj[chave];
-    }
-    return novo;
+  const novo = {};
+  for (const chave in obj) {
+    const camel = chave.replace(/_([a-z])/g, (_, letra) => letra.toUpperCase());
+    novo[camel] = obj[chave];
+  }
+  return novo;
 }
 async function mikrotikLogin(token) {
-    const { error } = await supabaseClient.functions.invoke('mikrotik-login', {
-        body: { token }
-    });
-    if (error) throw error;
+  const { error } = await supabaseClient.functions.invoke("mikrotik-login", {
+    body: { token },
+  });
+  if (error) throw error;
 }
 
 async function mikrotikAtivos() {
-    const { data, error } = await supabaseClient.functions.invoke('mikrotik-ativos');
-    if (error) throw error;
-    return data.total;
+  const { data, error } = await supabaseClient.functions.invoke("mikrotik-ativos");
+  if (error) throw error;
+  return data.total;
 }
