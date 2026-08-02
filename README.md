@@ -1,29 +1,58 @@
-# Welcome to your Lovable project
+# Manos Tech Events
 
-This project was built with [Lovable](https://lovable.dev).
+Sistema web para gestão de eventos com backend em **Supabase**.
 
-## Build with Lovable
+## Stack atual
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+- Frontend estático com HTML/CSS/JS
+- Build/dev server com Vite
+- Backend único: Supabase (Auth, Database e Functions)
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+## Requisitos
 
-## Development
+- Node.js 20+
+- npm 10+
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+## Configuração local
 
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+1. Instale dependências:
+
+```bash
+npm install
+```
+
+2. Crie/edite o arquivo `.env` na raiz:
+
+```env
+VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co
+VITE_SUPABASE_ANON_KEY=SEU_ANON_KEY
+```
+
+> Compatibilidade: `VITE_SUPABASE_PUBLISHABLE_KEY` também é aceito como fallback.
+
+3. Rode em desenvolvimento:
+
+```bash
 npm run dev
 ```
 
-## Built with
+## Build de produção
 
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
+```bash
+npm run build
+npm run preview
+```
+
+## Fluxo principal
+
+- Painel administrativo: `/` (redireciona para `/pages/index.html`)
+- Portal cativo: `/portal.html`
+
+## Validação manual
+
+1. Abrir o painel e fazer login.
+2. Confirmar carregamento de configurações e listagem de eventos.
+3. Criar/editar/excluir evento.
+4. Abrir área do cliente e conferir dashboard.
+5. Abrir `/portal.html` com token válido e registrar visitante.
+6. Confirmar atualização de visitantes no evento.
