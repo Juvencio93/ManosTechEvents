@@ -1,29 +1,54 @@
-# Welcome to your Lovable project
+# ManosTechEvents
 
-This project was built with [Lovable](https://lovable.dev).
+Aplicação web com React + TanStack Start + Vite + Tailwind, integrada ao Supabase.
 
-## Build with Lovable
+## Requisitos
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+- Node.js 20+
+- npm (ou Bun)
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+## Variáveis de ambiente (Supabase)
 
-## Development
+Crie um arquivo `.env` com base em `.env.example`:
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+```env
+VITE_SUPABASE_URL=
+VITE_SUPABASE_PUBLISHABLE_KEY=
+VITE_SUPABASE_PROJECT_ID=
+```
+
+## Instalação
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+npm install
+```
+
+## Desenvolvimento
+
+```sh
 npm run dev
 ```
 
-## Built with
+## Build
 
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
+```sh
+npm run build
+```
+
+## Preview
+
+```sh
+npm run preview
+```
+
+## Lint
+
+```sh
+npm run lint
+```
+
+## Format
+
+```sh
+npm run format
+```
