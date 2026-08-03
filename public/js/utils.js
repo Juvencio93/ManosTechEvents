@@ -31,8 +31,11 @@ function statusPagamento(evento) {
 
 function gerarLinkPortal(evento) {
     if (!evento || !evento.token) return '#';
-    // URL base correta do GitHub Pages
-    return `https://juvencio93.github.io/ManosTechEvents/portal.html?token=${evento.token}`;
+    // Derive the app root from the current page URL so the link works in local dev,
+    // Vite preview and on GitHub Pages (under /ManosTechEvents/) without hard-coding.
+    // pages/index.html is always the calling page, so strip everything from /pages/ onward.
+    const base = window.location.href.replace(/\/pages\/[^?#]*.*$/, '/');
+    return `${base}portal.html?token=${evento.token}`;
 }
 function escapeHtml(texto) {
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
